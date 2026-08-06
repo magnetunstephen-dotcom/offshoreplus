@@ -1,0 +1,36 @@
+OFFSHOREPLUS – REN REACT-VERSJON
+
+Denne pakken inneholder IKKE node_modules, node.exe, npm, npx, corepack eller dist.
+
+ANBEFALT:
+Pakk ut til en helt ny mappe, for eksempel:
+C:\Prosjekter\offshoreplus
+
+Ikke pakk ut oppå den gamle prosjektmappen.
+
+SLIK STARTER DU:
+
+1. Åpne Visual Studio Code.
+2. Velg File -> Open Folder.
+3. Velg den nye offshoreplus-mappen.
+4. Velg Terminal -> New Terminal.
+5. Kontroller at package.json finnes:
+   dir
+6. Kjør:
+   npm install
+7. Kjør:
+   npm run dev
+8. Åpne adressen som vises, vanligvis:
+   http://localhost:5173/
+
+GITHUB:
+
+1. Bruk GitHub Desktop til å klone repositoryet.
+2. Slett gammelt prosjektinnhold lokalt, men behold .git-mappen.
+3. Kopier ALT innhold fra denne rene pakken inn i repositorymappen.
+4. Commit og Push.
+5. Settings -> Pages -> Source: GitHub Actions.
+
+VIKTIG:
+Ikke kopier inn node_modules fra andre mapper.
+Node_modules blir opprettet automatisk av npm install.
