@@ -4,6 +4,15 @@ import { holidaysDuringTrip } from "../lib/holidays";
 import { rotationLabel, rotationStatus } from "../lib/rotation";
 import { useClock } from "../hooks/useClock";
 import type { TripSetup } from "../types";
+import {
+  CalendarIcon,
+  ChevronRightIcon,
+  FlameIcon,
+  HelicopterIcon,
+  HomeIcon,
+  InfoIcon,
+  SettingsIcon,
+} from "./Icons";
 
 interface DashboardProps {
   trip: TripSetup;
@@ -15,11 +24,12 @@ interface DashboardProps {
   onChangeEarningsView: (view: "trip" | "monthly") => void;
 }
 
-function money(value: number): string {
+function money(value: number, decimals = 0): string {
   return new Intl.NumberFormat("nb-NO", {
     style: "currency",
     currency: "NOK",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(value);
 }
 
@@ -35,6 +45,15 @@ function countdownParts(target: Date, now: Date) {
 
 function hours(value: number): string {
   return `${value.toFixed(value < 10 ? 1 : 0)} t`;
+}
+
+function phaseMessage(isOffshore: boolean, phaseDay: number, phaseLength: number) {
+  const remaining = Math.max(0, phaseLength - phaseDay);
+  if (isOffshore && remaining === 0) return "Siste dag offshore";
+  if (isOffshore && remaining === 1) return "Én dag igjen av turen";
+  if (isOffshore) return `${remaining} dager igjen offshore`;
+  if (remaining === 0) return "Utreise i dag";
+  return `${remaining} dager igjen hjemme`;
 }
 
 export function Dashboard({
@@ -58,17 +77,19 @@ export function Dashboard({
   const heroLabel = view === "trip" ? "Opptjent denne turen" : "Estimert månedslønn";
   const heroValue = view === "trip" ? calculation.gross : calculation.estimatedMonthlyGross;
   const heroNet = view === "trip" ? calculation.net : calculation.estimatedMonthlyNet;
+  const liveMoney = calculation.isMoneyRunning && view === "trip";
 
   return (
     <>
-      <main className="page">
-        <section className="countdown-card">
-          <div className="countdown-heading">
-            <div>
-              <span className="eyebrow">🚁 {status.countdownLabel}</span>
+      <main className="page mobile-dashboard">
+        <section className="op-hero-section">
+          <div className="op-flight-topline">
+            <div className="op-icon-chip"><HelicopterIcon size={20} /></div>
+            <div className="op-flight-copy">
+              <span className="eyebrow">{status.countdownLabel}</span>
               <strong className="departure-date">{formatDateTime(status.nextHelicopter)}</strong>
             </div>
-            <span className="status-pill">{rotationLabel(trip)}</span>
+            <span className="rotation-badge">{rotationLabel(trip)} rotasjon</span>
           </div>
 
           <div className="countdown-grid" aria-label="Nedtelling til neste helikopter">
@@ -79,106 +100,111 @@ export function Dashboard({
           </div>
         </section>
 
-        <section className="trip-progress-card">
+        <section className="trip-progress-card op-progress-card">
           <div className="trip-progress-top">
             <div>
-              <span className="eyebrow">{status.isOffshore ? "Aktiv offshoretur" : "Friperiode"}</span>
+              <span className="eyebrow">{status.isOffshore ? "Offshore" : "Friperiode"}</span>
               <strong>Dag {status.phaseDay} av {status.phaseLength}</strong>
             </div>
-            <span>{Math.round(progress)} %</span>
+            <div className="op-progress-meta">
+              <strong>{Math.round(progress)}%</strong>
+              <small>{phaseMessage(status.isOffshore, status.phaseDay, status.phaseLength)}</small>
+            </div>
           </div>
-          <div className="progress-track" aria-hidden="true">
-            <span style={{ width: `${progress}%` }} />
-          </div>
+          <div className="progress-track" aria-hidden="true"><span style={{ width: `${progress}%` }} /></div>
         </section>
 
         <section className={`earning-status-card ${calculation.status}`}>
           <span className="status-dot" aria-hidden="true" />
           <div>
-            <span className="eyebrow">Status akkurat nå</span>
+            <span className="eyebrow">Akkurat nå</span>
             <strong>{calculation.statusLabel}</strong>
           </div>
-          <span className="status-running">{calculation.isMoneyRunning ? "● LIVE" : "⏸"}</span>
+          <span className={`status-running ${calculation.isMoneyRunning ? "live" : "paused"}`}>
+            {calculation.isMoneyRunning ? "LIVE" : "PAUSE"}
+          </span>
         </section>
 
-        <section className="hero-card earnings-hero">
+        <section className={`hero-card earnings-hero ${liveMoney ? "money-running" : ""}`}>
           <div className="earnings-header-row">
             <span className="eyebrow">{heroLabel}</span>
-            <button className="info-button" onClick={onEarningsInfo} aria-label="Forklaring av lønnstall">?</button>
+            <button className="info-button" onClick={onEarningsInfo} aria-label="Forklaring av lønnstall"><InfoIcon size={18} /></button>
           </div>
-          <strong className="hero-money">{money(heroValue)}</strong>
-          <span className="muted">
-            Ca. {money(heroNet)} etter {trip.taxRate}% skatt
-          </span>
+          <strong className="hero-money">{money(heroValue, liveMoney ? 2 : 0)}</strong>
+          <span className="muted">Ca. {money(heroNet)} etter {trip.taxRate}% skatt</span>
+          {view === "trip" && (
+            <span className="money-caption">{calculation.isMoneyRunning ? "Lønn opptjenes nå" : "Telleren står stille mens du ikke opptjener lønn"}</span>
+          )}
           <div className="segmented earnings-toggle" aria-label="Velg lønnsvisning">
-            <button className={view === "trip" ? "selected" : ""} onClick={() => onChangeEarningsView("trip")}>Tur-opptjening</button>
+            <button className={view === "trip" ? "selected" : ""} onClick={() => onChangeEarningsView("trip")}>Denne turen</button>
             <button className={view === "monthly" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly")}>Månedslønn</button>
           </div>
         </section>
 
         {activeSession && (
           <button className={`live-addition-banner ${activeSession.type}`} onClick={onAdditions}>
+            <div className="op-icon-chip small"><FlameIcon size={18} /></div>
             <div>
-              <span className="eyebrow">Live teller</span>
-              <strong>{activeSession.type === "overtime" ? "🔥 Overtid pågår" : "☕ Ventetid pågår"}</strong>
+              <span className="eyebrow">Live tillegg</span>
+              <strong>{activeSession.type === "overtime" ? "Overtid pågår" : "Ventetid pågår"}</strong>
             </div>
-            <span>Trykk for detaljer →</span>
+            <ChevronRightIcon size={20} />
           </button>
         )}
 
-        <section className="dashboard-grid salary-breakdown-grid">
-          <article className="card">
-            <span className="eyebrow">Estimert full tur</span>
+        <section className="op-summary-grid">
+          <article className="card summary-card">
+            <span className="eyebrow">Full tur som planlagt</span>
             <strong className="metric">{money(calculation.estimatedGross)}</strong>
             <span className="muted">≈ {calculation.tripsPerYear.toFixed(1)} turer per år</span>
           </article>
-          <article className="card additions-card">
+          <button className="card summary-card addition-summary" onClick={onAdditions}>
             <span className="eyebrow">Tillegg denne turen</span>
             <strong className="metric accent-money">+{money(calculation.additionsPay)}</strong>
-            <button className="text-button" onClick={onAdditions}>Registrer / se tillegg</button>
-          </article>
+            <span className="summary-link">Se / registrer <ChevronRightIcon size={16} /></span>
+          </button>
         </section>
 
-        <section className="card pay-breakdown">
-          <div className="breakdown-heading">
-            <strong>Hva består lønnen av?</strong>
-            <span>{money(calculation.gross)}</span>
+        <details className="card pay-breakdown op-details">
+          <summary>
+            <span>Se lønnsdetaljer</span>
+            <strong>{money(calculation.gross)}</strong>
+          </summary>
+          <div className="breakdown-content">
+            <div className="breakdown-row"><span>Grunnlønn</span><strong>{money(calculation.basePay)}</strong></div>
+            <div className="breakdown-row"><span>Nattillegg</span><strong>{money(calculation.nightPay)}</strong></div>
+            <div className="breakdown-row"><span>Overtid · {hours(calculation.overtimeHours)}</span><strong>{money(calculation.overtimePay)}</strong></div>
+            <div className="breakdown-row"><span>Ventetid · {hours(calculation.waitingHours)}</span><strong>{money(calculation.waitingPay)}</strong></div>
+            <div className="breakdown-row"><span>Svingskift · {trip.swingCompHours ?? 0} t</span><strong>{money(calculation.swingPay)}</strong></div>
+            {calculation.customAdditionResults.map((addition) => (
+              <div className="breakdown-row" key={addition.id}><span>{addition.name}</span><strong>{money(addition.tripPay)}</strong></div>
+            ))}
           </div>
-          <div className="breakdown-row"><span>Grunnlønn</span><strong>{money(calculation.basePay)}</strong></div>
-          <div className="breakdown-row"><span>Nattillegg</span><strong>{money(calculation.nightPay)}</strong></div>
-          <div className="breakdown-row"><span>Overtid · {hours(calculation.overtimeHours)}</span><strong>{money(calculation.overtimePay)}</strong></div>
-          <div className="breakdown-row"><span>Ventetid · {hours(calculation.waitingHours)}</span><strong>{money(calculation.waitingPay)}</strong></div>
-          <div className="breakdown-row"><span>Svingskift · {trip.swingCompHours ?? 0} t</span><strong>{money(calculation.swingPay)}</strong></div>
-          {calculation.customAdditionResults.map((addition) => (
-            <div className="breakdown-row" key={addition.id}><span>{addition.name}</span><strong>{money(addition.tripPay)}</strong></div>
-          ))}
-        </section>
+        </details>
 
-        <section className="quick-actions" aria-label="Hurtigvalg">
-          <button onClick={onAdditions}><span>🔥</span><strong>Tillegg</strong><small>Overtid, ventetid og svingskift</small></button>
-          <button onClick={onCalendar}><span>📅</span><strong>Turnuskalender</strong><small>Se hele året og eksporter</small></button>
-          <button onClick={onSettings}><span>⚙️</span><strong>Innstillinger</strong><small>Lønn, skatt og rotasjon</small></button>
+        <section className="quick-actions op-tools" aria-label="Hurtigvalg">
+          <button onClick={onAdditions}><span className="action-icon"><FlameIcon /></span><strong>Tillegg</strong><small>Overtid og ventetid</small><ChevronRightIcon className="action-chevron" size={17}/></button>
+          <button onClick={onCalendar}><span className="action-icon"><CalendarIcon /></span><strong>Kalender</strong><small>Turnus og eksport</small><ChevronRightIcon className="action-chevron" size={17}/></button>
+          <button onClick={onSettings}><span className="action-icon"><SettingsIcon /></span><strong>Innstillinger</strong><small>Lønn og oppsett</small><ChevronRightIcon className="action-chevron" size={17}/></button>
         </section>
 
         {holidays.length > 0 && (
           <section className="card holiday-card">
-            <strong>🎉 Hellig-/tariffdager på denne turen</strong>
-            {holidays.map((holiday) => (
-              <span key={`${holiday.name}-${holiday.date.toISOString()}`}>
-                {holiday.name} – {formatDate(holiday.date)}
-              </span>
-            ))}
+            <strong>Hellig-/tariffdager på denne turen</strong>
+            {holidays.map((holiday) => <span key={`${holiday.name}-${holiday.date.toISOString()}`}>{holiday.name} – {formatDate(holiday.date)}</span>)}
             <small>Kontroller alltid hvilke tillegg som gjelder i avtalen din.</small>
           </section>
         )}
       </main>
 
-      <nav className="bottom-nav" aria-label="Hovedmeny">
-        <button onClick={onNewTrip}>🚁<span>Ny tur</span></button>
-        <button onClick={onAdditions}>🔥<span>Tillegg</span></button>
-        <button onClick={onCalendar}>📅<span>Kalender</span></button>
-        <button onClick={onSettings}>⚙️<span>Innstillinger</span></button>
+      <nav className="bottom-nav op-bottom-nav" aria-label="Hovedmeny">
+        <button className="active" aria-current="page"><HomeIcon/><span>Hjem</span></button>
+        <button onClick={onAdditions}><FlameIcon/><span>Tillegg</span></button>
+        <button onClick={onCalendar}><CalendarIcon/><span>Kalender</span></button>
+        <button onClick={onSettings}><SettingsIcon/><span>Innstillinger</span></button>
       </nav>
+
+      <button className="floating-new-trip" onClick={onNewTrip} aria-label="Start ny tur"><HelicopterIcon size={19}/><span>Ny tur</span></button>
     </>
   );
 }

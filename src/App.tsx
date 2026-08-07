@@ -7,6 +7,7 @@ import { SettingsModal } from "./components/SettingsModal";
 import { Wizard } from "./components/Wizard";
 import { loadTheme, loadTrip, saveTheme, saveTrip } from "./lib/storage";
 import type { EarningsView, TripSetup } from "./types";
+import { MoonIcon, SunIcon } from "./components/Icons";
 
 type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | null;
 
@@ -41,11 +42,11 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark">+</span>
+          <span className="brand-mark"><span className="brand-o">O</span><span className="brand-plus">+</span></span>
           <span>OffshorePlus</span>
         </div>
         <button className="theme-button" onClick={toggleTheme} aria-label="Bytt tema">
-          {theme === "dark" ? "☀️" : "🌙"}
+          {theme === "dark" ? <SunIcon size={19} /> : <MoonIcon size={19} />}
         </button>
       </header>
 
@@ -61,7 +62,7 @@ export default function App() {
         />
       ) : (
         <main className="empty-state">
-          <div className="large-mark">+</div>
+          <div className="large-mark"><span className="brand-o">O</span><span className="brand-plus">+</span></div>
           <h1>OffshorePlus</h1>
           <p>En enkel oversikt over offshore-tur, lønn og turnus.</p>
           <button className="primary large-button" onClick={() => setModal("wizard")}>
