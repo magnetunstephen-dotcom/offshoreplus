@@ -63,3 +63,35 @@ export interface HolidayEntry {
   name: string;
   tariffOnly?: boolean;
 }
+
+export interface CvExperience {
+  id: string;
+  employer: string;
+  period: string;
+  role: string;
+  details: string;
+}
+
+export interface CvEntry {
+  id: string;
+  title: string;
+  detail: string;
+}
+
+export interface CvProfile {
+  fullName: string;
+  address: string;
+  email: string;
+  phone: string;
+  birthDate: string;
+  familyStatus: string;
+  linkedin: string;
+  keyQualifications: string;
+  experiences: CvExperience[];
+  education: CvEntry[];
+  courses: CvEntry[];
+  itSkills: string;
+  languages: string;
+  interests: string;
+  references: CvEntry[];
+}

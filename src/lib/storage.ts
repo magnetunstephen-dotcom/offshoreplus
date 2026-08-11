@@ -1,4 +1,4 @@
-import type { TripSetup } from "../types";
+import type { CvProfile, TripSetup } from "../types";
 
 const TRIP_KEY = "offshoreplus.trip.v1";
 const THEME_KEY = "offshoreplus.theme";
@@ -37,4 +37,20 @@ export function loadTheme(): "dark" | "light" {
 
 export function saveTheme(theme: "dark" | "light"): void {
   localStorage.setItem(THEME_KEY, theme);
+}
+
+
+const CV_KEY = "offshoreplus.cv.v1";
+
+export function loadCvProfile(): CvProfile | null {
+  try {
+    const value = localStorage.getItem(CV_KEY);
+    return value ? (JSON.parse(value) as CvProfile) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveCvProfile(profile: CvProfile): void {
+  localStorage.setItem(CV_KEY, JSON.stringify(profile));
 }

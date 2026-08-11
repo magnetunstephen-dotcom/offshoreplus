@@ -124,9 +124,13 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
           <label>
             Rotasjon
             <select value={rotation} onChange={(event) => setRotation(event.target.value)}>
-              <option value="14-28">2 uker på / 4 uker av</option>
-              <option value="14-21">2 uker på / 3 uker av</option>
-              <option value="14-14">2 uker på / 2 uker av</option>
+              <option value="14-28">2/4 · 14 på / 28 av</option>
+              <option value="14-21">14 på / 21 av</option>
+              <option value="15-21">15 på / 21 av</option>
+              <option value="14-14">14 på / 14 av</option>
+              <option value="7-7">7 på / 7 av</option>
+              <option value="12-16">12 på / 16 av</option>
+              <option value="21-21">21 på / 21 av</option>
               <option value="custom">Egendefinert</option>
             </select>
           </label>

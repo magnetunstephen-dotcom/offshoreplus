@@ -21,6 +21,7 @@ interface DashboardProps {
   onSettings: () => void;
   onAdditions: () => void;
   onEarningsInfo: () => void;
+  onCv: () => void;
   onChangeEarningsView: (view: "trip" | "monthly") => void;
 }
 
@@ -63,6 +64,7 @@ export function Dashboard({
   onSettings,
   onAdditions,
   onEarningsInfo,
+  onCv,
   onChangeEarningsView,
 }: DashboardProps) {
   const now = useClock();
@@ -185,6 +187,7 @@ export function Dashboard({
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
           <button onClick={onAdditions}><span className="action-icon"><FlameIcon /></span><strong>Tillegg</strong><small>Overtid og ventetid</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onCalendar}><span className="action-icon"><CalendarIcon /></span><strong>Kalender</strong><small>Turnus og eksport</small><ChevronRightIcon className="action-chevron" size={17}/></button>
+          <button onClick={onCv}><span className="action-icon">CV</span><strong>Profil & CV</strong><small>Lag profesjonell PDF</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onSettings}><span className="action-icon"><SettingsIcon /></span><strong>Innstillinger</strong><small>Lønn og oppsett</small><ChevronRightIcon className="action-chevron" size={17}/></button>
         </section>
 
@@ -201,7 +204,7 @@ export function Dashboard({
         <button className="active" aria-current="page"><HomeIcon/><span>Hjem</span></button>
         <button onClick={onAdditions}><FlameIcon/><span>Tillegg</span></button>
         <button onClick={onCalendar}><CalendarIcon/><span>Kalender</span></button>
-        <button onClick={onSettings}><SettingsIcon/><span>Innstillinger</span></button>
+        <button onClick={onCv}><strong className="nav-cv-icon">CV</strong><span>Profil</span></button>
       </nav>
 
       <button className="floating-new-trip" onClick={onNewTrip} aria-label="Start ny tur"><HelicopterIcon size={19}/><span>Ny tur</span></button>
