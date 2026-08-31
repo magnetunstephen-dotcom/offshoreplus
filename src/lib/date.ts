@@ -24,6 +24,7 @@ export function formatDateTime(value: string | Date): string {
   return new Intl.DateTimeFormat("nb-NO", {
     dateStyle: "medium",
     timeStyle: "short",
+    hourCycle: "h23",
   }).format(date);
 }
 

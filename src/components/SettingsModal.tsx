@@ -11,7 +11,7 @@ interface SettingsModalProps {
 export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
   const [hourlyRate, setHourlyRate] = useState(trip.hourlyRate);
   const [nightAllowance, setNightAllowance] = useState(trip.nightAllowance);
-  const [taxRate, setTaxRate] = useState(trip.taxRate);
+  const [taxRate, setTaxRate] = useState(String(trip.taxRate));
   const [rotationOnDays, setRotationOnDays] = useState(trip.rotationOnDays);
   const [rotationOffDays, setRotationOffDays] = useState(trip.rotationOffDays);
 
@@ -51,7 +51,7 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
             max={60}
             step={0.1}
             value={taxRate}
-            onChange={(event) => setTaxRate(Number(event.target.value))}
+            onChange={(event) => setTaxRate(event.target.value)}
           />
         </label>
         <div className="form-grid">
@@ -69,7 +69,7 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
         <button className="secondary" onClick={onClose}>Lukk</button>
         <button
           className="primary"
-          onClick={() => onSave({ ...trip, hourlyRate, nightAllowance, taxRate, rotationOnDays, rotationOffDays })}
+          onClick={() => onSave({ ...trip, hourlyRate, nightAllowance, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
         >
           Lagre
         </button>

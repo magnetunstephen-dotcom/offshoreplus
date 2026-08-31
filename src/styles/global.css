@@ -597,6 +597,11 @@ body {
 .earnings-toggle { grid-template-columns: repeat(3, 1fr); }
 .earnings-toggle button { padding-inline: 7px; font-size: 11px; }
 .tax-note { display:block; margin-top:11px; color:var(--muted); font-size:10px; line-height:1.45; }
+.datetime-24-input { display:grid; grid-template-columns:minmax(0,1fr) minmax(132px,.55fr); gap:9px; margin-top:7px; }
+.datetime-24-input > input { margin:0; }
+.clock-24-field { position:relative; margin:0; }
+.clock-24-field > span { position:absolute; left:10px; top:6px; z-index:1; color:var(--muted); font-size:9px; font-weight:750; pointer-events:none; }
+.clock-24-field input { margin:0; padding-top:19px; font-variant-numeric:tabular-nums; letter-spacing:.04em; }
 .segmented { background: color-mix(in srgb, var(--bg) 35%, transparent); }
 .segmented button.selected { background: var(--panel-strong); }
 .info-button { display: grid; place-items: center; width: 32px; height: 32px; background: transparent; }
@@ -695,6 +700,8 @@ body {
 .cv-paper ul { margin:5px 0 8px; padding-left:20px; }
 .cv-paper li { margin:2px 0; }
 .cv-contact { display:grid; grid-template-columns:1fr 1fr; gap:2px 18px; }
+.cv-header-with-photo { display:grid; grid-template-columns:1fr 104px; align-items:start; gap:24px; min-height:112px; }
+.cv-demo-photo { width:104px; height:104px; object-fit:cover; object-position:center 18%; border:3px solid #fff; border-radius:14px; background:#e9f0f3; box-shadow:0 0 0 1px #c8d3d8, 0 5px 14px rgb(0 0 0 / 14%); }
 .cv-item { margin:0 0 13px; break-inside:avoid; }
 .cv-item-title { display:flex; justify-content:space-between; gap:14px; font-size:13px; }
 .cv-item > b { display:block; margin:2px 0; }
@@ -725,10 +732,13 @@ body {
   .cv-paper { min-height:0; padding:28px 22px; font-size:10px; }
   .cv-paper h1 { font-size:19px; }
   .cv-contact { grid-template-columns:1fr; }
+  .cv-header-with-photo { grid-template-columns:1fr 76px; gap:12px; min-height:84px; }
+  .cv-demo-photo { width:76px; height:76px; border-radius:11px; }
   .cv-item-title { flex-direction:column; gap:0; }
   .cv-demo-notice { margin:-18px -12px 20px; padding:9px 12px; }
   .certificate-summary { grid-template-columns:repeat(2,1fr); }
   .certificate-row { align-items:flex-start; flex-direction:column; }
+  .datetime-24-input { grid-template-columns:1fr; }
 }
 
 @media print {

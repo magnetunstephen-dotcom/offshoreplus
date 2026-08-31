@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { salaryAgreements } from "../data/salaries";
 import { addDays, formatDate, toDateTimeLocal } from "../lib/date";
+import { DateTime24Input } from "./DateTime24Input";
 import { holidaysDuringTrip } from "../lib/holidays";
 import type { AgreementId, ShiftPattern, TripSetup } from "../types";
 import { Modal } from "./Modal";
@@ -48,7 +49,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
   const [pattern, setPattern] = useState<ShiftPattern>(
     existingTrip?.pattern ?? "night-day",
   );
-  const [taxRate, setTaxRate] = useState(existingTrip?.taxRate ?? 35);
+  const [taxRate, setTaxRate] = useState(String(existingTrip?.taxRate ?? 35));
   const [taxUnknown, setTaxUnknown] = useState(false);
   const [rotation, setRotation] = useState(existingTrip ? `${existingTrip.rotationOnDays}-${existingTrip.rotationOffDays}` : "14-28");
   const [customOnDays, setCustomOnDays] = useState(existingTrip?.rotationOnDays ?? 14);
@@ -84,7 +85,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       group,
       stepIndex,
       pattern,
-      taxRate: taxUnknown ? 35 : taxRate,
+      taxRate: taxUnknown ? 35 : Math.min(60, Math.max(0, Number(taxRate) || 35)),
       hourlyRate,
       nightAllowance: existingTrip?.nightAllowance ?? 113.5,
       overtimeHours: existingTrip?.overtimeHours ?? 0,
@@ -115,11 +116,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
           </p>
           <label>
             Dato og klokkeslett
-            <input
-              type="datetime-local"
-              value={heliDeparture}
-              onChange={(event) => setHeliDeparture(event.target.value)}
-            />
+            <DateTime24Input value={heliDeparture} onChange={setHeliDeparture} />
           </label>
           <label>
             Rotasjon
@@ -158,11 +155,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
           </p>
           <label>
             Dato og klokkeslett
-            <input
-              type="datetime-local"
-              value={paidStart}
-              onChange={(event) => setPaidStart(event.target.value)}
-            />
+            <DateTime24Input value={paidStart} onChange={setPaidStart} />
           </label>
           {holidays.length > 0 && (
             <div className="holiday-preview">
@@ -276,7 +269,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
                 step={0.1}
                 value={taxRate}
                 disabled={taxUnknown}
-                onChange={(event) => setTaxRate(Number(event.target.value))}
+                onChange={(event) => setTaxRate(event.target.value)}
               />
               <span>%</span>
             </div>

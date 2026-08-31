@@ -16,10 +16,8 @@ export function loadTrip(): TripSetup | null {
       rotationOffDays: parsed.rotationOffDays ?? 28,
       additionSessions: parsed.additionSessions ?? [],
       swingCompHours: parsed.swingCompHours ?? 0,
-      earningsView:
-        parsed.earningsView === "trip" || parsed.earningsView === "monthly-gross"
-          ? parsed.earningsView
-          : "monthly-net",
+      // Appen skal alltid åpne med forventet utbetalt måned som standard.
+      earningsView: "monthly-net",
     };
   } catch {
     return null;
