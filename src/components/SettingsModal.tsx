@@ -10,6 +10,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
   const [hourlyRate, setHourlyRate] = useState(trip.hourlyRate);
+  const [monthlyBaseGross, setMonthlyBaseGross] = useState(trip.monthlyBaseGross ? String(trip.monthlyBaseGross) : "");
   const [nightAllowance, setNightAllowance] = useState(trip.nightAllowance);
   const [taxRate, setTaxRate] = useState(String(trip.taxRate));
   const [rotationOnDays, setRotationOnDays] = useState(trip.rotationOnDays);
@@ -23,6 +24,17 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
         enheten.
       </p>
       <div className="form-grid one-column">
+        <label>
+          Fast månedslønn fra lønnsslipp
+          <input
+            type="text"
+            inputMode="decimal"
+            value={monthlyBaseGross}
+            placeholder="Eksempel: 68564,92"
+            onChange={(event) => setMonthlyBaseGross(event.target.value)}
+          />
+          <small className="field-help">Når dette fylles inn, brukes beløpet foran tariffmatrisen.</small>
+        </label>
         <label>
           Timelønn
           <input
@@ -69,7 +81,7 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
         <button className="secondary" onClick={onClose}>Lukk</button>
         <button
           className="primary"
-          onClick={() => onSave({ ...trip, hourlyRate, nightAllowance, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
+          onClick={() => onSave({ ...trip, monthlyBaseGross: Number(monthlyBaseGross.replace(",", ".")) || undefined, hourlyRate, nightAllowance, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
         >
           Lagre
         </button>

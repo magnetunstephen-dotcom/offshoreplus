@@ -30,20 +30,21 @@ export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
         offshoreperiode, inkludert registrerte tillegg.
       </p>
       <p>
-        <strong>Forventet utbetalt måned</strong> normaliserer ordinær full
-        turverdi med 8,7 turer per år og deler på 12. Registrert overtid,
-        helligdagstillegg og andre ekstra tillegg legges direkte oppå og blir
-        ikke annualisert.
+        <strong>Opptjent mot neste lønn</strong> fordeler den faste
+        månedslønnen fra tariff-/lønnstabellen over den planlagte 14-dagersturen.
+        Telleren starter på 0 og når full estimert fastlønn når alle planlagte
+        arbeidstimer er gjennomført. Variable tillegg legges på fortløpende.
       </p>
 
       <div className="example-box">
         <span>Eksempel med ditt oppsett</span>
-        <strong>{money(calculation.regularMonthlyGross)} ordinær brutto måned</strong>
-        <span>+ {money(calculation.activeExtrasGross)} ekstra på aktiv tur</span>
-        <strong>≈ {money(calculation.estimatedMonthlyNet)} forventet utbetalt</strong>
+        <strong>{money(calculation.accruedNextPayoutGross)} brutto opptjent nå</strong>
+        <span>Fast månedslønn: {money(calculation.regularMonthlyGross)}</span>
+        <span>Tillegg opptjent på aktiv tur: {money(calculation.activeExtrasGross)}</span>
+        <strong>≈ {money(calculation.accruedNextPayoutNet)} estimert netto opptjent</strong>
       </div>
 
-      <p className="muted small-copy">Ordinær lønn bruker skattetrekket du har valgt. Overtid og ekstra tillegg beregnes med 50 % estimert forskuddstrekk. Det er ikke nødvendigvis den endelige skatten.</p>
+      <p className="muted small-copy">Ordinær lønn bruker skattetrekket du har valgt. Tillegg beregnes med 50 % estimert forskuddstrekk. Arbeidsgiverens lønnskjøringsfrist, tabelltrekk, feriepenger og andre trekk kan gjøre at lønnsslippen avviker.</p>
 
       <p className="muted small-copy">
         OffshorePlus er en motivasjons- og estimatkalkulator. Kontroller alltid

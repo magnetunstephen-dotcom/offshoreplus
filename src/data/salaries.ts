@@ -1,6 +1,34 @@
 import type { AgreementId, SalaryAgreement } from "../types";
 
 export const salaryAgreements: Record<AgreementId, SalaryAgreement> = {
+  sokkel4a2025: {
+    id: "sokkel4a2025",
+    name: "Sokkelavtalen 4A",
+    description: "Bedriftstilpasset lønnssystem etter Sokkelavtalens punkt 4A.",
+    effectiveFrom: "Satser fra 1. juni 2024",
+    steps: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11*"],
+    groupDescriptions: {
+      S: "Fagansvarlige og sykepleier/HMS-koordinator",
+      F: "Operatører, teknikere, elektrikere, mekanikere, kranførere og dekks-/maskinromsoperatører",
+    },
+    notes: [
+      "Satsene inkluderer lokalt sokkeltillegg etter lønnsmatrisen.",
+      "Trinn 11 er forbeholdt bestemte stillinger med ekstra ansiennitetsutvikling.",
+      "Sykepleier/HMS-koordinator har et fast tillegg på 8 % som må registreres separat under tillegg.",
+    ],
+    groups: {
+      S: {
+        monthly: [63282, 64398, 65514, 66630, 67746, 68863, 69979, 71095, 72211, 73714, 74830],
+        hourly: [485, 494, 503, 511, 520, 528, 537, 545, 554, 565, 574],
+        overtime: [801, 815, 829, 843, 858, 872, 886, 900, 914, 933, 947],
+      },
+      F: {
+        monthly: [61124, 62092, 63059, 64026, 64993, 65961, 66928, 67895, 68863, 70365, 71482],
+        hourly: [469, 476, 484, 491, 499, 506, 513, 521, 528, 540, 548],
+        overtime: [774, 786, 798, 810, 823, 835, 847, 859, 872, 891, 905],
+      },
+    },
+  },
   safe2025: {
     id: "safe2025",
     name: "SAFE/NR – 2:4 avløsningssystem",
@@ -27,22 +55,6 @@ export const salaryAgreements: Record<AgreementId, SalaryAgreement> = {
       E: {
         hourly: [427.38, 435.59, 443.96, 452.49, 461.2, 470.08, 479.14],
         overtime: [705.18, 718.72, 732.53, 746.61, 760.98, 775.64, 790.58],
-      },
-    },
-  },
-  sokkel4a2025: {
-    id: "sokkel4a2025",
-    name: "Sokkelavtalen 4a",
-    description: "Stillinger omfattet av Sokkelavtalens 4a-bestemmelser.",
-    steps: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11*"],
-    groups: {
-      S: {
-        hourly: [505, 514, 523, 531, 540, 548, 557, 565, 574, 588, 597],
-        overtime: [834, 848, 862, 876, 890, 905, 919, 933, 947, 970, 984],
-      },
-      F: {
-        hourly: [488, 496, 504, 511, 519, 526, 533, 541, 548, 562, 571],
-        overtime: [807, 819, 831, 843, 856, 868, 880, 892, 905, 928, 942],
       },
     },
   },

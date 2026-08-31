@@ -3,8 +3,10 @@ import type {
   LiveAdditionSession,
   ShiftPattern,
   TripSetup,
+  TaxTreatment,
 } from "../types";
 import { addDays } from "./date";
+import { salaryAgreements } from "../data/salaries";
 
 export type EarningsStatus = "work" | "rest" | "overtime" | "waiting" | "home" | "upcoming";
 
@@ -13,6 +15,8 @@ export interface CustomAdditionResult {
   name: string;
   tripPay: number;
   monthlyPay: number;
+  isMonthlyFixed: boolean;
+  taxTreatment: TaxTreatment;
 }
 
 export interface TripCalculation {
@@ -39,6 +43,12 @@ export interface TripCalculation {
   regularMonthlyNet: number;
   activeExtrasGross: number;
   activeExtrasNet: number;
+  accruedNextPayoutGross: number;
+  accruedNextPayoutNet: number;
+  accruedRegularGross: number;
+  accruedRegularNet: number;
+  usesAgreementMonthlySalary: boolean;
+  usesMonthlyOverride: boolean;
   tripsPerYear: number;
   dayNumber: number;
   homeDate: Date;
@@ -94,6 +104,8 @@ function calculateCustomAdditions(
           name: addition.name,
           monthlyPay,
           tripPay: tripsPerYear > 0 ? (monthlyPay * 12) / tripsPerYear : 0,
+          isMonthlyFixed: true,
+          taxTreatment: addition.taxTreatment ?? "normal",
         };
       }
 
@@ -107,6 +119,8 @@ function calculateCustomAdditions(
           name: addition.name,
           tripPay,
           monthlyPay: (tripPay * tripsPerYear) / 12,
+          isMonthlyFixed: false,
+          taxTreatment: addition.taxTreatment ?? "extra-50",
         };
       }
 
@@ -116,6 +130,8 @@ function calculateCustomAdditions(
         name: addition.name,
         tripPay,
         monthlyPay: (tripPay * tripsPerYear) / 12,
+        isMonthlyFixed: false,
+        taxTreatment: addition.taxTreatment ?? "extra-50",
       };
     });
 }
@@ -141,7 +157,7 @@ function currentScheduledStatus(setup: TripSetup, now: Date) {
     if (now >= shiftStart && now < shiftEnd) {
       return {
         status: "work" as const,
-        label: isNight ? "Nattskift · lønn teller" : "Dagskift · lønn teller",
+        label: isNight ? "Nattskift · lønn og tillegg teller" : "Dagskift · lønn teller",
         next: shiftEnd,
       };
     }
@@ -219,15 +235,41 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     swingPay +
     customAdditionsPay;
 
-  // Ordinær full tur normaliseres med offshorestandarden 8,7 turer/år.
-  // Tillegg opptjent på aktiv tur skal aldri annualiseres.
+  // Bruk avtalens oppgitte månedslønn når den finnes. Andre avtaler bruker
+  // normalisert full tur som reserve. Tillegg på aktiv tur annualiseres aldri.
   const regularFullTripGross = totalPaidHours * setup.hourlyRate + totalNightHours * setup.nightAllowance;
-  const regularMonthlyGross = (regularFullTripGross * 8.7) / 12;
+  const agreementMonthlyGross = salaryAgreements[setup.agreementId]
+    ?.groups[setup.group]?.monthly?.[setup.stepIndex];
+  const regularMonthlyGross = setup.monthlyBaseGross ?? agreementMonthlyGross ?? (regularFullTripGross * 8.7) / 12;
   const regularMonthlyNet = regularMonthlyGross * (1 - setup.taxRate / 100);
-  const activeExtrasGross = waitingPay + overtimePay + swingPay + customAdditionsPay;
-  const activeExtrasNet = activeExtrasGross * 0.5;
-  const estimatedMonthlyGross = regularMonthlyGross + activeExtrasGross + customMonthlyPay;
-  const estimatedMonthlyNet = regularMonthlyNet + activeExtrasNet + customMonthlyPay * 0.5;
+  const tripCustomExtrasPay = customAdditionResults
+    .filter(result => !result.isMonthlyFixed)
+    .reduce((sum, result) => sum + result.tripPay, 0);
+  const monthlyFixedPay = customAdditionResults
+    .filter(result => result.isMonthlyFixed)
+    .reduce((sum, result) => sum + result.monthlyPay, 0);
+  const customTripExtrasNet = customAdditionResults
+    .filter(result => !result.isMonthlyFixed)
+    .reduce((sum, result) => {
+      const keep = result.taxTreatment === "tax-free" ? 1 : result.taxTreatment === "normal" ? 1 - setup.taxRate / 100 : 0.5;
+      return sum + result.tripPay * keep;
+    }, 0);
+  const monthlyFixedNet = customAdditionResults
+    .filter(result => result.isMonthlyFixed)
+    .reduce((sum, result) => {
+      const keep = result.taxTreatment === "tax-free" ? 1 : result.taxTreatment === "extra-50" ? 0.5 : 1 - setup.taxRate / 100;
+      return sum + result.monthlyPay * keep;
+    }, 0);
+  const liveTaxedExtrasGross = nightPay + waitingPay + overtimePay + swingPay;
+  const activeExtrasGross = liveTaxedExtrasGross + tripCustomExtrasPay;
+  const activeExtrasNet = liveTaxedExtrasGross * 0.5 + customTripExtrasNet;
+  const estimatedMonthlyGross = regularMonthlyGross + monthlyFixedPay + activeExtrasGross;
+  const estimatedMonthlyNet = regularMonthlyNet + monthlyFixedNet + activeExtrasNet;
+  const regularEarnedRatio = totalPaidHours > 0 ? Math.min(1, paidHours / totalPaidHours) : 0;
+  const accruedRegularGross = regularMonthlyGross * regularEarnedRatio;
+  const accruedRegularNet = accruedRegularGross * (1 - setup.taxRate / 100);
+  const accruedNextPayoutGross = accruedRegularGross + monthlyFixedPay * regularEarnedRatio + activeExtrasGross;
+  const accruedNextPayoutNet = accruedRegularNet + monthlyFixedNet * regularEarnedRatio + activeExtrasNet;
 
   const activeSession = sessions.find((session) => !session.end);
   const scheduled = currentScheduledStatus(setup, now);
@@ -266,6 +308,12 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     regularMonthlyNet,
     activeExtrasGross,
     activeExtrasNet,
+    accruedNextPayoutGross,
+    accruedNextPayoutNet,
+    accruedRegularGross,
+    accruedRegularNet,
+    usesAgreementMonthlySalary: agreementMonthlyGross !== undefined,
+    usesMonthlyOverride: setup.monthlyBaseGross !== undefined,
     tripsPerYear,
     dayNumber: Math.min(
       setup.rotationOnDays,

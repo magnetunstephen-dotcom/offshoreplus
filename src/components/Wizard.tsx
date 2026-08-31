@@ -37,7 +37,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
     existingTrip?.paidStart ?? toDateTimeLocal(addDays(now, 0)),
   );
   const [agreementId, setAgreementId] = useState<AgreementId>(
-    existingTrip?.agreementId ?? "safe2025",
+    existingTrip?.agreementId ?? "sokkel4a2025",
   );
   const agreement = salaryAgreements[agreementId];
   const initialGroup =
@@ -87,6 +87,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       pattern,
       taxRate: taxUnknown ? 35 : Math.min(60, Math.max(0, Number(taxRate) || 35)),
       hourlyRate,
+      monthlyBaseGross: existingTrip?.monthlyBaseGross,
       nightAllowance: existingTrip?.nightAllowance ?? 113.5,
       overtimeHours: existingTrip?.overtimeHours ?? 0,
       overtimeRate,
@@ -191,6 +192,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
                   <span>
                     <strong>{option.name}</strong>
                     <small>{option.description}</small>
+                    {option.effectiveFrom && <small className="agreement-date">{option.effectiveFrom}</small>}
                   </span>
                 </label>
               );
@@ -225,6 +227,8 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
               </select>
             </label>
           </div>
+          {agreement.groupDescriptions?.[group] && <p className="muted agreement-group-help"><strong>Gruppe {group}:</strong> {agreement.groupDescriptions[group]}</p>}
+          {agreement.notes && <div className="info-box compact-info agreement-notes">{agreement.notes.map(note => <span key={note}>{note}</span>)}</div>}
         </div>
       )}
 

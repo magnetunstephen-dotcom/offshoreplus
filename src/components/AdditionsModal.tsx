@@ -3,6 +3,7 @@ import type {
   CustomAddition,
   CustomAdditionKind,
   CustomAdditionRateBasis,
+  TaxTreatment,
   LiveAdditionType,
   TripSetup,
 } from "../types";
@@ -40,6 +41,7 @@ function smokeDiverPreset(): CustomAddition {
     rateBasis: "custom",
     customRate: 0,
     note: "Standardverdi fra SAFE/NR 2022–2024. Kontroller oppdatert sats.",
+    taxTreatment: "normal",
   };
 }
 
@@ -55,6 +57,7 @@ function rescueExercisePreset(): CustomAddition {
     rateBasis: "hourly",
     customRate: 0,
     note: "Lokalt tillegg. Sett antall gjennomførte øvelser denne turen.",
+    taxTreatment: "extra-50",
   };
 }
 
@@ -72,6 +75,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
   const [hours, setHours] = useState(1);
   const [amount, setAmount] = useState(0);
   const [customRate, setCustomRate] = useState(0);
+  const [taxTreatment, setTaxTreatment] = useState<TaxTreatment>("extra-50");
 
   function start(type: LiveAdditionType) {
     if (active) return;
@@ -139,6 +143,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
       occurrences: 1,
       rateBasis,
       customRate: Math.max(0, customRate),
+      taxTreatment,
     };
     onSave({ ...trip, customAdditions: [...customAdditions, addition] });
     setName("");
@@ -222,6 +227,13 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
               </>
             )}
             {kind !== "trip-hours" && <label>Beløp<input type="number" min={0} step={1} value={amount} onChange={(event) => setAmount(Number(event.target.value))} /></label>}
+            <label>Skattetrekk
+              <select value={taxTreatment} onChange={(event) => setTaxTreatment(event.target.value as TaxTreatment)}>
+                <option value="extra-50">50 % estimert tilleggstrekk</option>
+                <option value="normal">Vanlig valgt skatteprosent</option>
+                <option value="tax-free">Trekkfritt / refusjon</option>
+              </select>
+            </label>
             <button className="primary" onClick={createCustom}>Lagre tillegg</button>
           </div>
         )}
@@ -232,7 +244,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
             <div className="custom-addition-main">
               <label className="switch-row">
                 <input type="checkbox" checked={addition.enabled} onChange={(event) => updateCustom(addition.id, { enabled: event.target.checked })} />
-                <span><strong>{addition.name}</strong><small>{addition.note ?? (addition.kind === "monthly-fixed" ? `${addition.amount} kr per måned` : addition.kind === "trip-hours" ? `${addition.hours} t per gjennomføring` : `${addition.amount} kr per gjennomføring`)}</small></span>
+                <span><strong>{addition.name}</strong><small>{addition.note ?? (addition.kind === "monthly-fixed" ? `${addition.amount} kr per måned` : addition.kind === "trip-hours" ? `${addition.hours} t per gjennomføring` : `${addition.amount} kr per gjennomføring`)}</small><small>{addition.taxTreatment === "tax-free" ? "Trekkfritt" : addition.taxTreatment === "normal" ? "Vanlig skattetrekk" : "50 % estimert trekk"}</small></span>
               </label>
             </div>
             {addition.kind !== "monthly-fixed" && (

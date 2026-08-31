@@ -80,11 +80,11 @@ export function Dashboard({
 
   const heroLabel = view === "trip"
     ? "Opptjent denne turen"
-    : view === "monthly-gross" ? "Estimert brutto måned" : "Forventet utbetalt måned";
+    : view === "monthly-gross" ? "Brutto opptjent mot neste lønn" : "Opptjent mot neste lønn";
   const heroValue = view === "trip"
     ? calculation.gross
-    : view === "monthly-gross" ? calculation.estimatedMonthlyGross : calculation.estimatedMonthlyNet;
-  const liveMoney = calculation.isMoneyRunning && view === "trip";
+    : view === "monthly-gross" ? calculation.accruedNextPayoutGross : calculation.accruedNextPayoutNet;
+  const liveMoney = calculation.isMoneyRunning;
 
   return (
     <>
@@ -138,18 +138,19 @@ export function Dashboard({
             <button className="info-button" onClick={onEarningsInfo} aria-label="Forklaring av lønnstall"><InfoIcon size={18} /></button>
           </div>
           <strong className="hero-money">{money(heroValue, liveMoney ? 2 : 0)}</strong>
-          {view === "monthly-net" && <span className="muted">Brutto {money(calculation.estimatedMonthlyGross)}</span>}
-          {view === "monthly-gross" && <span className="muted">Ca. {money(calculation.estimatedMonthlyNet)} utbetalt</span>}
+          {view === "monthly-net" && <span className="muted">Brutto opptjent {money(calculation.accruedNextPayoutGross)}</span>}
+          {view === "monthly-gross" && <span className="muted">Ca. {money(calculation.accruedNextPayoutNet)} utbetalt</span>}
           {view === "trip" && <span className="muted">Brutto opptjent på aktiv tur</span>}
           {view === "trip" && (
             <span className="money-caption">{calculation.isMoneyRunning ? "Lønn opptjenes nå" : "Telleren står stille mens du ikke opptjener lønn"}</span>
           )}
           <div className="segmented earnings-toggle" aria-label="Velg lønnsvisning">
-            <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Utbetalt måned</button>
-            <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Brutto måned</button>
+            <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Neste utbetaling</button>
+            <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Brutto opptjent</button>
             <button className={view === "trip" ? "selected" : ""} onClick={() => onChangeEarningsView("trip")}>Denne turen</button>
           </div>
-          {view !== "trip" && <span className="tax-note">Ordinær lønn bruker valgt skattetrekk. Overtid og ekstra tillegg er estimert med 50 % forskuddstrekk – dette er ikke nødvendigvis endelig skatt.</span>}
+          {view !== "trip" && <span className="tax-note">Viser hvor mye av den faste månedslønnen du har opptjent gjennom denne 14-dagersturen. Telleren starter på 0, når full fastlønn ved ferdig tur og legger variable tillegg oppå fortløpende.</span>}
+          {view !== "trip" && <div className={`live-calculation-note ${calculation.isMoneyRunning ? "active" : "paused"}`}><span className="status-dot" /> <strong>{calculation.isMoneyRunning ? "Teller live nå" : "Telleren står nå"}</strong><span>{calculation.isMoneyRunning ? "Beløpet oppdateres mens aktivt skift eller tillegg pågår." : "Beløpet øker igjen ved neste planlagte skift eller aktive tillegg."}</span></div>}
         </section>
 
         {activeSession && (
@@ -167,12 +168,12 @@ export function Dashboard({
           <article className="card summary-card">
             <span className="eyebrow">Ordinær månedslønn</span>
             <strong className="metric">{money(calculation.regularMonthlyGross)}</strong>
-            <span className="muted">Full tur × 8,7 ÷ 12</span>
+            <span className="muted">{calculation.usesMonthlyOverride ? "Fra fastlønn på lønnsslippen" : calculation.usesAgreementMonthlySalary ? "Direkte fra valgt lønnstabell" : "Full tur × 8,7 ÷ 12"}</span>
           </article>
           <button className="card summary-card addition-summary" onClick={onAdditions}>
             <span className="eyebrow">Tillegg denne turen</span>
             <strong className="metric accent-money">+{money(calculation.activeExtrasGross)}</strong>
-            <span className="summary-link">Se / registrer <ChevronRightIcon size={16} /></span>
+            <span className="summary-link">Opptjent live · se / registrer <ChevronRightIcon size={16} /></span>
           </button>
         </section>
 
@@ -182,6 +183,15 @@ export function Dashboard({
             <strong>{money(calculation.gross)}</strong>
           </summary>
           <div className="breakdown-content">
+            {view !== "trip" && <>
+              <div className="breakdown-explainer"><strong>Slik er estimatet bygget opp</strong><span>Fastlønn bruker {trip.taxRate}% valgt trekk. Variable tillegg bruker normalt 50% estimert forskuddstrekk.</span></div>
+              <div className="breakdown-row"><span>Fastlønn opptjent · {hours(calculation.paidHours)} av {trip.rotationOnDays * 12} t</span><strong>{money(calculation.accruedRegularGross)}</strong></div>
+              <div className="breakdown-row sub-row"><span>Estimert netto fastlønn etter {trip.taxRate}%</span><strong>{money(calculation.accruedRegularNet)}</strong></div>
+              <div className="breakdown-row"><span>Variable tillegg opptjent</span><strong>+{money(calculation.activeExtrasGross)}</strong></div>
+              <div className="breakdown-row sub-row"><span>Estimert netto av tillegg</span><strong>+{money(calculation.activeExtrasNet)}</strong></div>
+              <div className="breakdown-row total-row"><span>Estimert netto opptjent</span><strong>{money(calculation.accruedNextPayoutNet)}</strong></div>
+            </>}
+            {view === "trip" && <>
             <div className="breakdown-row"><span>Grunnlønn</span><strong>{money(calculation.basePay)}</strong></div>
             <div className="breakdown-row"><span>Nattillegg</span><strong>{money(calculation.nightPay)}</strong></div>
             <div className="breakdown-row"><span>Overtid · {hours(calculation.overtimeHours)}</span><strong>{money(calculation.overtimePay)}</strong></div>
@@ -190,6 +200,7 @@ export function Dashboard({
             {calculation.customAdditionResults.map((addition) => (
               <div className="breakdown-row" key={addition.id}><span>{addition.name}</span><strong>{money(addition.tripPay)}</strong></div>
             ))}
+            </>}
           </div>
         </details>
 
