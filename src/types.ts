@@ -4,7 +4,8 @@ export type LiveAdditionType = "overtime" | "waiting";
 export type EarningsView = "monthly-net" | "monthly-gross" | "trip";
 export type CustomAdditionKind = "monthly-fixed" | "trip-fixed" | "trip-hours";
 export type CustomAdditionRateBasis = "hourly" | "overtime" | "custom";
-export type TaxTreatment = "normal" | "extra-50" | "tax-free";
+export type TaxTreatment = "normal" | "tax-free";
+export type TaxMethod = "percentage" | "table";
 
 export interface SalaryGroup {
   hourly: number[];
@@ -52,6 +53,8 @@ export interface TripSetup {
   stepIndex: number;
   pattern: ShiftPattern;
   taxRate: number;
+  taxMethod?: TaxMethod;
+  taxTable?: string;
   hourlyRate: number;
   monthlyBaseGross?: number;
   nightAllowance: number;

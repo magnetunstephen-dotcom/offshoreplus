@@ -598,6 +598,12 @@ body {
 .earnings-toggle button { padding-inline: 7px; font-size: 11px; }
 .tax-note { display:block; margin-top:11px; color:var(--muted); font-size:10px; line-height:1.45; }
 .live-calculation-note { display:grid; grid-template-columns:auto auto 1fr; align-items:center; gap:7px; margin-top:10px; padding:8px 10px; border:1px solid var(--border); border-radius:11px; color:var(--muted); background:color-mix(in srgb,var(--panel-strong) 82%,transparent); font-size:9px; }
+.pay-target { display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 12px; margin-top:12px; padding:10px 12px; border:1px solid color-mix(in srgb,var(--accent) 24%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--accent) 6%,var(--panel-strong)); }
+.pay-target span { color:var(--muted); font-size:10px; }
+.pay-target strong { color:var(--accent); font-size:14px; }
+.pay-target small { grid-column:1 / -1; color:var(--muted); font-size:9px; }
+.tax-table-state { display:block; margin-top:7px; color:var(--muted); font-size:9px; }
+.tax-table-state.error { color:var(--danger); }
 .live-calculation-note .status-dot { width:7px; height:7px; }
 .live-calculation-note.active strong { color:var(--accent); }
 .live-calculation-note.active .status-dot { background:var(--accent); box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 13%,transparent); animation:livePulse 1.4s ease-in-out infinite; }
@@ -615,6 +621,8 @@ body {
 .agreement-group-help { margin:10px 2px 0; font-size:12px; line-height:1.45; }
 .agreement-notes span { display:block; }
 .agreement-notes span + span { margin-top:5px; }
+.night-allowance-picker { display:grid; gap:9px; margin-top:12px; padding:13px; border:1px solid var(--border); border-radius:15px; background:var(--panel-strong); }
+.night-allowance-picker .segmented button { font-size:10px; }
 .segmented { background: color-mix(in srgb, var(--bg) 35%, transparent); }
 .segmented button.selected { background: var(--panel-strong); }
 .info-button { display: grid; place-items: center; width: 32px; height: 32px; background: transparent; }

@@ -11,6 +11,8 @@ export function loadTrip(): TripSetup | null {
     return {
       ...parsed,
       overtimeHours: parsed.overtimeHours ?? 0,
+      taxMethod: parsed.taxMethod ?? "percentage",
+      taxTable: parsed.taxTable ?? "",
       overtimeRate: parsed.overtimeRate ?? 0,
       rotationOnDays: parsed.rotationOnDays ?? 14,
       rotationOffDays: parsed.rotationOffDays ?? 28,

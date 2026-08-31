@@ -3,7 +3,7 @@ import { salaryAgreements } from "../data/salaries";
 import { addDays, formatDate, toDateTimeLocal } from "../lib/date";
 import { DateTime24Input } from "./DateTime24Input";
 import { holidaysDuringTrip } from "../lib/holidays";
-import type { AgreementId, ShiftPattern, TripSetup } from "../types";
+import type { AgreementId, ShiftPattern, TaxMethod, TripSetup } from "../types";
 import { Modal } from "./Modal";
 
 interface WizardProps {
@@ -49,7 +49,10 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
   const [pattern, setPattern] = useState<ShiftPattern>(
     existingTrip?.pattern ?? "night-day",
   );
+  const [nightAllowance, setNightAllowance] = useState(existingTrip?.nightAllowance ?? 136);
   const [taxRate, setTaxRate] = useState(String(existingTrip?.taxRate ?? 35));
+  const [taxMethod, setTaxMethod] = useState<TaxMethod>(existingTrip?.taxMethod ?? "percentage");
+  const [taxTable, setTaxTable] = useState(existingTrip?.taxTable ?? "");
   const [taxUnknown, setTaxUnknown] = useState(false);
   const [rotation, setRotation] = useState(existingTrip ? `${existingTrip.rotationOnDays}-${existingTrip.rotationOffDays}` : "14-28");
   const [customOnDays, setCustomOnDays] = useState(existingTrip?.rotationOnDays ?? 14);
@@ -86,9 +89,11 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       stepIndex,
       pattern,
       taxRate: taxUnknown ? 35 : Math.min(60, Math.max(0, Number(taxRate) || 35)),
+      taxMethod,
+      taxTable,
       hourlyRate,
       monthlyBaseGross: existingTrip?.monthlyBaseGross,
-      nightAllowance: existingTrip?.nightAllowance ?? 113.5,
+      nightAllowance,
       overtimeHours: existingTrip?.overtimeHours ?? 0,
       overtimeRate,
       rotationOnDays,
@@ -255,6 +260,15 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
           <div className="info-box compact-info">
             Overtid, ventetid og svingskift registreres live fra dashboardet når det skjer.
           </div>
+          {pattern !== "day" && <div className="night-allowance-picker">
+            <span className="eyebrow">Nattillegg per time</span>
+            <div className="segmented">
+              <button className={nightAllowance === 136 ? "selected" : ""} onClick={() => setNightAllowance(136)}>136 kr · med handover</button>
+              <button className={nightAllowance === 106 ? "selected" : ""} onClick={() => setNightAllowance(106)}>106 kr · uten</button>
+            </div>
+            <label>Egen sats<input type="number" min={0} step={0.01} value={nightAllowance} onChange={(event) => setNightAllowance(Number(event.target.value))} /></label>
+            <small className="field-help">2026-sats: 136 kr når nødvendig konferanse/handover ved skiftbytte inngår, ellers 106 kr.</small>
+          </div>}
         </div>
       )}
 
@@ -262,8 +276,9 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
         <div>
           <div className="step-emoji">🧾</div>
           <h2 id="wizard-title">Vet du cirka skatteprosent?</h2>
-          <p className="muted">Brukes bare til et grovt nettoestimat.</p>
-          <label>
+          <p className="muted">Velg samme trekkmetode som står på skattekortet.</p>
+          <div className="segmented"><button className={taxMethod === "percentage" ? "selected" : ""} onClick={() => setTaxMethod("percentage")}>Prosenttrekk</button><button className={taxMethod === "table" ? "selected" : ""} onClick={() => setTaxMethod("table")}>Tabelltrekk</button></div>
+          {taxMethod === "percentage" ? <><label>
             Skattetrekk
             <div className="suffix-field">
               <input
@@ -285,7 +300,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
               onChange={(event) => setTaxUnknown(event.target.checked)}
             />
             Jeg vet ikke – bruk 35 %
-          </label>
+          </label></> : <label>Tabellnummer<input inputMode="numeric" maxLength={4} value={taxTable} placeholder="Eksempel: 8000" onChange={(event) => setTaxTable(event.target.value.replace(/\D/g, "").slice(0, 4))} /><small className="field-help">Bruk tabellnummeret fra skattekortet. OffshorePlus bruker månedstabellen for lønn i Skatteetatens 2026-data.</small></label>}
         </div>
       )}
 

@@ -49,6 +49,10 @@ export interface TripCalculation {
   accruedRegularNet: number;
   usesAgreementMonthlySalary: boolean;
   usesMonthlyOverride: boolean;
+  accruedTaxableGross: number;
+  accruedTaxFreeGross: number;
+  estimatedTaxableGross: number;
+  estimatedTaxFreeGross: number;
   tripsPerYear: number;
   dayNumber: number;
   homeDate: Date;
@@ -120,7 +124,7 @@ function calculateCustomAdditions(
           tripPay,
           monthlyPay: (tripPay * tripsPerYear) / 12,
           isMonthlyFixed: false,
-          taxTreatment: addition.taxTreatment ?? "extra-50",
+          taxTreatment: addition.taxTreatment ?? "normal",
         };
       }
 
@@ -131,7 +135,7 @@ function calculateCustomAdditions(
         tripPay,
         monthlyPay: (tripPay * tripsPerYear) / 12,
         isMonthlyFixed: false,
-        taxTreatment: addition.taxTreatment ?? "extra-50",
+        taxTreatment: addition.taxTreatment ?? "normal",
       };
     });
 }
@@ -251,18 +255,30 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const customTripExtrasNet = customAdditionResults
     .filter(result => !result.isMonthlyFixed)
     .reduce((sum, result) => {
-      const keep = result.taxTreatment === "tax-free" ? 1 : result.taxTreatment === "normal" ? 1 - setup.taxRate / 100 : 0.5;
+      const keep = result.taxTreatment === "tax-free" ? 1 : 1 - setup.taxRate / 100;
       return sum + result.tripPay * keep;
     }, 0);
+  const taxableTripCustomGross = customAdditionResults
+    .filter(result => !result.isMonthlyFixed && result.taxTreatment !== "tax-free")
+    .reduce((sum, result) => sum + result.tripPay, 0);
+  const taxFreeTripCustomGross = customAdditionResults
+    .filter(result => !result.isMonthlyFixed && result.taxTreatment === "tax-free")
+    .reduce((sum, result) => sum + result.tripPay, 0);
+  const taxableMonthlyFixedGross = customAdditionResults
+    .filter(result => result.isMonthlyFixed && result.taxTreatment !== "tax-free")
+    .reduce((sum, result) => sum + result.monthlyPay, 0);
+  const taxFreeMonthlyFixedGross = customAdditionResults
+    .filter(result => result.isMonthlyFixed && result.taxTreatment === "tax-free")
+    .reduce((sum, result) => sum + result.monthlyPay, 0);
   const monthlyFixedNet = customAdditionResults
     .filter(result => result.isMonthlyFixed)
     .reduce((sum, result) => {
-      const keep = result.taxTreatment === "tax-free" ? 1 : result.taxTreatment === "extra-50" ? 0.5 : 1 - setup.taxRate / 100;
+      const keep = result.taxTreatment === "tax-free" ? 1 : 1 - setup.taxRate / 100;
       return sum + result.monthlyPay * keep;
     }, 0);
   const liveTaxedExtrasGross = nightPay + waitingPay + overtimePay + swingPay;
   const activeExtrasGross = liveTaxedExtrasGross + tripCustomExtrasPay;
-  const activeExtrasNet = liveTaxedExtrasGross * 0.5 + customTripExtrasNet;
+  const activeExtrasNet = liveTaxedExtrasGross * (1 - setup.taxRate / 100) + customTripExtrasNet;
   const estimatedMonthlyGross = regularMonthlyGross + monthlyFixedPay + activeExtrasGross;
   const estimatedMonthlyNet = regularMonthlyNet + monthlyFixedNet + activeExtrasNet;
   const regularEarnedRatio = totalPaidHours > 0 ? Math.min(1, paidHours / totalPaidHours) : 0;
@@ -270,6 +286,10 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const accruedRegularNet = accruedRegularGross * (1 - setup.taxRate / 100);
   const accruedNextPayoutGross = accruedRegularGross + monthlyFixedPay * regularEarnedRatio + activeExtrasGross;
   const accruedNextPayoutNet = accruedRegularNet + monthlyFixedNet * regularEarnedRatio + activeExtrasNet;
+  const accruedTaxableGross = accruedRegularGross + taxableMonthlyFixedGross * regularEarnedRatio + liveTaxedExtrasGross + taxableTripCustomGross;
+  const accruedTaxFreeGross = taxFreeMonthlyFixedGross * regularEarnedRatio + taxFreeTripCustomGross;
+  const estimatedTaxableGross = regularMonthlyGross + taxableMonthlyFixedGross + liveTaxedExtrasGross + taxableTripCustomGross;
+  const estimatedTaxFreeGross = taxFreeMonthlyFixedGross + taxFreeTripCustomGross;
 
   const activeSession = sessions.find((session) => !session.end);
   const scheduled = currentScheduledStatus(setup, now);
@@ -314,6 +334,10 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     accruedRegularNet,
     usesAgreementMonthlySalary: agreementMonthlyGross !== undefined,
     usesMonthlyOverride: setup.monthlyBaseGross !== undefined,
+    accruedTaxableGross,
+    accruedTaxFreeGross,
+    estimatedTaxableGross,
+    estimatedTaxFreeGross,
     tripsPerYear,
     dayNumber: Math.min(
       setup.rotationOnDays,

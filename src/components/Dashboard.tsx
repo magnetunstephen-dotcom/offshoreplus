@@ -3,6 +3,8 @@ import { formatDate, formatDateTime } from "../lib/date";
 import { holidaysDuringTrip } from "../lib/holidays";
 import { rotationLabel, rotationStatus } from "../lib/rotation";
 import { useClock } from "../hooks/useClock";
+import { useMonthlyTableTax } from "../hooks/useMonthlyTableTax";
+import { salaryAgreements } from "../data/salaries";
 import type { TripSetup } from "../types";
 import {
   CalendarIcon,
@@ -71,11 +73,22 @@ export function Dashboard({
 }: DashboardProps) {
   const now = useClock();
   const calculation = calculateTrip(trip, now);
+  const accruedTable = useMonthlyTableTax(trip.taxTable ?? "", calculation.accruedTaxableGross);
+  const finalTable = useMonthlyTableTax(trip.taxTable ?? "", calculation.estimatedTaxableGross);
+  const usesTable = trip.taxMethod === "table";
+  const accruedNet = usesTable && accruedTable.tax !== null
+    ? calculation.accruedTaxableGross - accruedTable.tax + calculation.accruedTaxFreeGross
+    : calculation.accruedNextPayoutNet;
+  const finalNet = usesTable && finalTable.tax !== null
+    ? calculation.estimatedTaxableGross - finalTable.tax + calculation.estimatedTaxFreeGross
+    : calculation.estimatedMonthlyNet;
   const holidays = holidaysDuringTrip(new Date(trip.paidStart));
   const status = rotationStatus(trip, now);
   const countdown = countdownParts(status.nextHelicopter, now);
   const progress = Math.min(100, Math.max(0, (status.phaseDay / status.phaseLength) * 100));
   const activeSession = (trip.additionSessions ?? []).find((session) => !session.end);
+  const salaryAgreement = salaryAgreements[trip.agreementId];
+  const salaryStep = salaryAgreement?.steps[trip.stepIndex] ?? String(trip.stepIndex + 1);
   const view = trip.earningsView ?? "monthly-net";
 
   const heroLabel = view === "trip"
@@ -83,7 +96,7 @@ export function Dashboard({
     : view === "monthly-gross" ? "Brutto opptjent mot neste lønn" : "Opptjent mot neste lønn";
   const heroValue = view === "trip"
     ? calculation.gross
-    : view === "monthly-gross" ? calculation.accruedNextPayoutGross : calculation.accruedNextPayoutNet;
+    : view === "monthly-gross" ? calculation.accruedNextPayoutGross : accruedNet;
   const liveMoney = calculation.isMoneyRunning;
 
   return (
@@ -139,8 +152,11 @@ export function Dashboard({
           </div>
           <strong className="hero-money">{money(heroValue, liveMoney ? 2 : 0)}</strong>
           {view === "monthly-net" && <span className="muted">Brutto opptjent {money(calculation.accruedNextPayoutGross)}</span>}
-          {view === "monthly-gross" && <span className="muted">Ca. {money(calculation.accruedNextPayoutNet)} utbetalt</span>}
+          {view === "monthly-gross" && <span className="muted">Ca. {money(accruedNet)} utbetalt</span>}
           {view === "trip" && <span className="muted">Brutto opptjent på aktiv tur</span>}
+          {view !== "trip" && <div className="pay-target"><span>Ved fullført tur, med tillegg hittil</span><strong>{view === "monthly-gross" ? money(calculation.estimatedMonthlyGross) : `ca. ${money(finalNet)} netto`}</strong><small>{salaryAgreement?.name} · gruppe {trip.group} · trinn {salaryStep}{usesTable ? ` · tabell ${trip.taxTable || "mangler"}` : ` · ${trip.taxRate}% trekk`}</small></div>}
+          {usesTable && (accruedTable.loading || finalTable.loading) && <span className="tax-table-state">Laster Skatteetatens 2026-tabell …</span>}
+          {usesTable && (accruedTable.error || finalTable.error) && <span className="tax-table-state error">{accruedTable.error || finalTable.error}</span>}
           {view === "trip" && (
             <span className="money-caption">{calculation.isMoneyRunning ? "Lønn opptjenes nå" : "Telleren står stille mens du ikke opptjener lønn"}</span>
           )}
@@ -149,7 +165,7 @@ export function Dashboard({
             <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Brutto opptjent</button>
             <button className={view === "trip" ? "selected" : ""} onClick={() => onChangeEarningsView("trip")}>Denne turen</button>
           </div>
-          {view !== "trip" && <span className="tax-note">Viser hvor mye av den faste månedslønnen du har opptjent gjennom denne 14-dagersturen. Telleren starter på 0, når full fastlønn ved ferdig tur og legger variable tillegg oppå fortløpende.</span>}
+          {view !== "trip" && <span className="tax-note">Viser hvor mye av den faste månedslønnen du har opptjent gjennom denne 14-dagersturen. {usesTable ? `Trekkpliktig lønn beregnes med tabell ${trip.taxTable || "–"}.` : "Fastlønn og trekkpliktige tillegg bruker valgt skatteprosent."} Trekkfrie refusjoner legges til uten trekk.</span>}
           {view !== "trip" && <div className={`live-calculation-note ${calculation.isMoneyRunning ? "active" : "paused"}`}><span className="status-dot" /> <strong>{calculation.isMoneyRunning ? "Teller live nå" : "Telleren står nå"}</strong><span>{calculation.isMoneyRunning ? "Beløpet oppdateres mens aktivt skift eller tillegg pågår." : "Beløpet øker igjen ved neste planlagte skift eller aktive tillegg."}</span></div>}
         </section>
 
@@ -184,12 +200,18 @@ export function Dashboard({
           </summary>
           <div className="breakdown-content">
             {view !== "trip" && <>
-              <div className="breakdown-explainer"><strong>Slik er estimatet bygget opp</strong><span>Fastlønn bruker {trip.taxRate}% valgt trekk. Variable tillegg bruker normalt 50% estimert forskuddstrekk.</span></div>
+              <div className="breakdown-explainer"><strong>Slik er estimatet bygget opp</strong><span>{usesTable ? `Samlet trekkpliktig beløp slås opp i månedstabell ${trip.taxTable || "–"} for 2026. Trekkfrie refusjoner legges til etterpå.` : `Fastlønn og trekkpliktige tillegg bruker ${trip.taxRate}% fra prosentkortet. Trekkfrie refusjoner bruker 0%.`}</span></div>
               <div className="breakdown-row"><span>Fastlønn opptjent · {hours(calculation.paidHours)} av {trip.rotationOnDays * 12} t</span><strong>{money(calculation.accruedRegularGross)}</strong></div>
-              <div className="breakdown-row sub-row"><span>Estimert netto fastlønn etter {trip.taxRate}%</span><strong>{money(calculation.accruedRegularNet)}</strong></div>
               <div className="breakdown-row"><span>Variable tillegg opptjent</span><strong>+{money(calculation.activeExtrasGross)}</strong></div>
-              <div className="breakdown-row sub-row"><span>Estimert netto av tillegg</span><strong>+{money(calculation.activeExtrasNet)}</strong></div>
-              <div className="breakdown-row total-row"><span>Estimert netto opptjent</span><strong>{money(calculation.accruedNextPayoutNet)}</strong></div>
+              {usesTable ? <>
+                <div className="breakdown-row"><span>Trekkpliktig grunnlag</span><strong>{money(calculation.accruedTaxableGross)}</strong></div>
+                <div className="breakdown-row sub-row"><span>Tabelltrekk 2026</span><strong>-{money(accruedTable.tax ?? 0)}</strong></div>
+                {calculation.accruedTaxFreeGross > 0 && <div className="breakdown-row"><span>Trekkfrie beløp</span><strong>+{money(calculation.accruedTaxFreeGross)}</strong></div>}
+              </> : <>
+                <div className="breakdown-row sub-row"><span>Estimert netto fastlønn etter {trip.taxRate}%</span><strong>{money(calculation.accruedRegularNet)}</strong></div>
+                <div className="breakdown-row sub-row"><span>Estimert netto av tillegg</span><strong>+{money(calculation.activeExtrasNet)}</strong></div>
+              </>}
+              <div className="breakdown-row total-row"><span>Estimert netto opptjent</span><strong>{money(accruedNet)}</strong></div>
             </>}
             {view === "trip" && <>
             <div className="breakdown-row"><span>Grunnlønn</span><strong>{money(calculation.basePay)}</strong></div>

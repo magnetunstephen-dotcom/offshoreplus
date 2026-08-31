@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { TripSetup } from "../types";
+import type { TaxMethod, TripSetup } from "../types";
 import { Modal } from "./Modal";
 
 interface SettingsModalProps {
@@ -13,6 +13,8 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
   const [monthlyBaseGross, setMonthlyBaseGross] = useState(trip.monthlyBaseGross ? String(trip.monthlyBaseGross) : "");
   const [nightAllowance, setNightAllowance] = useState(trip.nightAllowance);
   const [taxRate, setTaxRate] = useState(String(trip.taxRate));
+  const [taxMethod, setTaxMethod] = useState<TaxMethod>(trip.taxMethod ?? "percentage");
+  const [taxTable, setTaxTable] = useState(trip.taxTable ?? "");
   const [rotationOnDays, setRotationOnDays] = useState(trip.rotationOnDays);
   const [rotationOffDays, setRotationOffDays] = useState(trip.rotationOffDays);
 
@@ -55,7 +57,8 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
             onChange={(event) => setNightAllowance(Number(event.target.value))}
           />
         </label>
-        <label>
+        <label>Skattemetode<select value={taxMethod} onChange={(event) => setTaxMethod(event.target.value as TaxMethod)}><option value="percentage">Prosenttrekk</option><option value="table">Tabelltrekk</option></select></label>
+        {taxMethod === "percentage" ? <label>
           Skatteprosent
           <input
             type="number"
@@ -65,7 +68,7 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
             value={taxRate}
             onChange={(event) => setTaxRate(event.target.value)}
           />
-        </label>
+        </label> : <label>Tabellnummer<input inputMode="numeric" maxLength={4} value={taxTable} placeholder="Eksempel: 8000" onChange={(event) => setTaxTable(event.target.value.replace(/\D/g, "").slice(0, 4))} /><small className="field-help">Månedstabell for lønn · Skatteetatens 2026-tabeller</small></label>}
         <div className="form-grid">
           <label>
             Dager offshore
@@ -81,7 +84,7 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
         <button className="secondary" onClick={onClose}>Lukk</button>
         <button
           className="primary"
-          onClick={() => onSave({ ...trip, monthlyBaseGross: Number(monthlyBaseGross.replace(",", ".")) || undefined, hourlyRate, nightAllowance, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
+          onClick={() => onSave({ ...trip, monthlyBaseGross: Number(monthlyBaseGross.replace(",", ".")) || undefined, hourlyRate, nightAllowance, taxMethod, taxTable, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
         >
           Lagre
         </button>

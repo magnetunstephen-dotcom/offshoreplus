@@ -1,6 +1,7 @@
 import type { TripSetup } from "../types";
 import { calculateTrip } from "../lib/calculation";
 import { Modal } from "./Modal";
+import { useMonthlyTableTax } from "../hooks/useMonthlyTableTax";
 
 interface EarningsInfoModalProps {
   trip: TripSetup;
@@ -17,6 +18,11 @@ function money(value: number): string {
 
 export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
   const calculation = calculateTrip(trip);
+  const tableResult = useMonthlyTableTax(trip.taxTable ?? "", calculation.accruedTaxableGross);
+  const usesTable = trip.taxMethod === "table";
+  const displayedNet = usesTable && tableResult.tax !== null
+    ? calculation.accruedTaxableGross - tableResult.tax + calculation.accruedTaxFreeGross
+    : calculation.accruedNextPayoutNet;
 
   return (
     <Modal onClose={onClose} labelledBy="earnings-info-title">
@@ -41,10 +47,11 @@ export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
         <strong>{money(calculation.accruedNextPayoutGross)} brutto opptjent nå</strong>
         <span>Fast månedslønn: {money(calculation.regularMonthlyGross)}</span>
         <span>Tillegg opptjent på aktiv tur: {money(calculation.activeExtrasGross)}</span>
-        <strong>≈ {money(calculation.accruedNextPayoutNet)} estimert netto opptjent</strong>
+        {usesTable && <span>Tabelltrekk {trip.taxTable || "–"}: {money(tableResult.tax ?? 0)}</span>}
+        <strong>≈ {money(displayedNet)} estimert netto opptjent</strong>
       </div>
 
-      <p className="muted small-copy">Ordinær lønn bruker skattetrekket du har valgt. Tillegg beregnes med 50 % estimert forskuddstrekk. Arbeidsgiverens lønnskjøringsfrist, tabelltrekk, feriepenger og andre trekk kan gjøre at lønnsslippen avviker.</p>
+      <p className="muted small-copy">{usesTable ? `Trekkpliktig lønn slås opp i Skatteetatens månedstabell ${trip.taxTable || "–"} for 2026.` : `Fastlønn og trekkpliktige tillegg bruker ${trip.taxRate}% fra prosentkortet.`} Trekkfrie refusjoner legges til etterpå. Feriepenger, halv skatt og andre lønnstrekk kan gi avvik.</p>
 
       <p className="muted small-copy">
         OffshorePlus er en motivasjons- og estimatkalkulator. Kontroller alltid
