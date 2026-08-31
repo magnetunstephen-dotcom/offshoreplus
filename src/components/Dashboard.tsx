@@ -184,7 +184,7 @@ export function Dashboard({
           <article className="card summary-card">
             <span className="eyebrow">Ordinær månedslønn</span>
             <strong className="metric">{money(calculation.regularMonthlyGross)}</strong>
-            <span className="muted">{calculation.usesMonthlyOverride ? "Fra fastlønn på lønnsslippen" : calculation.usesAgreementMonthlySalary ? "Direkte fra valgt lønnstabell" : "Full tur × 8,7 ÷ 12"}</span>
+            <span className="muted">{calculation.usesAgreementMonthlySalary ? "Direkte fra valgt lønnstabell" : "Full tur × 8,7 ÷ 12"}</span>
           </article>
           <button className="card summary-card addition-summary" onClick={onAdditions}>
             <span className="eyebrow">Tillegg denne turen</span>

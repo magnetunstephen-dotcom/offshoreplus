@@ -92,7 +92,6 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       taxMethod,
       taxTable,
       hourlyRate,
-      monthlyBaseGross: existingTrip?.monthlyBaseGross,
       nightAllowance,
       overtimeHours: existingTrip?.overtimeHours ?? 0,
       overtimeRate,

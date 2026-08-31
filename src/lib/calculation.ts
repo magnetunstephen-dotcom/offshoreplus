@@ -48,7 +48,6 @@ export interface TripCalculation {
   accruedRegularGross: number;
   accruedRegularNet: number;
   usesAgreementMonthlySalary: boolean;
-  usesMonthlyOverride: boolean;
   accruedTaxableGross: number;
   accruedTaxFreeGross: number;
   estimatedTaxableGross: number;
@@ -244,7 +243,7 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const regularFullTripGross = totalPaidHours * setup.hourlyRate + totalNightHours * setup.nightAllowance;
   const agreementMonthlyGross = salaryAgreements[setup.agreementId]
     ?.groups[setup.group]?.monthly?.[setup.stepIndex];
-  const regularMonthlyGross = setup.monthlyBaseGross ?? agreementMonthlyGross ?? (regularFullTripGross * 8.7) / 12;
+  const regularMonthlyGross = agreementMonthlyGross ?? (regularFullTripGross * 8.7) / 12;
   const regularMonthlyNet = regularMonthlyGross * (1 - setup.taxRate / 100);
   const tripCustomExtrasPay = customAdditionResults
     .filter(result => !result.isMonthlyFixed)
@@ -333,7 +332,6 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     accruedRegularGross,
     accruedRegularNet,
     usesAgreementMonthlySalary: agreementMonthlyGross !== undefined,
-    usesMonthlyOverride: setup.monthlyBaseGross !== undefined,
     accruedTaxableGross,
     accruedTaxFreeGross,
     estimatedTaxableGross,

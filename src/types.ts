@@ -56,7 +56,6 @@ export interface TripSetup {
   taxMethod?: TaxMethod;
   taxTable?: string;
   hourlyRate: number;
-  monthlyBaseGross?: number;
   nightAllowance: number;
   overtimeHours: number;
   overtimeRate: number;

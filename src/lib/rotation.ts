@@ -92,6 +92,9 @@ export function isOffshoreDate(date: Date, periods: RotationPeriod[]): boolean {
   return periods.some(({ start, end }) => {
     const from = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
     const to = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
-    return day >= from && day < to;
+    // Hjemreisedagen er fortsatt en offshore-/arbeidsdag i kalenderen. Selve
+    // rotasjonsstatusen skifter ved klokkeslettet for helikopteret, men en
+    // dagskalender må derfor vise både utreise- og hjemreisedatoen.
+    return day >= from && day <= to;
   });
 }

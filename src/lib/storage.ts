@@ -1,4 +1,5 @@
 import type { Certificate, CvProfile, TripSetup } from "../types";
+import { salaryAgreements } from "../data/salaries";
 
 const TRIP_KEY = "offshoreplus.trip.v1";
 const THEME_KEY = "offshoreplus.theme";
@@ -8,12 +9,16 @@ export function loadTrip(): TripSetup | null {
     const value = localStorage.getItem(TRIP_KEY);
     if (!value) return null;
     const parsed = JSON.parse(value) as TripSetup;
+    const salaryGroup = salaryAgreements[parsed.agreementId]?.groups[parsed.group];
     return {
       ...parsed,
+      // Oppdater lagrede turer når lønnstabellen endres. Gruppe og trinn er
+      // fasiten; brukeren skal ikke måtte starte turen på nytt.
+      hourlyRate: salaryGroup?.hourly[parsed.stepIndex] ?? parsed.hourlyRate,
       overtimeHours: parsed.overtimeHours ?? 0,
       taxMethod: parsed.taxMethod ?? "percentage",
       taxTable: parsed.taxTable ?? "",
-      overtimeRate: parsed.overtimeRate ?? 0,
+      overtimeRate: salaryGroup?.overtime[parsed.stepIndex] ?? parsed.overtimeRate ?? 0,
       rotationOnDays: parsed.rotationOnDays ?? 14,
       rotationOffDays: parsed.rotationOffDays ?? 28,
       additionSessions: parsed.additionSessions ?? [],

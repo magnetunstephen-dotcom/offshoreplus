@@ -5,7 +5,7 @@ export const salaryAgreements: Record<AgreementId, SalaryAgreement> = {
     id: "sokkel4a2025",
     name: "Sokkelavtalen 4A",
     description: "Bedriftstilpasset lønnssystem etter Sokkelavtalens punkt 4A.",
-    effectiveFrom: "Satser fra 1. juni 2024",
+    effectiveFrom: "Satser fra 1. juni 2025",
     steps: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11*"],
     groupDescriptions: {
       S: "Fagansvarlige og sykepleier/HMS-koordinator",
@@ -18,14 +18,14 @@ export const salaryAgreements: Record<AgreementId, SalaryAgreement> = {
     ],
     groups: {
       S: {
-        monthly: [63282, 64398, 65514, 66630, 67746, 68863, 69979, 71095, 72211, 73714, 74830],
-        hourly: [485, 494, 503, 511, 520, 528, 537, 545, 554, 565, 574],
-        overtime: [801, 815, 829, 843, 858, 872, 886, 900, 914, 933, 947],
+        monthly: [65886.33, 67002.42, 68118.42, 69234.5, 70350.58, 71466.67, 72582.75, 73698.83, 74814.92, 76317.83, 77433.92],
+        hourly: [505, 514, 523, 531, 540, 548, 557, 565, 574, 585, 594],
+        overtime: [833.25, 848.1, 862.95, 876.15, 891, 904.2, 919.05, 932.25, 947.1, 965.25, 980.1],
       },
       F: {
-        monthly: [61124, 62092, 63059, 64026, 64993, 65961, 66928, 67895, 68863, 70365, 71482],
-        hourly: [469, 476, 484, 491, 499, 506, 513, 521, 528, 540, 548],
-        overtime: [774, 786, 798, 810, 823, 835, 847, 859, 872, 891, 905],
+        monthly: [63728.58, 64695.83, 65663.08, 66630.33, 67597.58, 68564.92, 69532.17, 70499.42, 71466.67, 72969.67, 74085.75],
+        hourly: [489, 496, 504, 511, 519, 526, 533, 541, 548, 560, 568],
+        overtime: [806.85, 818.4, 831.6, 843.15, 856.35, 867.9, 879.45, 892.65, 904.2, 924, 937.2],
       },
     },
   },

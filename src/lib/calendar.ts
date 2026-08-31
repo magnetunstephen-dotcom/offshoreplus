@@ -22,7 +22,10 @@ export function createRotationCalendar(setup: TripSetup, years: number): string 
   const events: string[] = [];
 
   for (let tripStart = new Date(start); tripStart < limit; tripStart = addDays(tripStart, cycleDays)) {
-    const tripEnd = addDays(tripStart, setup.rotationOnDays);
+    const homeDate = addDays(tripStart, setup.rotationOnDays);
+    // DTEND er eksklusiv for heldagshendelser. Legg derfor til én dag slik at
+    // hjemreisedagen også blir markert i Google/Apple/Outlook-kalenderen.
+    const calendarEnd = addDays(homeDate, 1);
     const uid = `${dateOnly(tripStart)}-offshore@offshoreplus.no`;
 
     events.push(
@@ -30,7 +33,7 @@ export function createRotationCalendar(setup: TripSetup, years: number): string 
         "BEGIN:VEVENT",
         `UID:${uid}`,
         `DTSTART;VALUE=DATE:${dateOnly(tripStart)}`,
-        `DTEND;VALUE=DATE:${dateOnly(tripEnd)}`,
+        `DTEND;VALUE=DATE:${dateOnly(calendarEnd)}`,
         "SUMMARY:Offshore",
         `DESCRIPTION:${escapeIcs("Opprettet av OffshorePlus")}`,
         "END:VEVENT",
