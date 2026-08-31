@@ -30,17 +30,20 @@ export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
         offshoreperiode, inkludert registrerte tillegg.
       </p>
       <p>
-        <strong>Estimert månedslønn</strong> fordeler årsopptjeningen jevnt over
-        12 måneder. Faktisk utbetaling kan avvike på grunn av lønnssystem,
-        trekk, ferie, andre tillegg og arbeidsgivers praksis.
+        <strong>Forventet utbetalt måned</strong> normaliserer ordinær full
+        turverdi med 8,7 turer per år og deler på 12. Registrert overtid,
+        helligdagstillegg og andre ekstra tillegg legges direkte oppå og blir
+        ikke annualisert.
       </p>
 
       <div className="example-box">
         <span>Eksempel med ditt oppsett</span>
-        <strong>{money(calculation.estimatedGross)} per tur</strong>
-        <span>× {calculation.tripsPerYear.toFixed(1)} turer per år</span>
-        <strong>≈ {money(calculation.estimatedMonthlyGross)} per måned</strong>
+        <strong>{money(calculation.regularMonthlyGross)} ordinær brutto måned</strong>
+        <span>+ {money(calculation.activeExtrasGross)} ekstra på aktiv tur</span>
+        <strong>≈ {money(calculation.estimatedMonthlyNet)} forventet utbetalt</strong>
       </div>
+
+      <p className="muted small-copy">Ordinær lønn bruker skattetrekket du har valgt. Overtid og ekstra tillegg beregnes med 50 % estimert forskuddstrekk. Det er ikke nødvendigvis den endelige skatten.</p>
 
       <p className="muted small-copy">
         OffshorePlus er en motivasjons- og estimatkalkulator. Kontroller alltid

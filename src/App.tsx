@@ -6,11 +6,12 @@ import { EarningsInfoModal } from "./components/EarningsInfoModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { Wizard } from "./components/Wizard";
 import { CvModal } from "./components/CvModal";
+import { CertificatesModal } from "./components/CertificatesModal";
 import { loadTheme, loadTrip, saveTheme, saveTrip } from "./lib/storage";
 import type { EarningsView, TripSetup } from "./types";
 import { MoonIcon, SunIcon } from "./components/Icons";
 
-type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | null;
+type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | null;
 
 export default function App() {
   const initialTrip = loadTrip();
@@ -60,6 +61,7 @@ export default function App() {
           onAdditions={() => setModal("additions")}
           onEarningsInfo={() => setModal("earnings-info")}
           onCv={() => setModal("cv")}
+          onCertificates={() => setModal("certificates")}
           onChangeEarningsView={changeEarningsView}
         />
       ) : (
@@ -102,6 +104,7 @@ export default function App() {
       )}
 
       {modal === "cv" && <CvModal onClose={() => setModal(null)} />}
+      {modal === "certificates" && <CertificatesModal onClose={() => setModal(null)} />}
 
       {modal === "earnings-info" && trip && (
         <EarningsInfoModal trip={trip} onClose={() => setModal(null)} />

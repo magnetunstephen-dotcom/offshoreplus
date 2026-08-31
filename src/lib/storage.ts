@@ -1,4 +1,4 @@
-import type { CvProfile, TripSetup } from "../types";
+import type { Certificate, CvProfile, TripSetup } from "../types";
 
 const TRIP_KEY = "offshoreplus.trip.v1";
 const THEME_KEY = "offshoreplus.theme";
@@ -16,7 +16,10 @@ export function loadTrip(): TripSetup | null {
       rotationOffDays: parsed.rotationOffDays ?? 28,
       additionSessions: parsed.additionSessions ?? [],
       swingCompHours: parsed.swingCompHours ?? 0,
-      earningsView: parsed.earningsView ?? "trip",
+      earningsView:
+        parsed.earningsView === "trip" || parsed.earningsView === "monthly-gross"
+          ? parsed.earningsView
+          : "monthly-net",
     };
   } catch {
     return null;
@@ -53,4 +56,19 @@ export function loadCvProfile(): CvProfile | null {
 
 export function saveCvProfile(profile: CvProfile): void {
   localStorage.setItem(CV_KEY, JSON.stringify(profile));
+}
+
+const CERTIFICATES_KEY = "offshoreplus.certificates.v1";
+
+export function loadCertificates(): Certificate[] {
+  try {
+    const value = localStorage.getItem(CERTIFICATES_KEY);
+    return value ? (JSON.parse(value) as Certificate[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCertificates(certificates: Certificate[]): void {
+  localStorage.setItem(CERTIFICATES_KEY, JSON.stringify(certificates));
 }

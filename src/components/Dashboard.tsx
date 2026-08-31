@@ -22,7 +22,8 @@ interface DashboardProps {
   onAdditions: () => void;
   onEarningsInfo: () => void;
   onCv: () => void;
-  onChangeEarningsView: (view: "trip" | "monthly") => void;
+  onCertificates: () => void;
+  onChangeEarningsView: (view: "monthly-net" | "monthly-gross" | "trip") => void;
 }
 
 function money(value: number, decimals = 0): string {
@@ -65,6 +66,7 @@ export function Dashboard({
   onAdditions,
   onEarningsInfo,
   onCv,
+  onCertificates,
   onChangeEarningsView,
 }: DashboardProps) {
   const now = useClock();
@@ -74,11 +76,14 @@ export function Dashboard({
   const countdown = countdownParts(status.nextHelicopter, now);
   const progress = Math.min(100, Math.max(0, (status.phaseDay / status.phaseLength) * 100));
   const activeSession = (trip.additionSessions ?? []).find((session) => !session.end);
-  const view = trip.earningsView ?? "trip";
+  const view = trip.earningsView ?? "monthly-net";
 
-  const heroLabel = view === "trip" ? "Opptjent denne turen" : "Estimert månedslønn";
-  const heroValue = view === "trip" ? calculation.gross : calculation.estimatedMonthlyGross;
-  const heroNet = view === "trip" ? calculation.net : calculation.estimatedMonthlyNet;
+  const heroLabel = view === "trip"
+    ? "Opptjent denne turen"
+    : view === "monthly-gross" ? "Estimert brutto måned" : "Forventet utbetalt måned";
+  const heroValue = view === "trip"
+    ? calculation.gross
+    : view === "monthly-gross" ? calculation.estimatedMonthlyGross : calculation.estimatedMonthlyNet;
   const liveMoney = calculation.isMoneyRunning && view === "trip";
 
   return (
@@ -133,14 +138,18 @@ export function Dashboard({
             <button className="info-button" onClick={onEarningsInfo} aria-label="Forklaring av lønnstall"><InfoIcon size={18} /></button>
           </div>
           <strong className="hero-money">{money(heroValue, liveMoney ? 2 : 0)}</strong>
-          <span className="muted">Ca. {money(heroNet)} etter {trip.taxRate}% skatt</span>
+          {view === "monthly-net" && <span className="muted">Brutto {money(calculation.estimatedMonthlyGross)}</span>}
+          {view === "monthly-gross" && <span className="muted">Ca. {money(calculation.estimatedMonthlyNet)} utbetalt</span>}
+          {view === "trip" && <span className="muted">Brutto opptjent på aktiv tur</span>}
           {view === "trip" && (
             <span className="money-caption">{calculation.isMoneyRunning ? "Lønn opptjenes nå" : "Telleren står stille mens du ikke opptjener lønn"}</span>
           )}
           <div className="segmented earnings-toggle" aria-label="Velg lønnsvisning">
+            <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Utbetalt måned</button>
+            <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Brutto måned</button>
             <button className={view === "trip" ? "selected" : ""} onClick={() => onChangeEarningsView("trip")}>Denne turen</button>
-            <button className={view === "monthly" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly")}>Månedslønn</button>
           </div>
+          {view !== "trip" && <span className="tax-note">Ordinær lønn bruker valgt skattetrekk. Overtid og ekstra tillegg er estimert med 50 % forskuddstrekk – dette er ikke nødvendigvis endelig skatt.</span>}
         </section>
 
         {activeSession && (
@@ -156,13 +165,13 @@ export function Dashboard({
 
         <section className="op-summary-grid">
           <article className="card summary-card">
-            <span className="eyebrow">Full tur som planlagt</span>
-            <strong className="metric">{money(calculation.estimatedGross)}</strong>
-            <span className="muted">≈ {calculation.tripsPerYear.toFixed(1)} turer per år</span>
+            <span className="eyebrow">Ordinær månedslønn</span>
+            <strong className="metric">{money(calculation.regularMonthlyGross)}</strong>
+            <span className="muted">Full tur × 8,7 ÷ 12</span>
           </article>
           <button className="card summary-card addition-summary" onClick={onAdditions}>
             <span className="eyebrow">Tillegg denne turen</span>
-            <strong className="metric accent-money">+{money(calculation.additionsPay)}</strong>
+            <strong className="metric accent-money">+{money(calculation.activeExtrasGross)}</strong>
             <span className="summary-link">Se / registrer <ChevronRightIcon size={16} /></span>
           </button>
         </section>
@@ -185,6 +194,7 @@ export function Dashboard({
         </details>
 
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
+          <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon size={18} /></button>
           <button onClick={onAdditions}><span className="action-icon"><FlameIcon /></span><strong>Tillegg</strong><small>Overtid og ventetid</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onCalendar}><span className="action-icon"><CalendarIcon /></span><strong>Kalender</strong><small>Turnus og eksport</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onCv}><span className="action-icon">CV</span><strong>Profil & CV</strong><small>Lag profesjonell PDF</small><ChevronRightIcon className="action-chevron" size={17}/></button>

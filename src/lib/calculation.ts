@@ -35,6 +35,10 @@ export interface TripCalculation {
   estimatedGross: number;
   estimatedMonthlyGross: number;
   estimatedMonthlyNet: number;
+  regularMonthlyGross: number;
+  regularMonthlyNet: number;
+  activeExtrasGross: number;
+  activeExtrasNet: number;
   tripsPerYear: number;
   dayNumber: number;
   homeDate: Date;
@@ -215,9 +219,15 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     swingPay +
     customAdditionsPay;
 
-  const estimatedMonthlyGross =
-    ((estimatedGross - customAdditionsPay) * tripsPerYear) / 12 + customMonthlyPay;
-  const estimatedMonthlyNet = estimatedMonthlyGross * (1 - setup.taxRate / 100);
+  // Ordinær full tur normaliseres med offshorestandarden 8,7 turer/år.
+  // Tillegg opptjent på aktiv tur skal aldri annualiseres.
+  const regularFullTripGross = totalPaidHours * setup.hourlyRate + totalNightHours * setup.nightAllowance;
+  const regularMonthlyGross = (regularFullTripGross * 8.7) / 12;
+  const regularMonthlyNet = regularMonthlyGross * (1 - setup.taxRate / 100);
+  const activeExtrasGross = waitingPay + overtimePay + swingPay + customAdditionsPay;
+  const activeExtrasNet = activeExtrasGross * 0.5;
+  const estimatedMonthlyGross = regularMonthlyGross + activeExtrasGross + customMonthlyPay;
+  const estimatedMonthlyNet = regularMonthlyNet + activeExtrasNet + customMonthlyPay * 0.5;
 
   const activeSession = sessions.find((session) => !session.end);
   const scheduled = currentScheduledStatus(setup, now);
@@ -252,6 +262,10 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     estimatedGross,
     estimatedMonthlyGross,
     estimatedMonthlyNet,
+    regularMonthlyGross,
+    regularMonthlyNet,
+    activeExtrasGross,
+    activeExtrasNet,
     tripsPerYear,
     dayNumber: Math.min(
       setup.rotationOnDays,

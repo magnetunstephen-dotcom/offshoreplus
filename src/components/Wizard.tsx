@@ -93,7 +93,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       rotationOffDays,
       additionSessions: existingTrip?.additionSessions ?? [],
       swingCompHours: existingTrip?.swingCompHours ?? 0,
-      earningsView: existingTrip?.earningsView ?? "trip",
+      earningsView: existingTrip?.earningsView ?? "monthly-net",
       customAdditions: existingTrip?.customAdditions ?? [],
     });
   }

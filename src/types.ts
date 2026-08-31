@@ -1,7 +1,7 @@
 export type AgreementId = "safe2025" | "sokkel4a2025";
 export type ShiftPattern = "day" | "night" | "night-day" | "day-night";
 export type LiveAdditionType = "overtime" | "waiting";
-export type EarningsView = "trip" | "monthly";
+export type EarningsView = "monthly-net" | "monthly-gross" | "trip";
 export type CustomAdditionKind = "monthly-fixed" | "trip-fixed" | "trip-hours";
 export type CustomAdditionRateBasis = "hourly" | "overtime" | "custom";
 
@@ -94,4 +94,14 @@ export interface CvProfile {
   languages: string;
   interests: string;
   references: CvEntry[];
+}
+
+export type CertificateStatus = "valid" | "expiring" | "expired";
+
+export interface Certificate {
+  id: string;
+  name: string;
+  issuedDate: string;
+  expiryDate: string;
+  includeInCv: boolean;
 }
