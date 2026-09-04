@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
-type PlatformKind = "jacket" | "concrete" | "semi" | "fpso";
+type PlatformKind = "jacket" | "concrete" | "semi" | "fpso" | "circular";
 type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number };
@@ -12,12 +12,13 @@ type LeaderboardEntry = { user_id: string; display_name: string; score: number }
 const WIDTH = 720;
 const HEIGHT = 400;
 const SEA_Y = 350;
-const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup"];
+const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg"];
 const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean }> = {
   Ula: { kind: "jacket", flare: true }, Statfjord: { kind: "concrete", flare: true }, Skarv: { kind: "fpso", flare: true },
   Troll: { kind: "concrete", flare: false }, Oseberg: { kind: "jacket", flare: true }, Gullfaks: { kind: "concrete", flare: true },
   Ekofisk: { kind: "jacket", flare: true }, Valhall: { kind: "jacket", flare: false }, Snorre: { kind: "semi", flare: true },
   Heidrun: { kind: "semi", flare: true }, Åsgard: { kind: "semi", flare: true }, "Johan Sverdrup": { kind: "jacket", flare: false },
+  Goliat: { kind: "circular", flare: false }, "Johan Castberg": { kind: "fpso", flare: false },
 };
 
 function createRig(x: number, index: number): Rig {
@@ -28,7 +29,7 @@ function createRig(x: number, index: number): Rig {
     padY: 225 + Math.random() * 78,
     scored: false,
     name,
-    size: .78 + Math.random() * .42,
+    size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.18 : .78 + Math.random() * .42,
     ...profile,
   };
 }
@@ -216,9 +217,17 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.strokeStyle = "#d7e9e5";
       context.fillStyle = "#173846";
       context.lineWidth = 5;
-      if (rig.kind === "fpso") {
+      if (rig.kind === "circular") {
+        context.fillStyle = "#2b3f49";
+        context.beginPath(); context.ellipse(x + width * .52, y + 25, width * .48, 27 * size, 0, 0, Math.PI * 2); context.fill(); context.stroke();
+        context.fillStyle = "#f2b233"; context.fillRect(x + 35 * size, y + 5, 82 * size, 6);
+        context.fillStyle = "#dce8ee"; context.fillRect(x + 72 * size, y - 48 * size, 42 * size, 55 * size); context.strokeRect(x + 72 * size, y - 48 * size, 42 * size, 55 * size);
+        context.fillStyle = "#e2ebee"; context.beginPath(); context.ellipse(x + width * .52, y + 12, width * .35, 13 * size, 0, 0, Math.PI * 2); context.fill(); context.stroke();
+        context.strokeStyle = "rgba(215,233,229,.42)"; context.beginPath(); context.moveTo(x + 28, y + 42); context.lineTo(x + 18, SEA_Y + 10); context.moveTo(x + width - 28, y + 42); context.lineTo(x + width - 18, SEA_Y + 10); context.stroke();
+      } else if (rig.kind === "fpso") {
         context.beginPath(); context.moveTo(x - 12, y + 12); context.lineTo(x + width + 18, y + 12); context.lineTo(x + width, y + 36); context.lineTo(x + 10, y + 36); context.closePath(); context.fill(); context.stroke();
         context.fillRect(x + 72 * size, y - 36 * size, 48 * size, 48 * size); context.strokeRect(x + 72 * size, y - 36 * size, 48 * size, 48 * size);
+        if (rig.name === "Johan Castberg") { context.fillStyle = "#d6473f"; context.fillRect(x + 7, y + 24, width - 3, 8); }
         context.strokeStyle = "rgba(215,233,229,.45)"; context.beginPath(); context.moveTo(x + 24, y + 37); context.lineTo(x + 12, SEA_Y + 13); context.moveTo(x + width - 18, y + 37); context.lineTo(x + width, SEA_Y + 13); context.stroke();
       } else {
         context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
