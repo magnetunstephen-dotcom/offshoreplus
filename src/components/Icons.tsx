@@ -24,6 +24,18 @@ function IconBase({ size = 22, children, ...props }: IconProps & { children: Rea
 export function HelicopterIcon(props: IconProps) {
   return <IconBase {...props}><path d="M4 15h11.5a4.5 4.5 0 0 0 4.2-2.9L20 11H9.5L7.6 8.4A1 1 0 0 0 6.8 8H5l1.8 3H4a2 2 0 0 0 0 4Z"/><path d="M13 11 10 6h3l4 5"/><path d="M12 6V3"/><path d="M7 3h10"/><path d="M7 15l-2 3"/><path d="M16 15l2 3"/><path d="M3 18h16"/></IconBase>;
 }
+
+export function OffshorePlusLogo({ size = 28, ...props }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true" {...props}>
+    <path d="M7 26.5h23.2c5.1 0 8.8-3.1 10.2-7.6H25.8l-4.5-6.2h-6.2l3.8 6.2H9.5A5.5 5.5 0 0 0 4 24.4v.1a2 2 0 0 0 2 2Z" fill="currentColor"/>
+    <path d="M24.5 18.9 19.8 9h6.1l7.5 9.9h-8.9Z" fill="currentColor" opacity=".75"/>
+    <path d="M6.5 26.5 3 22.5V16h2.8l2.7 3.1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M17 32h17M20 26.5 17 32M30 26.5l4 5.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+    <path d="M9 8.5h22M20 8.5V6" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/>
+    <path d="M38 4v10M33 9h10" stroke="var(--accent)" strokeWidth="4" strokeLinecap="round"/>
+    <circle cx="11.5" cy="22.5" r="1.8" fill="var(--panel)"/>
+  </svg>;
+}
 export function FlameIcon(props: IconProps) {
   return <IconBase {...props}><path d="M12 22c4.4 0 7-3 7-7 0-3.4-2-5.8-4.4-8.4.2 2.4-.8 3.8-2.1 4.7.2-3.5-1.7-6.2-4.8-9.3.2 4.3-2.7 6.2-2.7 10.5C5 18.1 8.1 22 12 22Z"/><path d="M9.5 16.5c0 2 1 3.5 2.5 3.5s2.5-1.2 2.5-3c0-1.3-.7-2.3-1.6-3.2 0 1-.4 1.7-1 2.1-.1-1.3-.8-2.4-2-3.6.1 1.6-.4 2.6-.4 4.2Z"/></IconBase>;
 }

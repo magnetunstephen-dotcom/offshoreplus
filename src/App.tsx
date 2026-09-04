@@ -15,7 +15,7 @@ import { loadTheme, loadTrip, saveTheme, saveTrip, STORAGE_CHANGED_EVENT } from 
 import { pushLocalData, syncAccount } from "./lib/cloud";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
-import { MoonIcon, SunIcon } from "./components/Icons";
+import { MoonIcon, OffshorePlusLogo, SunIcon } from "./components/Icons";
 
 type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | null;
 
@@ -75,7 +75,7 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark"><span className="brand-o">O</span><span className="brand-plus">+</span></span>
+          <span className="brand-mark"><OffshorePlusLogo size={29} /></span>
           <span>OffshorePlus</span>
         </div>
         <div className="topbar-actions"><button className={`account-button ${user ? "signed-in" : ""}`} onClick={() => setModal("account")}><span>{user ? (user.email?.[0] || "O").toUpperCase() : "○"}</span>{user ? "Min konto" : "Logg inn"}</button><button className="theme-button" onClick={toggleTheme} aria-label="Bytt tema">
@@ -98,7 +98,7 @@ export default function App() {
         />
       ) : (
         <main className="empty-state">
-          <div className="large-mark"><span className="brand-o">O</span><span className="brand-plus">+</span></div>
+          <div className="large-mark"><OffshorePlusLogo size={65} /></div>
           <h1>OffshorePlus</h1>
           <p>En enkel oversikt over offshore-tur, lønn og turnus.</p>
           <button className="primary large-button" onClick={() => setModal("wizard")}>

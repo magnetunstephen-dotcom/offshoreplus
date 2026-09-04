@@ -515,10 +515,8 @@ body {
   overflow: hidden;
 }
 .brand-mark { width: 34px; height: 34px; border-radius: 11px; }
-.brand-o { font-size: .93em; font-weight: 950; letter-spacing: -.08em; transform: translateX(-2px); }
-.brand-plus { position: absolute; right: 4px; top: 1px; color: var(--accent); font-size: .7em; font-weight: 950; }
 .large-mark { width: 82px; height: 82px; border-radius: 24px; font-size: 44px; }
-.large-mark .brand-plus { right: 9px; top: 5px; }
+.brand-mark svg,.large-mark svg { color:#f3faf7; filter:drop-shadow(0 2px 4px rgb(0 0 0 / 20%)); }
 .theme-button { display: grid; place-items: center; border-radius: 12px; background: transparent; }
 
 .mobile-dashboard { max-width: 760px; padding-top: 12px; }
