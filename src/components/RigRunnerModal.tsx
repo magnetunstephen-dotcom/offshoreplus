@@ -50,6 +50,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | undefined>(undefined);
   const gameRunRef = useRef<string | null>(null);
+  const gameRunPromiseRef = useRef<PromiseLike<string | null> | null>(null);
   const userRef = useRef(user);
   const initialCourseRef = useRef(createStartingCourse());
   const gameRef = useRef({
@@ -68,6 +69,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const [nickname, setNickname] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nameMessage, setNameMessage] = useState("");
+  const [scoreMessage, setScoreMessage] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobilePlayMode, setMobilePlayMode] = useState(false);
   const nicknameRef = useRef(nickname);
@@ -77,10 +79,23 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   async function loadLeaderboard() {
     if (!supabaseConfigured) return;
     const { data } = await supabase.from("game_scores").select("user_id,display_name,score").order("score", { ascending: false }).order("updated_at", { ascending: true }).limit(10);
-    if (data) setLeaderboard(data as LeaderboardEntry[]);
+    if (data) {
+      const entries = data as LeaderboardEntry[];
+      setLeaderboard(entries);
+      let ownEntry = entries.find(entry => entry.user_id === userRef.current?.id);
+      if (!ownEntry && userRef.current) {
+        const { data: ownData } = await supabase.from("game_scores").select("user_id,display_name,score").eq("user_id", userRef.current.id).maybeSingle();
+        ownEntry = ownData as LeaderboardEntry | undefined;
+      }
+      if (ownEntry && !nicknameRef.current.trim()) {
+        setNickname(ownEntry.display_name);
+        setNicknameDraft(ownEntry.display_name);
+        localStorage.setItem("offshoreplus-game-name", ownEntry.display_name);
+      }
+    }
   }
 
-  useEffect(() => { loadLeaderboard(); }, []);
+  useEffect(() => { loadLeaderboard(); }, [user?.id]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
@@ -104,19 +119,32 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
 
   async function submitScore(nextScore: number) {
     const currentUser = userRef.current;
-    const currentName = nicknameRef.current.trim();
-    const runId = gameRunRef.current;
+    const runId = gameRunRef.current ?? await gameRunPromiseRef.current;
     gameRunRef.current = null;
-    if (!currentUser || !runId || currentName.length < 3 || !supabaseConfigured) return;
-    await supabase.rpc("finish_rig_runner_run", { p_run_id: runId, p_final_score: nextScore });
-    loadLeaderboard();
+    gameRunPromiseRef.current = null;
+    if (!currentUser || !runId || !supabaseConfigured) {
+      if (currentUser) setScoreMessage("Resultatet ble lagret på telefonen, men kom ikke på poengtavlen. Kontroller spillnavnet og prøv igjen.");
+      return;
+    }
+    const { data, error } = await supabase.rpc("finish_rig_runner_run", { p_run_id: runId, p_final_score: nextScore });
+    if (error || data !== true) {
+      setScoreMessage("Resultatet ble lagret lokalt, men poengtavlen avviste innsendingen.");
+      return;
+    }
+    setScoreMessage("Resultatet er lagret på poengtavlen.");
+    await loadLeaderboard();
   }
 
-  async function startVerifiedRun() {
+  function startVerifiedRun() {
     gameRunRef.current = null;
-    if (!userRef.current || nicknameRef.current.trim().length < 3 || !supabaseConfigured) return;
-    const { data } = await supabase.rpc("start_rig_runner_run");
-    if (typeof data === "string") gameRunRef.current = data;
+    if (!userRef.current || !supabaseConfigured) { gameRunPromiseRef.current = null; return; }
+    setScoreMessage("");
+    gameRunPromiseRef.current = supabase.rpc("start_rig_runner_run").then(({ data, error }) => {
+      const id = !error && typeof data === "string" ? data : null;
+      gameRunRef.current = id;
+      if (!id) setScoreMessage("Lagre et spillnavn før resultatet kan føres på poengtavlen.");
+      return id;
+    });
   }
 
   async function toggleFullscreen() {
@@ -464,6 +492,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       <aside className="game-leaderboard" aria-label="Poengtavle">
         <div><span className="eyebrow">TOPP 10</span><h3>Poengtavle</h3></div>
         {leaderboard.length ? <ol>{leaderboard.map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.score}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå. Bli den første!</p>}
+        {scoreMessage && <p className="game-score-message" role="status">{scoreMessage}</p>}
         {!user ? <button className="secondary full-width" onClick={onLogin}>Logg inn for poengtavlen</button> : <form className="game-name-form" onSubmit={saveNickname}><label htmlFor="game-name">Ditt spillnavn</label><div><input id="game-name" value={nicknameDraft} maxLength={20} placeholder="F.eks. Nordsjøpiloten" onChange={event => setNicknameDraft(event.target.value)} /><button type="submit">Lagre</button></div>{nameMessage && <small>{nameMessage}</small>}</form>}
       </aside>
     </div>
