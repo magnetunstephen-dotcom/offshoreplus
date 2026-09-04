@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { TripSetup, UserProfile, YearTrip } from "../types";
 import { formatDate } from "../lib/date";
 import { loadAutoDisabledYears, loadUserProfile, loadYearTrips, saveAutoDisabledYears, saveUserProfile, saveYearTrips } from "../lib/storage";
-import { changeYearTripPattern, snapshotTrip, summarizeYear } from "../lib/year";
+import { changeYearTripPattern, snapshotTrip, summarizeYear, upgradeLegacyYearTrips } from "../lib/year";
 import { Modal } from "./Modal";
 
 interface Props { trip: TripSetup; onClose: () => void; }
@@ -15,6 +15,11 @@ export function MyYearModal({ trip, onClose }: Props) {
   const [tab, setTab] = useState<Tab>("overview");
   const [year, setYear] = useState(new Date(trip.paidStart).getFullYear());
   const summary = useMemo(() => summarizeYear(trips, profile, year), [trips, profile, year]);
+
+  useEffect(() => {
+    const upgraded = upgradeLegacyYearTrips(trips, trip, profile);
+    if (upgraded !== trips) { setTrips(upgraded); saveYearTrips(upgraded); }
+  }, []);
 
   function persistTrips(next: YearTrip[]) { setTrips(next); saveYearTrips(next); }
   function addCurrentTrip() {
@@ -35,7 +40,7 @@ export function MyYearModal({ trip, onClose }: Props) {
 
   return <Modal onClose={onClose} labelledBy="my-year-title" className="my-year-modal">
     <div className="modal-header"><div><span className="eyebrow">OffshorePlus</span><h2 id="my-year-title">Mitt år</h2></div><button className="icon-button" onClick={onClose} aria-label="Lukk">×</button></div>
-    <div className="year-toolbar"><button onClick={() => setYear(year - 1)}>‹</button><strong>{year}</strong><button onClick={() => setYear(year + 1)}>›</button><button className="danger-text year-delete" onClick={deleteYear}>Slett året</button></div>
+    <div className="year-toolbar"><div className="year-picker"><button className="year-nav" onClick={() => setYear(year - 1)} aria-label="Forrige år">‹</button><strong>{year}</strong><button className="year-nav" onClick={() => setYear(year + 1)} aria-label="Neste år">›</button></div><button className="year-delete" onClick={deleteYear}>Slett året</button></div>
     <div className="segmented year-tabs"><button className={tab === "overview" ? "selected" : ""} onClick={() => setTab("overview")}>Oversikt</button><button className={tab === "trips" ? "selected" : ""} onClick={() => setTab("trips")}>Turer ({summary.rows.length})</button><button className={tab === "profile" ? "selected" : ""} onClick={() => setTab("profile")}>Profil</button></div>
 
     {tab === "overview" && <div className="year-content">
