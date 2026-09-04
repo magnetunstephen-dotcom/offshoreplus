@@ -4,7 +4,8 @@ import { Modal } from "./Modal";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
-type Rig = { x: number; padY: number; scored: boolean; name: string; size: number };
+type PlatformKind = "jacket" | "concrete" | "semi" | "fpso";
+type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number };
 
@@ -12,14 +13,23 @@ const WIDTH = 720;
 const HEIGHT = 400;
 const SEA_Y = 350;
 const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup"];
+const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean }> = {
+  Ula: { kind: "jacket", flare: true }, Statfjord: { kind: "concrete", flare: true }, Skarv: { kind: "fpso", flare: true },
+  Troll: { kind: "concrete", flare: false }, Oseberg: { kind: "jacket", flare: true }, Gullfaks: { kind: "concrete", flare: true },
+  Ekofisk: { kind: "jacket", flare: true }, Valhall: { kind: "jacket", flare: false }, Snorre: { kind: "semi", flare: true },
+  Heidrun: { kind: "semi", flare: true }, Åsgard: { kind: "semi", flare: true }, "Johan Sverdrup": { kind: "jacket", flare: false },
+};
 
 function createRig(x: number, index: number): Rig {
+  const name = PLATFORM_NAMES[index % PLATFORM_NAMES.length];
+  const profile = PLATFORM_PROFILES[name];
   return {
     x,
     padY: 225 + Math.random() * 78,
     scored: false,
-    name: PLATFORM_NAMES[index % PLATFORM_NAMES.length],
+    name,
     size: .78 + Math.random() * .42,
+    ...profile,
   };
 }
 
@@ -35,7 +45,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     velocity: 0,
     score: 0,
     distance: 0,
-    rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1 }] as Rig[],
+    rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1, ...PLATFORM_PROFILES.Ula }] as Rig[],
     nextRigIndex: 1,
     drones: [{ x: 390, y: 135, phase: 0 }] as Drone[],
     lastTime: 0,
@@ -110,7 +120,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       velocity: -80,
       score: 0,
       distance: 0,
-      rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1 }],
+      rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1, ...PLATFORM_PROFILES.Ula }],
       nextRigIndex: 1,
       drones: [{ x: 390, y: 135, phase: 0 }],
       lastTime: performance.now(),
@@ -197,7 +207,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.restore();
     }
 
-    function drawRig(rig: Rig) {
+    function drawRig(rig: Rig, phase: number) {
       if (!context) return;
       const x = rig.x;
       const y = rig.padY;
@@ -206,11 +216,24 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.strokeStyle = "#d7e9e5";
       context.fillStyle = "#173846";
       context.lineWidth = 5;
-      context.fillRect(x, y, width, 17);
-      context.strokeRect(x, y, width, 17);
-      context.fillRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size);
-      context.strokeRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size);
-      context.beginPath(); context.moveTo(x + 20 * size, y + 17); context.lineTo(x + 35 * size, SEA_Y + 18); context.moveTo(x + 135 * size, y + 17); context.lineTo(x + 120 * size, SEA_Y + 18); context.stroke();
+      if (rig.kind === "fpso") {
+        context.beginPath(); context.moveTo(x - 12, y + 12); context.lineTo(x + width + 18, y + 12); context.lineTo(x + width, y + 36); context.lineTo(x + 10, y + 36); context.closePath(); context.fill(); context.stroke();
+        context.fillRect(x + 72 * size, y - 36 * size, 48 * size, 48 * size); context.strokeRect(x + 72 * size, y - 36 * size, 48 * size, 48 * size);
+        context.strokeStyle = "rgba(215,233,229,.45)"; context.beginPath(); context.moveTo(x + 24, y + 37); context.lineTo(x + 12, SEA_Y + 13); context.moveTo(x + width - 18, y + 37); context.lineTo(x + width, SEA_Y + 13); context.stroke();
+      } else {
+        context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
+        context.fillRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size); context.strokeRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size);
+        if (rig.kind === "concrete") {
+          context.fillStyle = "#315364";
+          context.beginPath(); context.moveTo(x + 24 * size, y + 17); context.lineTo(x + 15 * size, SEA_Y + 18); context.lineTo(x + 57 * size, SEA_Y + 18); context.lineTo(x + 48 * size, y + 17); context.closePath(); context.fill(); context.stroke();
+          context.beginPath(); context.moveTo(x + 108 * size, y + 17); context.lineTo(x + 101 * size, SEA_Y + 18); context.lineTo(x + 140 * size, SEA_Y + 18); context.lineTo(x + 132 * size, y + 17); context.closePath(); context.fill(); context.stroke();
+        } else if (rig.kind === "semi") {
+          context.fillStyle = "#173846"; context.fillRect(x + 8, SEA_Y - 5, 58 * size, 16); context.fillRect(x + 91 * size, SEA_Y - 5, 58 * size, 16);
+          context.beginPath(); context.moveTo(x + 30 * size, y + 17); context.lineTo(x + 35 * size, SEA_Y); context.moveTo(x + 118 * size, y + 17); context.lineTo(x + 120 * size, SEA_Y); context.stroke();
+        } else {
+          context.beginPath(); context.moveTo(x + 20 * size, y + 17); context.lineTo(x + 35 * size, SEA_Y + 18); context.moveTo(x + 135 * size, y + 17); context.lineTo(x + 120 * size, SEA_Y + 18); context.moveTo(x + 20 * size, y + 35); context.lineTo(x + 127 * size, SEA_Y - 10); context.moveTo(x + 134 * size, y + 35); context.lineTo(x + 29 * size, SEA_Y - 10); context.stroke();
+        }
+      }
       context.strokeStyle = "#20c98b";
       context.lineWidth = 4;
       context.beginPath(); context.arc(x + 38 * size, y - 2, 25 * size, Math.PI, 0); context.stroke();
@@ -219,8 +242,14 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillText("H", x + 31 * size, y - 5);
       context.strokeStyle = "#d7e9e5";
       context.beginPath(); context.moveTo(x + 115 * size, y - 45 * size); context.lineTo(x + 132 * size, y - 95 * size); context.lineTo(x + 142 * size, y - 45 * size); context.stroke();
-      context.strokeStyle = "#20c98b";
-      context.beginPath(); context.moveTo(x + 132 * size, y - 105 * size); context.lineTo(x + 132 * size, y - 84 * size); context.moveTo(x + 121 * size, y - 94 * size); context.lineTo(x + 143 * size, y - 94 * size); context.stroke();
+      if (rig.flare) {
+        const flameX = x + 132 * size, flameY = y - 108 * size;
+        context.fillStyle = "rgba(255,148,40,.25)"; context.beginPath(); context.arc(flameX, flameY, 18 + Math.sin(phase) * 3, 0, Math.PI * 2); context.fill();
+        context.fillStyle = "#ff5d32"; context.beginPath(); context.moveTo(flameX, flameY + 10); context.quadraticCurveTo(flameX - 13, flameY - 2, flameX + Math.sin(phase * 1.7) * 8, flameY - 27); context.quadraticCurveTo(flameX + 15, flameY - 3, flameX, flameY + 10); context.fill();
+        context.fillStyle = "#ffd45c"; context.beginPath(); context.moveTo(flameX, flameY + 7); context.quadraticCurveTo(flameX - 6, flameY - 2, flameX + 2, flameY - 14); context.quadraticCurveTo(flameX + 7, flameY, flameX, flameY + 7); context.fill();
+      } else {
+        context.strokeStyle = "#20c98b"; context.beginPath(); context.moveTo(x + 132 * size, y - 105 * size); context.lineTo(x + 132 * size, y - 84 * size); context.moveTo(x + 121 * size, y - 94 * size); context.lineTo(x + 143 * size, y - 94 * size); context.stroke();
+      }
       context.fillStyle = "rgba(3,18,27,.82)";
       context.fillRect(x + 3, y + 24, Math.max(72, rig.name.length * 10), 25);
       context.fillStyle = "#eaf8f3";
@@ -250,7 +279,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       }
       context.fillStyle = "#06121d";
       context.fillRect(0, SEA_Y + 7, WIDTH, HEIGHT - SEA_Y);
-      game.rigs.forEach(drawRig);
+      game.rigs.forEach(rig => drawRig(rig, game.distance / 9));
       game.drones.forEach(drone => {
         const bob = Math.sin(game.distance / 35 + drone.phase) * 7;
         const y = drone.y + bob;
@@ -335,7 +364,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           }
         }
         const droneHit = game.drones.some(drone => Math.abs(drone.x - 112) < 34 && Math.abs((drone.y + Math.sin(game.distance / 35 + drone.phase) * 7) - game.y) < 24);
-        if (droneHit || game.y < 42 || heliBottom > SEA_Y + 3) finish();
+        const flareHit = game.rigs.some(rig => rig.flare && Math.abs((rig.x + 132 * rig.size) - 112) < 27 && Math.abs((rig.padY - 119 * rig.size) - game.y) < 38);
+        if (droneHit || flareHit || game.y < 42 || heliBottom > SEA_Y + 3) finish();
       }
       draw();
       frameRef.current = requestAnimationFrame(loop);
