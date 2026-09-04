@@ -1,9 +1,9 @@
 # OffshorePlus e-postmal
 
-Bruk `magic-link.html` for Supabase-malen **Magic link or OTP**.
+Bruk `confirm-signup.html` for Supabase-malen **Confirm sign up**.
 
 Emnefelt:
 
-`Velkommen til OffshorePlus – bekreft innloggingen din`
+`{{ .Token }} er bekreftelseskoden din til OffshorePlus`
 
-Malen bruker Supabase-variabelen `{{ .ConfirmationURL }}` for den sikre innloggingsknappen.
+Malen bruker Supabase-variabelen `{{ .Token }}`. Brukeren skriver koden direkte inn i OffshorePlus og trenger ingen klikkbar lenke.

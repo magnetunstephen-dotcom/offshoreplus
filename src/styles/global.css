@@ -611,6 +611,12 @@ body {
 .account-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .account-header h2 { margin:5px 0 18px; }
 .account-login,.account-signed-in { display:grid; gap:14px; }
+.account-tabs { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:4px; border-radius:13px; background:var(--panel-strong); }
+.account-tabs button { min-height:40px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:800; }
+.account-tabs button.active { background:var(--panel); color:var(--accent); box-shadow:0 3px 12px rgb(0 0 0 / 14%); }
+.account-login label { display:grid; gap:7px; font-size:13px; font-weight:800; }
+.otp-input { text-align:center; font-size:25px; font-weight:900; letter-spacing:.22em; font-variant-numeric:tabular-nums; }
+.text-button { min-height:34px; border:0; background:transparent; color:var(--accent); font-weight:800; }
 .account-login p { color:var(--muted); margin:0; line-height:1.55; }
 .account-login small,.account-signed-in > span { color:var(--muted); text-align:center; }
 .account-message { padding:12px; border-radius:12px; background:color-mix(in srgb,var(--accent) 12%,var(--panel)); color:var(--text); font-size:13px; }
