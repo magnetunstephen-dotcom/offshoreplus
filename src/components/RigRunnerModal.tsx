@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { User } from "@supabase/supabase-js";
 import { Modal } from "./Modal";
+import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
 type Rig = { x: number; padY: number; scored: boolean; name: string; size: number };
 type Drone = { x: number; y: number; phase: number };
+type LeaderboardEntry = { user_id: string; display_name: string; score: number };
 
 const WIDTH = 720;
 const HEIGHT = 400;
@@ -20,9 +23,11 @@ function createRig(x: number, index: number): Rig {
   };
 }
 
-export function RigRunnerModal({ onClose }: { onClose: () => void }) {
+export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void; user: User | null; onLogin: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameAreaRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | undefined>(undefined);
+  const userRef = useRef(user);
   const gameRef = useRef({
     state: "ready" as GameState,
     y: 155,
@@ -37,6 +42,57 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
   const [state, setState] = useState<GameState>("ready");
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-best") || 0));
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [nickname, setNickname] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
+  const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
+  const [nameMessage, setNameMessage] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const nicknameRef = useRef(nickname);
+  userRef.current = user;
+  nicknameRef.current = nickname;
+
+  async function loadLeaderboard() {
+    if (!supabaseConfigured) return;
+    const { data } = await supabase.from("game_scores").select("user_id,display_name,score").order("score", { ascending: false }).order("updated_at", { ascending: true }).limit(10);
+    if (data) setLeaderboard(data as LeaderboardEntry[]);
+  }
+
+  useEffect(() => { loadLeaderboard(); }, []);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  async function saveNickname(event: FormEvent) {
+    event.preventDefault();
+    const clean = nicknameDraft.trim().replace(/\s+/g, " ");
+    if (clean.length < 3 || clean.length > 20) { setNameMessage("Bruk mellom 3 og 20 tegn."); return; }
+    setNickname(clean);
+    localStorage.setItem("offshoreplus-game-name", clean);
+    setNameMessage("Spillnavnet er lagret.");
+    if (user) {
+      const { data } = await supabase.from("game_scores").select("score").eq("user_id", user.id).maybeSingle();
+      await supabase.from("game_scores").upsert({ user_id: user.id, display_name: clean, score: Math.max(best, data?.score || 0), updated_at: new Date().toISOString() });
+      loadLeaderboard();
+    }
+  }
+
+  async function submitScore(nextScore: number) {
+    const currentUser = userRef.current;
+    const currentName = nicknameRef.current.trim();
+    if (!currentUser || currentName.length < 3 || !supabaseConfigured) return;
+    const { data } = await supabase.from("game_scores").select("score").eq("user_id", currentUser.id).maybeSingle();
+    if ((data?.score || 0) >= nextScore) return;
+    await supabase.from("game_scores").upsert({ user_id: currentUser.id, display_name: currentName, score: nextScore, updated_at: new Date().toISOString() });
+    loadLeaderboard();
+  }
+
+  async function toggleFullscreen() {
+    if (!document.fullscreenElement) await gameAreaRef.current?.requestFullscreen();
+    else await document.exitFullscreen();
+  }
 
   function reset() {
     gameRef.current = {
@@ -86,6 +142,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
         localStorage.setItem("offshoreplus-rig-runner-best", String(next));
         return next;
       });
+      submitScore(game.score);
     }
 
     function drawHelicopter(y: number, rotation: number) {
@@ -249,16 +306,27 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
   }, []);
 
   return <Modal onClose={onClose} labelledBy="rig-runner-title" className="game-modal">
+    <div ref={gameAreaRef} className="game-fullscreen-area">
     <div className="game-header">
       <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Rig Runner</h2></div>
       <div className="game-score"><span>Poeng <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
-      <button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button>
+      <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
-    <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="rig-runner-canvas" onPointerDown={lift} aria-label="Rig Runner-spill" />
-    <div className="game-controls">
-      <button onPointerDown={(event) => { event.preventDefault(); lift(); }}>↑ Løft helikopteret</button>
-      <p>Trykk på skjermen eller bruk mellomrom. Land mykt på den grønne H-en og unngå de russiske dronene.</p>
+    <div className="game-layout">
+      <div className="game-play-column">
+        <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="rig-runner-canvas" onPointerDown={lift} aria-label="Rig Runner-spill" />
+        <div className="game-controls">
+          <button onPointerDown={(event) => { event.preventDefault(); lift(); }}>↑ Løft helikopteret</button>
+          <p>Trykk på skjermen eller bruk mellomrom. Land mykt på den grønne H-en og unngå de russiske dronene.</p>
+        </div>
+        {state === "over" && <button className="primary full-width" onClick={reset}>Prøv igjen</button>}
+      </div>
+      <aside className="game-leaderboard" aria-label="Poengtavle">
+        <div><span className="eyebrow">TOPP 10</span><h3>Poengtavle</h3></div>
+        {leaderboard.length ? <ol>{leaderboard.map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.score}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå. Bli den første!</p>}
+        {!user ? <button className="secondary full-width" onClick={onLogin}>Logg inn for poengtavlen</button> : <form className="game-name-form" onSubmit={saveNickname}><label htmlFor="game-name">Ditt spillnavn</label><div><input id="game-name" value={nicknameDraft} maxLength={20} placeholder="F.eks. Nordsjøpiloten" onChange={event => setNicknameDraft(event.target.value)} /><button type="submit">Lagre</button></div>{nameMessage && <small>{nameMessage}</small>}</form>}
+      </aside>
     </div>
-    {state === "over" && <button className="primary full-width" onClick={reset}>Prøv igjen</button>}
+    </div>
   </Modal>;
 }

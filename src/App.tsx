@@ -151,7 +151,7 @@ export default function App() {
       {modal === "feedback" && <FeedbackModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
       {modal === "privacy" && <PrivacyModal onClose={() => setModal(null)} />}
       {modal === "password-reset" && <PasswordResetModal onClose={() => setModal(null)} />}
-      {modal === "rig-runner" && <RigRunnerModal onClose={() => setModal(null)} />}
+      {modal === "rig-runner" && <RigRunnerModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
 
       {modal === "earnings-info" && trip && (
         <EarningsInfoModal trip={trip} onClose={() => setModal(null)} />

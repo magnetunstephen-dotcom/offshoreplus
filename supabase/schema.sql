@@ -70,3 +70,30 @@ $$;
 
 revoke all on function public.delete_own_account() from public, anon;
 grant execute on function public.delete_own_account() to authenticated;
+
+-- Offentlig poengtavle for Rig Runner. Kun spillnavn og poeng er synlig;
+-- e-post lagres aldri i denne tabellen.
+create table if not exists public.game_scores (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null check (char_length(display_name) between 3 and 20),
+  score integer not null default 0 check (score between 0 and 1000000),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.game_scores enable row level security;
+revoke all on public.game_scores from anon, authenticated;
+grant select on public.game_scores to anon, authenticated;
+grant insert, update on public.game_scores to authenticated;
+
+create policy "Everyone can read the Rig Runner leaderboard"
+on public.game_scores for select
+using (true);
+
+create policy "Players can add their own Rig Runner score"
+on public.game_scores for insert to authenticated
+with check ((select auth.uid()) = user_id);
+
+create policy "Players can update their own Rig Runner score"
+on public.game_scores for update to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
