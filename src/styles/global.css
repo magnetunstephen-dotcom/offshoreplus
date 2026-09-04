@@ -429,6 +429,7 @@ input, select {
 .game-controls { display:flex; align-items:center; gap:14px; margin-top:12px; }
 .game-controls button { flex:0 0 auto; min-height:48px; padding:0 18px; border-color:color-mix(in srgb,var(--accent) 60%,var(--border)); color:var(--accent); font-weight:850; }
 .game-controls p { margin:0; color:var(--muted); font-size:12px; line-height:1.4; }
+.game-mobile-fullscreen { display:none; }
 .game-leaderboard { display:grid; gap:14px; min-height:400px; padding:16px; border:1px solid var(--border); border-radius:18px; background:var(--panel-strong); }
 .game-leaderboard h3 { margin:3px 0 0; }
 .game-leaderboard ol { display:grid; gap:5px; margin:0; padding:0; list-style:none; }
@@ -455,8 +456,26 @@ input, select {
   .game-leaderboard { min-height:0; }
   .game-controls { display:grid; }
   .game-controls button { width:100%; }
+  .game-mobile-fullscreen { display:block; width:100%; margin-top:8px; min-height:46px; color:var(--accent); font-weight:850; }
   .game-fullscreen-area:fullscreen { align-content:start; }
   .game-fullscreen-area:fullscreen .game-layout { grid-template-columns:1fr; }
+}
+
+@media (max-width: 950px) {
+  .game-fullscreen-area.mobile-game-mode { position:fixed; inset:0; z-index:1200; width:100vw; height:100dvh; padding:8px; overflow:hidden; background:#07111c; }
+  .game-fullscreen-area.mobile-game-mode .game-header { grid-template-columns:1fr auto auto; gap:8px; margin-bottom:6px; }
+  .game-fullscreen-area.mobile-game-mode .game-header .eyebrow { display:none; }
+  .game-fullscreen-area.mobile-game-mode .game-header h2 { font-size:17px; }
+  .game-fullscreen-area.mobile-game-mode .game-score { grid-column:auto; grid-row:auto; font-size:10px; }
+  .game-fullscreen-area.mobile-game-mode .game-score b { font-size:14px; }
+  .game-fullscreen-area.mobile-game-mode .game-window-actions { grid-column:auto; grid-row:auto; }
+  .game-fullscreen-area.mobile-game-mode .game-window-actions button { width:36px; height:36px; }
+  .game-fullscreen-area.mobile-game-mode .game-layout { display:block; max-height:none; overflow:hidden; }
+  .game-fullscreen-area.mobile-game-mode .game-leaderboard { display:none; }
+  .game-fullscreen-area.mobile-game-mode .rig-runner-canvas { width:100%; max-height:calc(100dvh - 55px); object-fit:contain; border-radius:10px; }
+  .game-fullscreen-area.mobile-game-mode .game-controls,
+  .game-fullscreen-area.mobile-game-mode .game-mobile-fullscreen,
+  .game-fullscreen-area.mobile-game-mode .game-play-column > .primary { display:none; }
 }
 
 @media (max-width: 640px) {

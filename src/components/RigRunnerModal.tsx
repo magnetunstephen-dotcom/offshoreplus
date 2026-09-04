@@ -69,6 +69,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nameMessage, setNameMessage] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mobilePlayMode, setMobilePlayMode] = useState(false);
   const nicknameRef = useRef(nickname);
   userRef.current = user;
   nicknameRef.current = nickname;
@@ -119,8 +120,16 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }
 
   async function toggleFullscreen() {
-    if (!document.fullscreenElement) await gameAreaRef.current?.requestFullscreen();
-    else await document.exitFullscreen();
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      setMobilePlayMode(false);
+      try { screen.orientation.unlock(); } catch { /* Ikke støttet på blant annet iPhone. */ }
+      return;
+    }
+    if (mobilePlayMode) { setMobilePlayMode(false); return; }
+    setMobilePlayMode(true);
+    try { await gameAreaRef.current?.requestFullscreen(); } catch { /* CSS-modus gir iPhone samme spillflate. */ }
+    try { await (screen.orientation as ScreenOrientation & { lock: (orientation: string) => Promise<void> }).lock("landscape"); } catch { /* Brukeren kan snu telefonen manuelt. */ }
   }
 
   function reset() {
@@ -436,11 +445,11 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }, []);
 
   return <Modal onClose={onClose} labelledBy="rig-runner-title" className="game-modal">
-    <div ref={gameAreaRef} className="game-fullscreen-area">
+    <div ref={gameAreaRef} className={`game-fullscreen-area${mobilePlayMode ? " mobile-game-mode" : ""}`}>
     <div className="game-header">
       <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Dronevakta</h2></div>
       <div className="game-score"><span>Landinger <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
-      <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
+      <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen || mobilePlayMode ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen || mobilePlayMode ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
     <div className="game-layout">
       <div className="game-play-column">
@@ -449,6 +458,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           <button onPointerDown={(event) => { event.preventDefault(); lift(); }}>↑ Løft helikopteret</button>
           <p>Trykk på skjermen eller bruk mellomrom. Land mykt på den grønne H-en og unngå de russiske dronene.</p>
         </div>
+        <button className="game-mobile-fullscreen" onClick={toggleFullscreen}>↻ Snu telefonen og spill på fullskjerm</button>
         {state === "over" && <button className="primary full-width" onClick={reset}>Prøv igjen</button>}
       </div>
       <aside className="game-leaderboard" aria-label="Poengtavle">
