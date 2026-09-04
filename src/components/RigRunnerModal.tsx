@@ -2,12 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { Modal } from "./Modal";
 
 type GameState = "ready" | "running" | "over";
-type Rig = { x: number; padY: number; scored: boolean };
+type Rig = { x: number; padY: number; scored: boolean; name: string; size: number };
 type Bird = { x: number; y: number; phase: number };
 
 const WIDTH = 720;
 const HEIGHT = 400;
 const SEA_Y = 350;
+const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup"];
+
+function createRig(x: number, index: number): Rig {
+  return {
+    x,
+    padY: 225 + Math.random() * 78,
+    scored: false,
+    name: PLATFORM_NAMES[index % PLATFORM_NAMES.length],
+    size: .78 + Math.random() * .42,
+  };
+}
 
 export function RigRunnerModal({ onClose }: { onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,7 +29,8 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
     velocity: 0,
     score: 0,
     distance: 0,
-    rigs: [{ x: 570, padY: 270, scored: false }] as Rig[],
+    rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1 }] as Rig[],
+    nextRigIndex: 1,
     birds: [{ x: 390, y: 135, phase: 0 }] as Bird[],
     lastTime: 0,
   });
@@ -33,7 +45,8 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
       velocity: -80,
       score: 0,
       distance: 0,
-      rigs: [{ x: 570, padY: 270, scored: false }],
+      rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1 }],
+      nextRigIndex: 1,
       birds: [{ x: 390, y: 135, phase: 0 }],
       lastTime: performance.now(),
     };
@@ -99,24 +112,31 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
       if (!context) return;
       const x = rig.x;
       const y = rig.padY;
+      const size = rig.size;
+      const width = 155 * size;
       context.strokeStyle = "#d7e9e5";
       context.fillStyle = "#173846";
       context.lineWidth = 5;
-      context.fillRect(x, y, 155, 17);
-      context.strokeRect(x, y, 155, 17);
-      context.fillRect(x + 82, y - 45, 45, 45);
-      context.strokeRect(x + 82, y - 45, 45, 45);
-      context.beginPath(); context.moveTo(x + 20, y + 17); context.lineTo(x + 35, SEA_Y + 18); context.moveTo(x + 135, y + 17); context.lineTo(x + 120, SEA_Y + 18); context.stroke();
+      context.fillRect(x, y, width, 17);
+      context.strokeRect(x, y, width, 17);
+      context.fillRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size);
+      context.strokeRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size);
+      context.beginPath(); context.moveTo(x + 20 * size, y + 17); context.lineTo(x + 35 * size, SEA_Y + 18); context.moveTo(x + 135 * size, y + 17); context.lineTo(x + 120 * size, SEA_Y + 18); context.stroke();
       context.strokeStyle = "#20c98b";
       context.lineWidth = 4;
-      context.beginPath(); context.arc(x + 38, y - 2, 25, Math.PI, 0); context.stroke();
-      context.font = "bold 17px sans-serif";
+      context.beginPath(); context.arc(x + 38 * size, y - 2, 25 * size, Math.PI, 0); context.stroke();
+      context.font = `bold ${Math.max(13, 17 * size)}px sans-serif`;
       context.fillStyle = "#20c98b";
-      context.fillText("H", x + 31, y - 5);
+      context.fillText("H", x + 31 * size, y - 5);
       context.strokeStyle = "#d7e9e5";
-      context.beginPath(); context.moveTo(x + 115, y - 45); context.lineTo(x + 132, y - 95); context.lineTo(x + 142, y - 45); context.stroke();
+      context.beginPath(); context.moveTo(x + 115 * size, y - 45 * size); context.lineTo(x + 132 * size, y - 95 * size); context.lineTo(x + 142 * size, y - 45 * size); context.stroke();
       context.strokeStyle = "#20c98b";
-      context.beginPath(); context.moveTo(x + 132, y - 105); context.lineTo(x + 132, y - 84); context.moveTo(x + 121, y - 94); context.lineTo(x + 143, y - 94); context.stroke();
+      context.beginPath(); context.moveTo(x + 132 * size, y - 105 * size); context.lineTo(x + 132 * size, y - 84 * size); context.moveTo(x + 121 * size, y - 94 * size); context.lineTo(x + 143 * size, y - 94 * size); context.stroke();
+      context.fillStyle = "rgba(3,18,27,.82)";
+      context.fillRect(x + 3, y + 24, Math.max(72, rig.name.length * 10), 25);
+      context.fillStyle = "#eaf8f3";
+      context.font = "800 14px sans-serif";
+      context.fillText(rig.name, x + 11, y + 42);
     }
 
     function draw() {
@@ -176,15 +196,18 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
       const delta = Math.min(.034, Math.max(0, (time - (game.lastTime || time)) / 1000));
       game.lastTime = time;
       if (game.state === "running") {
-        const speed = 115 + Math.min(75, game.score * 7);
-        game.velocity += 365 * delta;
+        const speed = 122 + Math.min(85, game.score * 8);
+        game.velocity += 390 * delta;
         game.y += game.velocity * delta;
         game.distance += speed * delta;
         game.rigs.forEach(rig => { rig.x -= speed * delta; });
         game.birds.forEach(bird => { bird.x -= speed * delta; });
 
         const lastRig = game.rigs[game.rigs.length - 1];
-        if (lastRig.x < 390) game.rigs.push({ x: lastRig.x + 390 + Math.random() * 90, padY: 225 + Math.random() * 80, scored: false });
+        if (lastRig.x < 390) {
+          game.rigs.push(createRig(lastRig.x + 395 + Math.random() * 100, game.nextRigIndex));
+          game.nextRigIndex += 1;
+        }
         game.rigs = game.rigs.filter(rig => rig.x > -180);
         if (!game.birds.length || game.birds[game.birds.length - 1].x < 470) {
           game.birds.push({ x: 760 + Math.random() * 180, y: 95 + Math.random() * 125, phase: Math.random() * 6 });
@@ -193,14 +216,14 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
 
         const heliBottom = game.y + 21;
         for (const rig of game.rigs) {
-          const overlapsPad = rig.x < 154 && rig.x + 88 > 72;
-          const approachingPad = overlapsPad && heliBottom > rig.padY - 38 && heliBottom < rig.padY - 5;
+          const overlapsPad = rig.x < 154 && rig.x + 88 * rig.size > 72;
+          const approachingPad = overlapsPad && heliBottom > rig.padY - 34 && heliBottom < rig.padY - 5;
           if (!rig.scored && approachingPad && game.velocity > 15) {
-            game.velocity *= .88;
-            game.y += (rig.padY - 21 - game.y) * .035;
+            game.velocity *= .91;
+            game.y += (rig.padY - 21 - game.y) * .03;
           }
           if (overlapsPad && heliBottom >= rig.padY - 5) {
-            if (!rig.scored && heliBottom <= rig.padY + 13 && game.velocity < 185) {
+            if (!rig.scored && heliBottom <= rig.padY + 13 && game.velocity < 170) {
               rig.scored = true;
               game.score += 1;
               game.velocity = -170;
