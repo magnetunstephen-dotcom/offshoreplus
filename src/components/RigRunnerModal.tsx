@@ -154,23 +154,46 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       submitScore(game.score);
     }
 
-    function drawHelicopter(y: number, rotation: number) {
+    function drawHelicopter(y: number, rotation: number, rotorPhase: number) {
       if (!context) return;
       context.save();
       context.translate(112, y);
       context.rotate(rotation);
       context.scale(-1, 1);
-      context.strokeStyle = "#eaf8f3";
-      context.fillStyle = "#20c98b";
-      context.lineWidth = 4;
+      context.strokeStyle = "#dce8ee";
+      context.fillStyle = "#f4f7f8";
+      context.lineWidth = 3;
       context.lineCap = "round";
-      context.beginPath(); context.ellipse(0, 0, 27, 13, 0, 0, Math.PI * 2); context.fill(); context.stroke();
-      context.beginPath(); context.moveTo(23, -1); context.lineTo(46, -9); context.lineTo(48, 1); context.lineTo(25, 6); context.fill(); context.stroke();
-      context.fillStyle = "#0b2530";
-      context.beginPath(); context.arc(-8, -2, 7, 0, Math.PI * 2); context.fill();
-      context.beginPath(); context.moveTo(-4, -15); context.lineTo(1, -26); context.stroke();
-      context.beginPath(); context.moveTo(-27, -26); context.lineTo(28, -26); context.stroke();
-      context.beginPath(); context.moveTo(-16, 13); context.lineTo(-21, 21); context.moveTo(14, 13); context.lineTo(19, 21); context.moveTo(-27, 21); context.lineTo(27, 21); context.stroke();
+      context.beginPath(); context.ellipse(0, 0, 29, 14, 0, 0, Math.PI * 2); context.fill(); context.stroke();
+      context.fillStyle = "#1767a8";
+      context.beginPath(); context.ellipse(1, -5, 27, 8, 0, Math.PI, Math.PI * 2); context.fill();
+      context.fillStyle = "#ec3346";
+      context.beginPath(); context.moveTo(-24, 6); context.lineTo(22, 1); context.lineTo(17, 8); context.lineTo(-16, 12); context.closePath(); context.fill();
+      context.fillStyle = "#f4f7f8";
+      context.beginPath(); context.moveTo(23, -2); context.lineTo(51, -10); context.lineTo(53, 1); context.lineTo(25, 7); context.closePath(); context.fill(); context.stroke();
+      context.fillStyle = "#1767a8";
+      context.beginPath(); context.moveTo(29, -4); context.lineTo(50, -10); context.lineTo(50, -5); context.lineTo(29, 1); context.closePath(); context.fill();
+      context.fillStyle = "#102d3d";
+      context.beginPath(); context.arc(-10, -3, 7, 0, Math.PI * 2); context.fill();
+      context.fillStyle = "#b9dce9";
+      context.beginPath(); context.arc(-10, -3, 4, 0, Math.PI * 2); context.fill();
+      context.strokeStyle = "#dce8ee";
+      context.beginPath(); context.moveTo(-3, -15); context.lineTo(1, -25); context.stroke();
+      const rotorWidth = 35 + Math.abs(Math.sin(rotorPhase)) * 22;
+      context.strokeStyle = "rgba(220,232,238,.9)";
+      context.lineWidth = 3;
+      context.beginPath(); context.moveTo(-rotorWidth, -26); context.lineTo(rotorWidth, -26); context.stroke();
+      context.strokeStyle = "rgba(32,201,139,.35)";
+      context.lineWidth = 2;
+      context.beginPath(); context.moveTo(-rotorWidth * .75, -29); context.lineTo(rotorWidth * .75, -23); context.stroke();
+      context.save(); context.translate(52, -5); context.rotate(rotorPhase * 2.4);
+      context.strokeStyle = "#ec3346"; context.lineWidth = 2;
+      context.beginPath(); context.moveTo(-8, 0); context.lineTo(8, 0); context.moveTo(0, -8); context.lineTo(0, 8); context.stroke();
+      context.restore();
+      context.strokeStyle = "#dce8ee"; context.lineWidth = 3;
+      context.beginPath(); context.moveTo(-16, 13); context.lineTo(-18, 20); context.moveTo(15, 13); context.lineTo(18, 20); context.stroke();
+      context.fillStyle = "#263944";
+      context.beginPath(); context.arc(-18, 21, 4, 0, Math.PI * 2); context.arc(18, 21, 4, 0, Math.PI * 2); context.fill();
       context.restore();
     }
 
@@ -231,16 +254,23 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       game.drones.forEach(drone => {
         const bob = Math.sin(game.distance / 35 + drone.phase) * 7;
         const y = drone.y + bob;
+        const propellerPhase = game.distance / 5 + drone.phase;
         context.strokeStyle = "#d7e9e5";
-        context.fillStyle = "#243846";
+        context.fillStyle = "#f2f5f7";
         context.lineWidth = 3;
         context.beginPath(); context.moveTo(drone.x - 20, y - 7); context.lineTo(drone.x + 20, y + 7); context.moveTo(drone.x + 20, y - 7); context.lineTo(drone.x - 20, y + 7); context.stroke();
-        context.fillRect(drone.x - 11, y - 6, 22, 12);
-        context.beginPath(); context.ellipse(drone.x - 20, y - 8, 10, 3, 0, 0, Math.PI * 2); context.ellipse(drone.x + 20, y - 8, 10, 3, 0, 0, Math.PI * 2); context.ellipse(drone.x - 20, y + 8, 10, 3, 0, 0, Math.PI * 2); context.ellipse(drone.x + 20, y + 8, 10, 3, 0, 0, Math.PI * 2); context.stroke();
+        context.fillRect(drone.x - 12, y - 7, 24, 14);
+        context.fillStyle = "#1767a8"; context.fillRect(drone.x - 12, y - 2, 24, 5);
+        context.fillStyle = "#ec3346"; context.fillRect(drone.x - 12, y + 3, 24, 4);
+        [[-20,-8],[20,-8],[-20,8],[20,8]].forEach(([dx,dy], index) => {
+          context.save(); context.translate(drone.x + dx, y + dy); context.rotate(propellerPhase + index * .7);
+          context.strokeStyle = "rgba(215,233,229,.9)"; context.lineWidth = 2;
+          context.beginPath(); context.moveTo(-11, 0); context.lineTo(11, 0); context.moveTo(0, -4); context.lineTo(0, 4); context.stroke(); context.restore();
+        });
         context.fillStyle = "#f05252";
         context.beginPath(); context.arc(drone.x, y + 1, 3, 0, Math.PI * 2); context.fill();
       });
-      drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)));
+      drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4);
       context.fillStyle = "rgba(3,18,27,.72)";
       context.fillRect(16, 15, 160, 48);
       context.fillStyle = "#eaf8f3";
