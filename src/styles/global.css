@@ -406,7 +406,12 @@ input, select {
 }
 .compact-info { margin-top: 12px; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .example-box { margin: 18px 0; }
-.example-box strong { font-size: 20px; }
+.example-title { margin-bottom:4px; font-size:14px; }
+.example-row,.example-total { display:flex; align-items:baseline; justify-content:space-between; gap:16px; }
+.example-row { color:var(--muted); font-size:13px; }
+.example-row b { color:var(--text); white-space:nowrap; }
+.example-total { margin-top:7px; padding-top:11px; border-top:1px solid var(--border); font-size:13px; }
+.example-total strong { color:var(--accent); font-size:19px; white-space:nowrap; }
 .small-copy { font-size: 13px; line-height: 1.45; }
 
 @media (max-width: 640px) {
@@ -808,7 +813,7 @@ body {
 @media (min-width: 760px) {
   .mobile-dashboard { padding-top: 22px; padding-bottom: 118px; }
   .op-hero-section { padding: 22px; }
-  .op-tools { grid-template-columns: repeat(3, 1fr); }
+  .op-tools { grid-template-columns: repeat(2, 1fr); }
   .op-tools button { min-height: 100px; }
   .floating-new-trip { right: max(18px, calc((100vw - 760px)/2 + 18px)); }
 }

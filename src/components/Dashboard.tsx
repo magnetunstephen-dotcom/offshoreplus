@@ -231,11 +231,7 @@ export function Dashboard({
         </details>
 
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
-          <button onClick={onMyYear}><span className="action-icon">ÅR</span><strong>Mitt år</strong><small>Turer, feriepenger og prognose</small><ChevronRightIcon className="action-chevron" size={17} /></button>
           <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon className="action-chevron" size={17} /></button>
-          <button onClick={onAdditions}><span className="action-icon"><FlameIcon /></span><strong>Tillegg</strong><small>Overtid og ventetid</small><ChevronRightIcon className="action-chevron" size={17}/></button>
-          <button onClick={onCalendar}><span className="action-icon"><CalendarIcon /></span><strong>Kalender</strong><small>Turnus og eksport</small><ChevronRightIcon className="action-chevron" size={17}/></button>
-          <button onClick={onCv}><span className="action-icon">CV</span><strong>Profil & CV</strong><small>Lag profesjonell PDF</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onSettings}><span className="action-icon"><SettingsIcon /></span><strong>Innstillinger</strong><small>Lønn og oppsett</small><ChevronRightIcon className="action-chevron" size={17}/></button>
         </section>
 

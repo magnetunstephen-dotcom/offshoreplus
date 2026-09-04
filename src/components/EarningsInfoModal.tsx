@@ -28,27 +28,27 @@ export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
     <Modal onClose={onClose} labelledBy="earnings-info-title">
       <h2 id="earnings-info-title">Hva betyr tallene?</h2>
       <p>
-        <strong>Opptjent mot neste lønn</strong> tar årslønnen fra
-        tariff-/lønnstabellen, deler den på 12 og fordeler denne faste
-        månedslønnen over den planlagte 14-dagersperioden.
-        Telleren starter på 0 og når full estimert fastlønn når alle planlagte
-        arbeidstimer er gjennomført. Variable tillegg legges på fortløpende.
+        <strong>Dette er en fremdriftsmåler – ikke ekstra lønn per tur.</strong>
+        Den faste månedslønnen fordeles over de {trip.rotationOnDays * 12} planlagte
+        arbeidstimene på {trip.rotationOnDays}-dagersperioden. Når for eksempel
+        halvparten av timene er gjennomført, viser telleren halvparten av den
+        faste månedslønnen. Overtid, ventetid og andre tillegg legges til
+        fortløpende.
       </p>
 
       <div className="example-box">
-        <span>Eksempel med ditt oppsett</span>
-        <strong>{money(calculation.accruedNextPayoutGross)} brutto opptjent nå</strong>
-        <span>Fast månedslønn: {money(calculation.regularMonthlyGross)}</span>
-        <span>Tillegg opptjent på aktiv tur: {money(calculation.activeExtrasGross)}</span>
-        {usesTable && <span>Tabelltrekk {trip.taxTable || "–"}: {money(tableResult.tax ?? 0)}</span>}
-        <strong>≈ {money(displayedNet)} estimert netto opptjent</strong>
+        <strong className="example-title">Beregnet akkurat nå</strong>
+        <div className="example-row"><span>Opptjent brutto</span><b>{money(calculation.accruedNextPayoutGross)}</b></div>
+        <div className="example-row"><span>Fast månedslønn</span><b>{money(calculation.regularMonthlyGross)}</b></div>
+        <div className="example-row"><span>Tillegg på aktiv tur</span><b>{money(calculation.activeExtrasGross)}</b></div>
+        {usesTable && <div className="example-row"><span>Estimert tabelltrekk {trip.taxTable || "–"}</span><b>− {money(tableResult.tax ?? 0)}</b></div>}
+        <div className="example-total"><span>Estimert opptjent netto</span><strong>ca. {money(displayedNet)}</strong></div>
       </div>
 
       <p className="muted small-copy">{usesTable ? `Trekkpliktig lønn slås opp i Skatteetatens månedstabell ${trip.taxTable || "–"} for 2026.` : `Fastlønn og trekkpliktige tillegg bruker ${trip.taxRate}% fra prosentkortet.`} Trekkfrie refusjoner legges til etterpå. Feriepenger, halv skatt og andre lønnstrekk kan gi avvik.</p>
 
       <p className="muted small-copy">
-        OffshorePlus er en motivasjons- og estimatkalkulator. Kontroller alltid
-        lønnsslippen og gjeldende avtale.
+        Beløpene er estimater. Kontroller alltid lønnsslippen og gjeldende avtale.
       </p>
       <button className="primary full-width" onClick={onClose}>
         Skjønner
