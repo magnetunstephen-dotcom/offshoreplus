@@ -348,10 +348,10 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.textAlign = "center";
         context.fillStyle = "#fff";
         context.font = "900 34px sans-serif";
-        context.fillText(game.state === "ready" ? "DRONEVAKTA: NORDSJØEN" : "Vaktrunden er over", WIDTH / 2, 184);
+        context.fillText(game.state === "ready" ? "DRONEVAKTA" : "Vaktrunden er over", WIDTH / 2, 184);
         context.font = "600 18px sans-serif";
         context.fillStyle = "#b8d0d6";
-        context.fillText(game.state === "ready" ? "Patruljer feltet og land rolig på helidekkene" : `Du landet på ${game.score} ${game.score === 1 ? "installasjon" : "installasjoner"}`, WIDTH / 2, 222);
+        context.fillText(game.state === "ready" ? "Patruljer feltet og unngå de russiske dronene" : `Du landet på ${game.score} ${game.score === 1 ? "installasjon" : "installasjoner"}`, WIDTH / 2, 222);
         context.fillStyle = "#20c98b";
         context.font = "800 17px sans-serif";
         context.fillText(game.state === "ready" ? "TRYKK FOR Å STARTE VAKTRUNDEN" : "TRYKK FOR Å PRØVE IGJEN", WIDTH / 2, 282);
@@ -416,13 +416,13 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   return <Modal onClose={onClose} labelledBy="rig-runner-title" className="game-modal">
     <div ref={gameAreaRef} className="game-fullscreen-area">
     <div className="game-header">
-      <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Dronevakta: Nordsjøen</h2></div>
+      <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Dronevakta</h2></div>
       <div className="game-score"><span>Poeng <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
       <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
     <div className="game-layout">
       <div className="game-play-column">
-        <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="rig-runner-canvas" onPointerDown={lift} aria-label="Dronevakta: Nordsjøen-spill" />
+        <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="rig-runner-canvas" onPointerDown={lift} aria-label="Dronevakta-spill" />
         <div className="game-controls">
           <button onPointerDown={(event) => { event.preventDefault(); lift(); }}>↑ Løft helikopteret</button>
           <p>Trykk på skjermen eller bruk mellomrom. Land mykt på den grønne H-en og unngå de russiske dronene.</p>
