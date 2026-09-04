@@ -3,7 +3,7 @@ import { Modal } from "./Modal";
 
 type GameState = "ready" | "running" | "over";
 type Rig = { x: number; padY: number; scored: boolean; name: string; size: number };
-type Bird = { x: number; y: number; phase: number };
+type Drone = { x: number; y: number; phase: number };
 
 const WIDTH = 720;
 const HEIGHT = 400;
@@ -31,7 +31,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
     distance: 0,
     rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1 }] as Rig[],
     nextRigIndex: 1,
-    birds: [{ x: 390, y: 135, phase: 0 }] as Bird[],
+    drones: [{ x: 390, y: 135, phase: 0 }] as Drone[],
     lastTime: 0,
   });
   const [state, setState] = useState<GameState>("ready");
@@ -47,7 +47,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
       distance: 0,
       rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1 }],
       nextRigIndex: 1,
-      birds: [{ x: 390, y: 135, phase: 0 }],
+      drones: [{ x: 390, y: 135, phase: 0 }],
       lastTime: performance.now(),
     };
     setScore(0);
@@ -162,11 +162,17 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
       context.fillStyle = "#06121d";
       context.fillRect(0, SEA_Y + 7, WIDTH, HEIGHT - SEA_Y);
       game.rigs.forEach(drawRig);
-      game.birds.forEach(bird => {
-        const bob = Math.sin(game.distance / 35 + bird.phase) * 8;
-        context.strokeStyle = "#f4f5ee";
-        context.lineWidth = 4;
-        context.beginPath(); context.arc(bird.x - 7, bird.y + bob, 9, Math.PI * 1.1, Math.PI * 1.9); context.arc(bird.x + 10, bird.y + bob, 9, Math.PI * 1.1, Math.PI * 1.9); context.stroke();
+      game.drones.forEach(drone => {
+        const bob = Math.sin(game.distance / 35 + drone.phase) * 7;
+        const y = drone.y + bob;
+        context.strokeStyle = "#d7e9e5";
+        context.fillStyle = "#243846";
+        context.lineWidth = 3;
+        context.beginPath(); context.moveTo(drone.x - 20, y - 7); context.lineTo(drone.x + 20, y + 7); context.moveTo(drone.x + 20, y - 7); context.lineTo(drone.x - 20, y + 7); context.stroke();
+        context.fillRect(drone.x - 11, y - 6, 22, 12);
+        context.beginPath(); context.ellipse(drone.x - 20, y - 8, 10, 3, 0, 0, Math.PI * 2); context.ellipse(drone.x + 20, y - 8, 10, 3, 0, 0, Math.PI * 2); context.ellipse(drone.x - 20, y + 8, 10, 3, 0, 0, Math.PI * 2); context.ellipse(drone.x + 20, y + 8, 10, 3, 0, 0, Math.PI * 2); context.stroke();
+        context.fillStyle = "#f05252";
+        context.beginPath(); context.arc(drone.x, y + 1, 3, 0, Math.PI * 2); context.fill();
       });
       drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)));
       context.fillStyle = "rgba(3,18,27,.72)";
@@ -201,7 +207,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
         game.y += game.velocity * delta;
         game.distance += speed * delta;
         game.rigs.forEach(rig => { rig.x -= speed * delta; });
-        game.birds.forEach(bird => { bird.x -= speed * delta; });
+        game.drones.forEach(drone => { drone.x -= speed * delta; });
 
         const lastRig = game.rigs[game.rigs.length - 1];
         if (lastRig.x < 390) {
@@ -209,10 +215,10 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
           game.nextRigIndex += 1;
         }
         game.rigs = game.rigs.filter(rig => rig.x > -180);
-        if (!game.birds.length || game.birds[game.birds.length - 1].x < 470) {
-          game.birds.push({ x: 760 + Math.random() * 180, y: 95 + Math.random() * 125, phase: Math.random() * 6 });
+        if (!game.drones.length || game.drones[game.drones.length - 1].x < 470) {
+          game.drones.push({ x: 760 + Math.random() * 180, y: 95 + Math.random() * 125, phase: Math.random() * 6 });
         }
-        game.birds = game.birds.filter(bird => bird.x > -40);
+        game.drones = game.drones.filter(drone => drone.x > -40);
 
         const heliBottom = game.y + 21;
         for (const rig of game.rigs) {
@@ -232,8 +238,8 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
             } else if (!rig.scored) finish();
           }
         }
-        const birdHit = game.birds.some(bird => Math.abs(bird.x - 112) < 30 && Math.abs((bird.y + Math.sin(game.distance / 35 + bird.phase) * 8) - game.y) < 22);
-        if (birdHit || game.y < 42 || heliBottom > SEA_Y + 3) finish();
+        const droneHit = game.drones.some(drone => Math.abs(drone.x - 112) < 34 && Math.abs((drone.y + Math.sin(game.distance / 35 + drone.phase) * 7) - game.y) < 24);
+        if (droneHit || game.y < 42 || heliBottom > SEA_Y + 3) finish();
       }
       draw();
       frameRef.current = requestAnimationFrame(loop);
@@ -251,7 +257,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
     <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="rig-runner-canvas" onPointerDown={lift} aria-label="Rig Runner-spill" />
     <div className="game-controls">
       <button onPointerDown={(event) => { event.preventDefault(); lift(); }}>↑ Løft helikopteret</button>
-      <p>Trykk på skjermen eller bruk mellomrom. Land mykt på den grønne H-en og unngå måkene.</p>
+      <p>Trykk på skjermen eller bruk mellomrom. Land mykt på den grønne H-en og unngå de russiske dronene.</p>
     </div>
     {state === "over" && <button className="primary full-width" onClick={reset}>Prøv igjen</button>}
   </Modal>;
