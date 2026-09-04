@@ -493,7 +493,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         <div><span className="eyebrow">TOPP 10</span><h3>Poengtavle</h3></div>
         {leaderboard.length ? <ol>{leaderboard.map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.score}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå. Bli den første!</p>}
         {scoreMessage && <p className="game-score-message" role="status">{scoreMessage}</p>}
-        {!user ? <button className="secondary full-width" onClick={onLogin}>Logg inn for poengtavlen</button> : <form className="game-name-form" onSubmit={saveNickname}><label htmlFor="game-name">Ditt spillnavn</label><div><input id="game-name" value={nicknameDraft} maxLength={20} placeholder="F.eks. Nordsjøpiloten" onChange={event => setNicknameDraft(event.target.value)} /><button type="submit">Lagre</button></div>{nameMessage && <small>{nameMessage}</small>}</form>}
+        {!user ? <><p className="leaderboard-login-help">Logg inn for å lagre toppscoren din og velge spillnavn.</p><button className="secondary full-width" onClick={onLogin}>Logg inn for å lagre toppscore</button></> : <form className="game-name-form" onSubmit={saveNickname}><label htmlFor="game-name">Ditt spillnavn</label><div><input id="game-name" value={nicknameDraft} maxLength={20} placeholder="F.eks. Nordsjøpiloten" onChange={event => setNicknameDraft(event.target.value)} /><button type="submit">Lagre</button></div>{nameMessage && <small>{nameMessage}</small>}</form>}
       </aside>
     </div>
     </div>

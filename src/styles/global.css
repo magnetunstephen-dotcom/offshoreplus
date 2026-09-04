@@ -449,6 +449,7 @@ input, select {
 .game-leaderboard li span { display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .game-leaderboard li span b { display:grid; place-items:center; width:20px; height:20px; flex:none; border-radius:50%; background:var(--panel); font-size:10px; }
 .leaderboard-empty { margin:auto 0; color:var(--muted); text-align:center; font-size:13px; line-height:1.5; }
+.leaderboard-login-help { margin:0; color:var(--muted); font-size:12px; line-height:1.45; text-align:center; }
 .game-score-message { margin:0; color:var(--muted); font-size:12px; line-height:1.45; }
 .game-name-form { display:grid; gap:6px; margin-top:auto; }
 .game-name-form label { font-size:12px; font-weight:800; }
@@ -690,6 +691,9 @@ body {
 .account-modal:has(.feedback-inbox) { width:min(620px,calc(100vw - 24px)); max-height:min(820px,calc(100vh - 24px)); overflow:auto; }
 .account-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .account-header h2 { margin:5px 0 18px; }
+.free-account-note { display:grid; gap:3px; margin:-6px 0 14px; padding:12px 14px; border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border)); border-radius:14px; background:color-mix(in srgb,var(--accent) 8%,var(--panel)); }
+.free-account-note strong { color:var(--accent); }
+.free-account-note span { color:var(--muted); font-size:12px; line-height:1.4; }
 .account-login,.account-signed-in { display:grid; gap:14px; }
 .account-tabs { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:4px; border-radius:13px; background:var(--panel-strong); }
 .account-tabs button { min-height:40px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:800; }
