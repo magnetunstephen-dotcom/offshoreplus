@@ -27,12 +27,13 @@ export function HelicopterIcon(props: IconProps) {
 
 export function OffshorePlusLogo({ size = 28, ...props }: IconProps) {
   return <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true" {...props}>
-    <path d="M7 34h34M11 34l4-14h18l4 14M13 27h22M18 20v14M30 20v14" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M14 20h20l-4-5H18l-4 5Z" fill="currentColor"/>
-    <path d="M27 15V8h4v7" fill="currentColor"/>
-    <path d="M29 8c-2-2.8.2-4.3 1.7-5.7-.1 2 2.3 2.8 1.7 5.7" fill="var(--accent)" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-    <path d="M39 7v9M34.5 11.5h9" stroke="var(--accent)" strokeWidth="3.4" strokeLinecap="round"/>
-    <path d="M9 39h30" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" opacity=".7"/>
+    <path d="M7 29h34M10 29v5h28v-5" stroke="currentColor" strokeWidth="3.3" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M13 34v7M18 34v7M29 34v7M34 34v7" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+    <path d="M12 29V20h10v9M15 20v-4h5v4" fill="currentColor"/>
+    <path d="M11 23 4 18M4 18h8" stroke="currentColor" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M34 29V13" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"/>
+    <path d="M34 3v10M29 8h10" stroke="var(--accent)" strokeWidth="4" strokeLinecap="round"/>
+    <path d="M8 43c3-2 5 2 8 0s5 2 8 0 5 2 8 0 5 2 8 0" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity=".75"/>
   </svg>;
 }
 export function FlameIcon(props: IconProps) {
