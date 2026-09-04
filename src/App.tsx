@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { AdditionsModal } from "./components/AdditionsModal";
 import { CalendarModal } from "./components/CalendarModal";
 import { Dashboard } from "./components/Dashboard";
@@ -7,21 +8,50 @@ import { SettingsModal } from "./components/SettingsModal";
 import { Wizard } from "./components/Wizard";
 import { CvModal } from "./components/CvModal";
 import { CertificatesModal } from "./components/CertificatesModal";
-import { loadTheme, loadTrip, saveTheme, saveTrip } from "./lib/storage";
+import { MyYearModal } from "./components/MyYearModal";
+import { AccountModal } from "./components/AccountModal";
+import { loadTheme, loadTrip, saveTheme, saveTrip, STORAGE_CHANGED_EVENT } from "./lib/storage";
+import { pushLocalData, syncAccount } from "./lib/cloud";
+import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
 import { MoonIcon, SunIcon } from "./components/Icons";
 
-type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | null;
+type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | null;
 
 export default function App() {
   const initialTrip = loadTrip();
   const [trip, setTrip] = useState<TripSetup | null>(() => initialTrip);
-  const [modal, setModal] = useState<ModalName>(() => (initialTrip ? "wizard" : null));
+  const [modal, setModal] = useState<ModalName>(null);
   const [theme, setTheme] = useState<"dark" | "light">(() => loadTheme());
+  const [user, setUser] = useState<User | null>(null);
+  const [syncState, setSyncState] = useState("Ikke synkronisert ennå");
+  const syncTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) { setSyncState("Logg inn for sikker synkronisering"); return; }
+    setSyncState("Synkroniserer …");
+    syncAccount(user).then(data => { setTrip(data.trip); setSyncState("Alt er synkronisert"); }).catch(() => setSyncState("Synkronisering feilet – lokal kopi er trygg"));
+    const handleChange = () => {
+      window.clearTimeout(syncTimer.current);
+      syncTimer.current = window.setTimeout(() => {
+        setSyncState("Synkroniserer …");
+        pushLocalData(user).then(() => setSyncState("Alt er synkronisert")).catch(() => setSyncState("Venter på nettforbindelse"));
+      }, 700);
+    };
+    window.addEventListener(STORAGE_CHANGED_EVENT, handleChange);
+    return () => { window.removeEventListener(STORAGE_CHANGED_EVENT, handleChange); window.clearTimeout(syncTimer.current); };
+  }, [user]);
 
   function storeTrip(nextTrip: TripSetup, closeModal = true) {
     setTrip(nextTrip);
@@ -47,9 +77,9 @@ export default function App() {
           <span className="brand-mark"><span className="brand-o">O</span><span className="brand-plus">+</span></span>
           <span>OffshorePlus</span>
         </div>
-        <button className="theme-button" onClick={toggleTheme} aria-label="Bytt tema">
+        <div className="topbar-actions"><button className={`account-button ${user ? "signed-in" : ""}`} onClick={() => setModal("account")}><span>{user ? (user.email?.[0] || "O").toUpperCase() : "○"}</span>{user ? "Min konto" : "Logg inn"}</button><button className="theme-button" onClick={toggleTheme} aria-label="Bytt tema">
           {theme === "dark" ? <SunIcon size={19} /> : <MoonIcon size={19} />}
-        </button>
+        </button></div>
       </header>
 
       {trip ? (
@@ -62,6 +92,7 @@ export default function App() {
           onEarningsInfo={() => setModal("earnings-info")}
           onCv={() => setModal("cv")}
           onCertificates={() => setModal("certificates")}
+          onMyYear={() => setModal("my-year")}
           onChangeEarningsView={changeEarningsView}
         />
       ) : (
@@ -105,6 +136,8 @@ export default function App() {
 
       {modal === "cv" && <CvModal onClose={() => setModal(null)} />}
       {modal === "certificates" && <CertificatesModal onClose={() => setModal(null)} />}
+      {modal === "my-year" && trip && <MyYearModal trip={trip} onClose={() => setModal(null)} />}
+      {modal === "account" && <AccountModal user={user} syncState={syncState} onClose={() => setModal(null)} />}
 
       {modal === "earnings-info" && trip && (
         <EarningsInfoModal trip={trip} onClose={() => setModal(null)} />

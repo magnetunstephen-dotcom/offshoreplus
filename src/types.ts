@@ -114,3 +114,31 @@ export interface Certificate {
   expiryDate: string;
   includeInCv: boolean;
 }
+
+export interface UserProfile {
+  name: string;
+  employer: string;
+  holidayPayRate: number;
+  defaultTaxRate: number;
+  rotationLabel: string;
+}
+
+export interface YearTrip {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  paymentMonth: string;
+  regularPay: number;
+  nightPay: number;
+  overtimePay: number;
+  waitingPay: number;
+  swingPay: number;
+  otherAdditions: number;
+  grossEarned: number;
+  expectedNet: number;
+  actualPaid?: number;
+  offshoreDays: number;
+  overtimeHours: number;
+  createdAt: string;
+}

@@ -25,6 +25,7 @@ interface DashboardProps {
   onEarningsInfo: () => void;
   onCv: () => void;
   onCertificates: () => void;
+  onMyYear: () => void;
   onChangeEarningsView: (view: "monthly-net" | "monthly-gross" | "trip") => void;
 }
 
@@ -69,6 +70,7 @@ export function Dashboard({
   onEarningsInfo,
   onCv,
   onCertificates,
+  onMyYear,
   onChangeEarningsView,
 }: DashboardProps) {
   const now = useClock();
@@ -227,6 +229,7 @@ export function Dashboard({
         </details>
 
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
+          <button onClick={onMyYear}><span className="action-icon">ÅR</span><strong>Mitt år</strong><small>Turer, feriepenger og prognose</small><ChevronRightIcon size={18} /></button>
           <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon size={18} /></button>
           <button onClick={onAdditions}><span className="action-icon"><FlameIcon /></span><strong>Tillegg</strong><small>Overtid og ventetid</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onCalendar}><span className="action-icon"><CalendarIcon /></span><strong>Kalender</strong><small>Turnus og eksport</small><ChevronRightIcon className="action-chevron" size={17}/></button>
@@ -247,6 +250,7 @@ export function Dashboard({
         <button className="active" aria-current="page"><HomeIcon/><span>Hjem</span></button>
         <button onClick={onAdditions}><FlameIcon/><span>Tillegg</span></button>
         <button onClick={onCalendar}><CalendarIcon/><span>Kalender</span></button>
+        <button onClick={onMyYear}><strong className="nav-cv-icon">ÅR</strong><span>Mitt år</span></button>
         <button onClick={onCv}><strong className="nav-cv-icon">CV</strong><span>Profil</span></button>
       </nav>
 

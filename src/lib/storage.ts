@@ -1,4 +1,4 @@
-import type { Certificate, CvProfile, TripSetup } from "../types";
+import type { Certificate, CvProfile, TripSetup, UserProfile, YearTrip } from "../types";
 import { salaryAgreements } from "../data/salaries";
 
 const TRIP_KEY = "offshoreplus.trip.v1";
@@ -33,6 +33,7 @@ export function loadTrip(): TripSetup | null {
 
 export function saveTrip(trip: TripSetup): void {
   localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
+  notifyStorageChange();
 }
 
 export function clearTrip(): void {
@@ -61,6 +62,7 @@ export function loadCvProfile(): CvProfile | null {
 
 export function saveCvProfile(profile: CvProfile): void {
   localStorage.setItem(CV_KEY, JSON.stringify(profile));
+  notifyStorageChange();
 }
 
 const CERTIFICATES_KEY = "offshoreplus.certificates.v1";
@@ -76,4 +78,57 @@ export function loadCertificates(): Certificate[] {
 
 export function saveCertificates(certificates: Certificate[]): void {
   localStorage.setItem(CERTIFICATES_KEY, JSON.stringify(certificates));
+  notifyStorageChange();
+}
+
+const PROFILE_KEY = "offshoreplus.profile.v1";
+const YEAR_TRIPS_KEY = "offshoreplus.year-trips.v1";
+
+export function loadUserProfile(): UserProfile {
+  const fallback: UserProfile = { name: "", employer: "", holidayPayRate: 12, defaultTaxRate: 36, rotationLabel: "2 / 4" };
+  try {
+    const value = localStorage.getItem(PROFILE_KEY);
+    return value ? { ...fallback, ...(JSON.parse(value) as UserProfile) } : fallback;
+  } catch { return fallback; }
+}
+
+export function saveUserProfile(profile: UserProfile): void {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  notifyStorageChange();
+}
+
+export function loadYearTrips(): YearTrip[] {
+  try {
+    const value = localStorage.getItem(YEAR_TRIPS_KEY);
+    return value ? (JSON.parse(value) as YearTrip[]) : [];
+  } catch { return []; }
+}
+
+export function saveYearTrips(trips: YearTrip[]): void {
+  localStorage.setItem(YEAR_TRIPS_KEY, JSON.stringify(trips));
+  notifyStorageChange();
+}
+
+export const STORAGE_CHANGED_EVENT = "offshoreplus:storage-changed";
+function notifyStorageChange() { window.dispatchEvent(new Event(STORAGE_CHANGED_EVENT)); }
+
+export interface AppCloudData {
+  trip: TripSetup | null;
+  profile: UserProfile;
+  yearTrips: YearTrip[];
+  cvProfile: CvProfile | null;
+  certificates: Certificate[];
+}
+
+export function exportCloudData(): AppCloudData {
+  return { trip: loadTrip(), profile: loadUserProfile(), yearTrips: loadYearTrips(), cvProfile: loadCvProfile(), certificates: loadCertificates() };
+}
+
+export function importCloudData(data: AppCloudData): void {
+  if (data.trip) localStorage.setItem(TRIP_KEY, JSON.stringify(data.trip));
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(data.profile));
+  localStorage.setItem(YEAR_TRIPS_KEY, JSON.stringify(data.yearTrips));
+  if (data.cvProfile) localStorage.setItem(CV_KEY, JSON.stringify(data.cvProfile));
+  localStorage.setItem(CERTIFICATES_KEY, JSON.stringify(data.certificates));
+  notifyStorageChange();
 }
