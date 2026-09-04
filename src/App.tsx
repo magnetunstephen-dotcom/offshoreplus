@@ -10,13 +10,14 @@ import { CvModal } from "./components/CvModal";
 import { CertificatesModal } from "./components/CertificatesModal";
 import { MyYearModal } from "./components/MyYearModal";
 import { AccountModal } from "./components/AccountModal";
+import { FeedbackModal } from "./components/FeedbackModal";
 import { loadTheme, loadTrip, saveTheme, saveTrip, STORAGE_CHANGED_EVENT } from "./lib/storage";
 import { pushLocalData, syncAccount } from "./lib/cloud";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
 import { MoonIcon, SunIcon } from "./components/Icons";
 
-type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | null;
+type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | null;
 
 export default function App() {
   const initialTrip = loadTrip();
@@ -106,6 +107,8 @@ export default function App() {
         </main>
       )}
 
+      <button className="feedback-bubble" onClick={() => setModal("feedback")} aria-label="Send tilbakemelding"><span>💬</span><b>Tips eller feil?</b></button>
+
       {modal === "wizard" && (
         <Wizard
           existingTrip={trip}
@@ -138,6 +141,7 @@ export default function App() {
       {modal === "certificates" && <CertificatesModal onClose={() => setModal(null)} />}
       {modal === "my-year" && trip && <MyYearModal trip={trip} onClose={() => setModal(null)} />}
       {modal === "account" && <AccountModal user={user} syncState={syncState} onClose={() => setModal(null)} />}
+      {modal === "feedback" && <FeedbackModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
 
       {modal === "earnings-info" && trip && (
         <EarningsInfoModal trip={trip} onClose={() => setModal(null)} />
