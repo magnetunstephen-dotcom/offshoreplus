@@ -371,20 +371,22 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         }
         game.drones = game.drones.filter(drone => drone.x > -40);
 
-        const heliBottom = game.y + 21;
+        // Hjulene er tegnet med nederkant 25 px under helikopterets sentrum.
+        // Bruk samme punkt i fysikken, så en synlig hjulkontakt faktisk teller.
+        const heliBottom = game.y + 25;
         for (const rig of game.rigs) {
           const overlapsPad = rig.x < 154 && rig.x + 88 * rig.size > 72;
-          const approachingPad = overlapsPad && heliBottom > rig.padY - 34 && heliBottom < rig.padY - 5;
+          const approachingPad = overlapsPad && heliBottom > rig.padY - 40 && heliBottom < rig.padY - 3;
           if (!rig.scored && approachingPad && game.velocity > 15) {
             game.velocity *= .91;
             game.y += (rig.padY - 21 - game.y) * .03;
           }
-          if (overlapsPad && heliBottom >= rig.padY - 5) {
-            if (!rig.scored && heliBottom <= rig.padY + 13 && game.velocity < 170) {
+          if (overlapsPad && heliBottom >= rig.padY - 3) {
+            if (!rig.scored && heliBottom <= rig.padY + 14 && game.velocity < 190) {
               rig.scored = true;
               game.score += 1;
               game.velocity = -170;
-              game.y = rig.padY - 25;
+              game.y = rig.padY - 29;
               setScore(game.score);
             } else if (!rig.scored) finish();
           }
