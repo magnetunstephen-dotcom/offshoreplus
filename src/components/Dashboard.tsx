@@ -1,7 +1,7 @@
 import { calculateTrip } from "../lib/calculation";
 import { formatDate, formatDateTime } from "../lib/date";
 import { holidaysDuringTrip } from "../lib/holidays";
-import { rotationLabel, rotationStatus } from "../lib/rotation";
+import { rotationLabel, rotationStatus, tripSetupForDate } from "../lib/rotation";
 import { useClock } from "../hooks/useClock";
 import { useMonthlyTableTax } from "../hooks/useMonthlyTableTax";
 import { salaryAgreements } from "../data/salaries";
@@ -76,7 +76,8 @@ export function Dashboard({
   onChangeEarningsView,
 }: DashboardProps) {
   const now = useClock();
-  const calculation = calculateTrip(trip, now);
+  const activeTrip = tripSetupForDate(trip, now);
+  const calculation = calculateTrip(activeTrip, now);
   const accruedTable = useMonthlyTableTax(trip.taxTable ?? "", calculation.accruedTaxableGross);
   const finalTable = useMonthlyTableTax(trip.taxTable ?? "", calculation.estimatedTaxableGross);
   const usesTable = trip.taxMethod === "table";
@@ -86,7 +87,7 @@ export function Dashboard({
   const finalNet = usesTable && finalTable.tax !== null
     ? calculation.estimatedTaxableGross - finalTable.tax + calculation.estimatedTaxFreeGross
     : calculation.estimatedMonthlyNet;
-  const holidays = holidaysDuringTrip(new Date(trip.paidStart));
+  const holidays = holidaysDuringTrip(new Date(activeTrip.paidStart));
   const status = rotationStatus(trip, now);
   const countdown = countdownParts(status.nextHelicopter, now);
   const progress = Math.min(100, Math.max(0, (status.phaseDay / status.phaseLength) * 100));

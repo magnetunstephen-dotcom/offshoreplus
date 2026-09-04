@@ -11,7 +11,8 @@ import { CertificatesModal } from "./components/CertificatesModal";
 import { MyYearModal } from "./components/MyYearModal";
 import { AccountModal } from "./components/AccountModal";
 import { FeedbackModal } from "./components/FeedbackModal";
-import { loadTheme, loadTrip, saveTheme, saveTrip, STORAGE_CHANGED_EVENT } from "./lib/storage";
+import { loadAutoDisabledYears, loadTheme, loadTrip, loadUserProfile, loadYearTrips, saveTheme, saveTrip, saveYearTrips, STORAGE_CHANGED_EVENT } from "./lib/storage";
+import { automaticYearTrips } from "./lib/year";
 import { pushLocalData, syncAccount } from "./lib/cloud";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
@@ -35,6 +36,18 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (!trip) return;
+    const archiveCompletedTrips = () => {
+      const existing = loadYearTrips();
+      const generated = automaticYearTrips(trip, loadUserProfile(), existing, loadAutoDisabledYears());
+      if (generated.length) saveYearTrips([...existing, ...generated]);
+    };
+    archiveCompletedTrips();
+    const timer = window.setInterval(archiveCompletedTrips, 60 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [trip]);
 
   useEffect(() => {
     if (!supabaseConfigured) return;

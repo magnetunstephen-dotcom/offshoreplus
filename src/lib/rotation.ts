@@ -71,6 +71,31 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
   };
 }
 
+export function tripSetupForDate(trip: TripSetup, now = new Date()): TripSetup {
+  const anchor = new Date(trip.heliDeparture);
+  const cycle = cycleDays(trip);
+  if (now < anchor) return trip;
+  let index = Math.floor((now.getTime() - anchor.getTime()) / (cycle * 86_400_000));
+  while (addDays(anchor, (index + 1) * cycle) <= now) index += 1;
+  while (index > 0 && addDays(anchor, index * cycle) > now) index -= 1;
+  const departure = addDays(anchor, index * cycle);
+  const paidOffset = new Date(trip.paidStart).getTime() - anchor.getTime();
+  const paidStart = new Date(departure.getTime() + paidOffset);
+  const tripEnd = addDays(paidStart, trip.rotationOnDays);
+  return {
+    ...trip,
+    heliDeparture: departure.toISOString(),
+    paidStart: paidStart.toISOString(),
+    additionSessions: (trip.additionSessions ?? []).filter(session => {
+      const sessionStart = new Date(session.start);
+      return sessionStart >= paidStart && sessionStart < tripEnd;
+    }),
+    overtimeHours: index === 0 ? trip.overtimeHours : 0,
+    swingCompHours: index === 0 ? trip.swingCompHours : 0,
+    customAdditions: index === 0 ? trip.customAdditions : (trip.customAdditions ?? []).filter(addition => addition.kind === "monthly-fixed"),
+  };
+}
+
 export function offshorePeriodsForYear(trip: TripSetup, year: number): RotationPeriod[] {
   const anchor = new Date(trip.heliDeparture);
   const yearStart = new Date(year, 0, 1);

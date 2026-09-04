@@ -84,6 +84,7 @@ export function saveCertificates(certificates: Certificate[]): void {
 
 const PROFILE_KEY = "offshoreplus.profile.v1";
 const YEAR_TRIPS_KEY = "offshoreplus.year-trips.v1";
+const AUTO_DISABLED_YEARS_KEY = "offshoreplus.auto-disabled-years.v1";
 
 export function loadUserProfile(): UserProfile {
   const fallback: UserProfile = { name: "", employer: "", holidayPayRate: 12, defaultTaxRate: 36, rotationLabel: "2 / 4" };
@@ -110,6 +111,16 @@ export function saveYearTrips(trips: YearTrip[]): void {
   notifyStorageChange();
 }
 
+export function loadAutoDisabledYears(): number[] {
+  try { return JSON.parse(localStorage.getItem(AUTO_DISABLED_YEARS_KEY) ?? "[]") as number[]; }
+  catch { return []; }
+}
+
+export function saveAutoDisabledYears(years: number[]): void {
+  localStorage.setItem(AUTO_DISABLED_YEARS_KEY, JSON.stringify([...new Set(years)]));
+  notifyStorageChange();
+}
+
 export const STORAGE_CHANGED_EVENT = "offshoreplus:storage-changed";
 function notifyStorageChange() { window.dispatchEvent(new Event(STORAGE_CHANGED_EVENT)); }
 
@@ -119,10 +130,11 @@ export interface AppCloudData {
   yearTrips: YearTrip[];
   cvProfile: CvProfile | null;
   certificates: Certificate[];
+  autoDisabledYears: number[];
 }
 
 export function exportCloudData(): AppCloudData {
-  return { trip: loadTrip(), profile: loadUserProfile(), yearTrips: loadYearTrips(), cvProfile: loadCvProfile(), certificates: loadCertificates() };
+  return { trip: loadTrip(), profile: loadUserProfile(), yearTrips: loadYearTrips(), cvProfile: loadCvProfile(), certificates: loadCertificates(), autoDisabledYears: loadAutoDisabledYears() };
 }
 
 export function importCloudData(data: AppCloudData): void {
@@ -131,5 +143,6 @@ export function importCloudData(data: AppCloudData): void {
   localStorage.setItem(YEAR_TRIPS_KEY, JSON.stringify(data.yearTrips));
   if (data.cvProfile) localStorage.setItem(CV_KEY, JSON.stringify(data.cvProfile));
   localStorage.setItem(CERTIFICATES_KEY, JSON.stringify(data.certificates));
+  localStorage.setItem(AUTO_DISABLED_YEARS_KEY, JSON.stringify(data.autoDisabledYears ?? []));
   notifyStorageChange();
 }

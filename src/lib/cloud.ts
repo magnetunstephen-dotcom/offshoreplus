@@ -13,6 +13,7 @@ function merge(local: AppCloudData, remote: AppCloudData): AppCloudData {
     yearTrips: [...trips.values()],
     cvProfile: local.cvProfile ?? remote.cvProfile,
     certificates: local.certificates.length ? local.certificates : remote.certificates,
+    autoDisabledYears: [...new Set([...(remote.autoDisabledYears ?? []), ...(local.autoDisabledYears ?? [])])],
   };
 }
 
