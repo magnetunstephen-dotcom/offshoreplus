@@ -9,9 +9,10 @@ type Rig = { x: number; padY: number; scored: boolean; name: string; size: numbe
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number };
 
-const WIDTH = 720;
-const HEIGHT = 400;
-const SEA_Y = 350;
+const WIDTH = 900;
+const HEIGHT = 480;
+const SEA_Y = 420;
+const HELI_X = 145;
 const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg"];
 const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean }> = {
   Ula: { kind: "jacket", flare: false }, Statfjord: { kind: "concrete", flare: true }, Skarv: { kind: "fpso", flare: true },
@@ -26,7 +27,7 @@ function createRig(x: number, index: number): Rig {
   const profile = PLATFORM_PROFILES[name];
   return {
     x,
-    padY: 225 + Math.random() * 78,
+    padY: 278 + Math.random() * 78,
     scored: false,
     name,
     size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.18 : .78 + Math.random() * .42,
@@ -38,9 +39,9 @@ function createStartingCourse() {
   const startIndex = Math.floor(Math.random() * PLATFORM_NAMES.length);
   const name = PLATFORM_NAMES[startIndex];
   return {
-    rigs: [{ x: 570, padY: 270, scored: false, name, size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.18 : 1, ...PLATFORM_PROFILES[name] }] as Rig[],
+    rigs: [{ x: 720, padY: 335, scored: false, name, size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.18 : 1, ...PLATFORM_PROFILES[name] }] as Rig[],
     nextRigIndex: startIndex + 1,
-    drones: [{ x: 470, y: 105 + Math.random() * 95, phase: Math.random() * 6 }] as Drone[],
+    drones: [{ x: 600, y: 120 + Math.random() * 120, phase: Math.random() * 6 }] as Drone[],
   };
 }
 
@@ -53,7 +54,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const initialCourseRef = useRef(createStartingCourse());
   const gameRef = useRef({
     state: "ready" as GameState,
-    y: 155,
+    y: 190,
     velocity: 0,
     score: 0,
     distance: 0,
@@ -127,7 +128,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     const startingCourse = createStartingCourse();
     gameRef.current = {
       state: "running",
-      y: 155,
+      y: 190,
       velocity: -80,
       score: 0,
       distance: 0,
@@ -176,7 +177,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     function drawHelicopter(y: number, rotation: number, rotorPhase: number) {
       if (!context) return;
       context.save();
-      context.translate(112, y);
+      context.translate(HELI_X, y);
       context.rotate(rotation);
       context.scale(-1, 1);
       context.strokeStyle = "#f7c948";
@@ -257,6 +258,16 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.font = `bold ${Math.max(13, 17 * size)}px sans-serif`;
       context.fillStyle = "#20c98b";
       context.fillText("H", x + 31 * size, y - 5);
+      // Arbeidslys, moduler og kran gir installasjonene en tydeligere offshore-silhuett.
+      context.fillStyle = "#ffd45c";
+      for (let light = 0; light < 3; light++) context.fillRect(x + (86 + light * 12) * size, y - 33 * size, 5 * size, 5 * size);
+      if (rig.kind === "jacket" || rig.kind === "concrete") {
+        context.strokeStyle = "#b9cbd0"; context.lineWidth = 3;
+        context.beginPath(); context.moveTo(x + 76 * size, y - 31 * size); context.lineTo(x + 25 * size, y - 70 * size); context.lineTo(x + 18 * size, y - 64 * size); context.stroke();
+      }
+      if (rig.kind === "fpso") {
+        context.fillStyle = "#8bd3e6"; context.fillRect(x + 82 * size, y - 28 * size, 31 * size, 8 * size);
+      }
       context.strokeStyle = "#d7e9e5";
       context.beginPath(); context.moveTo(x + 115 * size, y - 45 * size); context.lineTo(x + 132 * size, y - 95 * size); context.lineTo(x + 142 * size, y - 45 * size); context.stroke();
       if (rig.flare) {
@@ -327,23 +338,23 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       });
       drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4);
       context.fillStyle = "rgba(3,18,27,.72)";
-      context.fillRect(16, 15, 160, 48);
+      context.fillRect(16, 15, 188, 48);
       context.fillStyle = "#eaf8f3";
       context.font = "800 20px sans-serif";
-      context.fillText(`LANDINGER  ${game.score}`, 28, 46);
+      context.fillText(`DRONEVAKT  ${game.score}`, 28, 46);
       if (game.state !== "running") {
         context.fillStyle = "rgba(3,13,22,.72)";
         context.fillRect(0, 0, WIDTH, HEIGHT);
         context.textAlign = "center";
         context.fillStyle = "#fff";
         context.font = "900 34px sans-serif";
-        context.fillText(game.state === "ready" ? "RIG RUNNER" : "Turen er over", WIDTH / 2, 154);
+        context.fillText(game.state === "ready" ? "DRONEVAKTA: NORDSJØEN" : "Vaktrunden er over", WIDTH / 2, 184);
         context.font = "600 18px sans-serif";
         context.fillStyle = "#b8d0d6";
-        context.fillText(game.state === "ready" ? "Land rolig på helidekkene" : `Du landet på ${game.score} ${game.score === 1 ? "rigg" : "rigger"}`, WIDTH / 2, 190);
+        context.fillText(game.state === "ready" ? "Patruljer feltet og land rolig på helidekkene" : `Du landet på ${game.score} ${game.score === 1 ? "installasjon" : "installasjoner"}`, WIDTH / 2, 222);
         context.fillStyle = "#20c98b";
         context.font = "800 17px sans-serif";
-        context.fillText(game.state === "ready" ? "TRYKK FOR Å STARTE" : "TRYKK FOR Å PRØVE IGJEN", WIDTH / 2, 242);
+        context.fillText(game.state === "ready" ? "TRYKK FOR Å STARTE VAKTRUNDEN" : "TRYKK FOR Å PRØVE IGJEN", WIDTH / 2, 282);
         context.textAlign = "start";
       }
     }
@@ -361,13 +372,13 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         game.drones.forEach(drone => { drone.x -= speed * delta; });
 
         const lastRig = game.rigs[game.rigs.length - 1];
-        if (lastRig.x < 390) {
-          game.rigs.push(createRig(lastRig.x + 395 + Math.random() * 100, game.nextRigIndex));
+        if (lastRig.x < 510) {
+          game.rigs.push(createRig(lastRig.x + 475 + Math.random() * 120, game.nextRigIndex));
           game.nextRigIndex += 1;
         }
         game.rigs = game.rigs.filter(rig => rig.x > -180);
         if (!game.drones.length || game.drones[game.drones.length - 1].x < 470) {
-          game.drones.push({ x: 760 + Math.random() * 180, y: 95 + Math.random() * 125, phase: Math.random() * 6 });
+          game.drones.push({ x: WIDTH + 40 + Math.random() * 220, y: 105 + Math.random() * 185, phase: Math.random() * 6 });
         }
         game.drones = game.drones.filter(drone => drone.x > -40);
 
@@ -375,7 +386,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         // Bruk samme punkt i fysikken, så en synlig hjulkontakt faktisk teller.
         const heliBottom = game.y + 25;
         for (const rig of game.rigs) {
-          const overlapsPad = rig.x < 154 && rig.x + 88 * rig.size > 72;
+          const overlapsPad = rig.x < HELI_X + 42 && rig.x + 88 * rig.size > HELI_X - 40;
           const approachingPad = overlapsPad && heliBottom > rig.padY - 40 && heliBottom < rig.padY - 3;
           if (!rig.scored && approachingPad && game.velocity > 15) {
             game.velocity *= .91;
@@ -391,8 +402,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
             } else if (!rig.scored) finish();
           }
         }
-        const droneHit = game.drones.some(drone => Math.abs(drone.x - 112) < 34 && Math.abs((drone.y + Math.sin(game.distance / 35 + drone.phase) * 7) - game.y) < 24);
-        const flareHit = game.rigs.some(rig => rig.flare && Math.abs((rig.x + 205 * rig.size) - 112) < 27 && Math.abs((rig.padY - 104 * rig.size) - game.y) < 38);
+        const droneHit = game.drones.some(drone => Math.abs(drone.x - HELI_X) < 34 && Math.abs((drone.y + Math.sin(game.distance / 35 + drone.phase) * 7) - game.y) < 24);
+        const flareHit = game.rigs.some(rig => rig.flare && Math.abs((rig.x + 205 * rig.size) - HELI_X) < 27 && Math.abs((rig.padY - 104 * rig.size) - game.y) < 38);
         if (droneHit || flareHit || game.y < 30 || heliBottom > SEA_Y + 3) finish();
       }
       draw();
@@ -405,13 +416,13 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   return <Modal onClose={onClose} labelledBy="rig-runner-title" className="game-modal">
     <div ref={gameAreaRef} className="game-fullscreen-area">
     <div className="game-header">
-      <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Rig Runner</h2></div>
+      <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Dronevakta: Nordsjøen</h2></div>
       <div className="game-score"><span>Poeng <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
       <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
     <div className="game-layout">
       <div className="game-play-column">
-        <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="rig-runner-canvas" onPointerDown={lift} aria-label="Rig Runner-spill" />
+        <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="rig-runner-canvas" onPointerDown={lift} aria-label="Dronevakta: Nordsjøen-spill" />
         <div className="game-controls">
           <button onPointerDown={(event) => { event.preventDefault(); lift(); }}>↑ Løft helikopteret</button>
           <p>Trykk på skjermen eller bruk mellomrom. Land mykt på den grønne H-en og unngå de russiske dronene.</p>
