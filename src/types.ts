@@ -1,4 +1,4 @@
-export type AgreementId = "safe2025" | "sokkel4a2025";
+export type AgreementId = "safe2025" | "sokkel4a2025" | "custom";
 export type ShiftPattern = "day" | "night" | "night-day" | "day-night";
 export type LiveAdditionType = "overtime" | "waiting";
 export type EarningsView = "monthly-net" | "monthly-gross" | "trip";
@@ -59,6 +59,8 @@ export interface TripSetup {
   nightAllowance: number;
   overtimeHours: number;
   overtimeRate: number;
+  customMonthlySalary?: number;
+  holidayPayRate?: number;
   rotationOnDays: number;
   rotationOffDays: number;
   additionSessions: LiveAdditionSession[];

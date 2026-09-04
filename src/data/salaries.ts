@@ -1,6 +1,14 @@
 import type { AgreementId, SalaryAgreement } from "../types";
 
 export const salaryAgreements: Record<AgreementId, SalaryAgreement> = {
+  custom: {
+    id: "custom",
+    name: "Egendefinert lønn",
+    description: "For deg som ikke finner tariffen din. Legg inn satsene fra arbeidsavtalen eller lønnsslippen.",
+    steps: ["Egen sats"],
+    groups: { Egen: { hourly: [0], overtime: [0], monthly: [0] } },
+    notes: ["Bruk avtalte bruttosatser. OffshorePlus beregner ikke en ukjent tariff automatisk."],
+  },
   sokkel4a2025: {
     id: "sokkel4a2025",
     name: "Sokkelavtalen 4A",

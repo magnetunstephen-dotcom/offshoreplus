@@ -16,6 +16,9 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
   const [taxTable, setTaxTable] = useState(trip.taxTable ?? "");
   const [rotationOnDays, setRotationOnDays] = useState(trip.rotationOnDays);
   const [rotationOffDays, setRotationOffDays] = useState(trip.rotationOffDays);
+  const [overtimeRate, setOvertimeRate] = useState(trip.overtimeRate);
+  const [monthlySalary, setMonthlySalary] = useState(trip.customMonthlySalary ?? 0);
+  const [holidayPayRate, setHolidayPayRate] = useState(trip.holidayPayRate ?? 12);
 
   return (
     <Modal onClose={onClose} labelledBy="settings-title">
@@ -35,6 +38,9 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
             onChange={(event) => setHourlyRate(Number(event.target.value))}
           />
         </label>
+        {trip.agreementId === "custom" && <label>Fast månedslønn<input type="number" min={0} step={100} value={monthlySalary} onChange={event => setMonthlySalary(Number(event.target.value))} /></label>}
+        <label>Overtidssats per time<input type="number" min={0} step={0.01} value={overtimeRate} onChange={event => setOvertimeRate(Number(event.target.value))} /></label>
+        <label>Feriepengesats<input type="number" min={0} max={20} step={0.1} value={holidayPayRate} onChange={event => setHolidayPayRate(Number(event.target.value))} /><small className="field-help">Vises som opptjening og legges ikke til neste lønn.</small></label>
         <label>
           Natt-tillegg per time
           <input
@@ -72,7 +78,7 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
         <button className="secondary" onClick={onClose}>Lukk</button>
         <button
           className="primary"
-          onClick={() => onSave({ ...trip, hourlyRate, nightAllowance, taxMethod, taxTable, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
+          onClick={() => onSave({ ...trip, hourlyRate, overtimeRate, customMonthlySalary: trip.agreementId === "custom" ? monthlySalary : undefined, holidayPayRate, nightAllowance, taxMethod, taxTable, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
         >
           Lagre
         </button>

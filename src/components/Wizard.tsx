@@ -57,6 +57,10 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
   const [rotation, setRotation] = useState(existingTrip ? `${existingTrip.rotationOnDays}-${existingTrip.rotationOffDays}` : "14-28");
   const [customOnDays, setCustomOnDays] = useState(existingTrip?.rotationOnDays ?? 14);
   const [customOffDays, setCustomOffDays] = useState(existingTrip?.rotationOffDays ?? 28);
+  const [customMonthlySalary, setCustomMonthlySalary] = useState(existingTrip?.customMonthlySalary ?? 60000);
+  const [customHourlyRate, setCustomHourlyRate] = useState(existingTrip?.agreementId === "custom" ? existingTrip.hourlyRate : 450);
+  const [customOvertimeRate, setCustomOvertimeRate] = useState(existingTrip?.agreementId === "custom" ? existingTrip.overtimeRate : 750);
+  const [holidayPayRate, setHolidayPayRate] = useState(existingTrip?.holidayPayRate ?? 12);
 
   const holidays = useMemo(
     () => (paidStart ? holidaysDuringTrip(new Date(paidStart)) : []),
@@ -76,8 +80,8 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
   }
 
   function complete() {
-    const hourlyRate = agreement.groups[group].hourly[stepIndex];
-    const overtimeRate = agreement.groups[group].overtime[stepIndex];
+    const hourlyRate = agreementId === "custom" ? customHourlyRate : agreement.groups[group].hourly[stepIndex];
+    const overtimeRate = agreementId === "custom" ? customOvertimeRate : agreement.groups[group].overtime[stepIndex];
     const [presetOn, presetOff] = rotation.split("-").map(Number);
     const rotationOnDays = rotation === "custom" ? customOnDays : presetOn;
     const rotationOffDays = rotation === "custom" ? customOffDays : presetOff;
@@ -95,6 +99,8 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       nightAllowance,
       overtimeHours: existingTrip?.overtimeHours ?? 0,
       overtimeRate,
+      customMonthlySalary: agreementId === "custom" ? customMonthlySalary : undefined,
+      holidayPayRate,
       rotationOnDays,
       rotationOffDays,
       additionSessions: existingTrip?.additionSessions ?? [],
@@ -232,6 +238,14 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
             </label>
           </div>
           {agreement.groupDescriptions?.[group] && <p className="muted agreement-group-help"><strong>Gruppe {group}:</strong> {agreement.groupDescriptions[group]}</p>}
+          {agreementId === "custom" && <div className="custom-salary-box">
+            <div className="form-grid">
+              <label>Fast månedslønn<input type="number" min={0} step={100} value={customMonthlySalary} onChange={event => setCustomMonthlySalary(Number(event.target.value))} /><small className="field-help">Brutto før tillegg</small></label>
+              <label>Timelønn<input type="number" min={0} step={0.01} value={customHourlyRate} onChange={event => setCustomHourlyRate(Number(event.target.value))} /></label>
+              <label>Overtid per time<input type="number" min={0} step={0.01} value={customOvertimeRate} onChange={event => setCustomOvertimeRate(Number(event.target.value))} /></label>
+              <label>Feriepenger<input type="number" min={0} max={20} step={0.1} value={holidayPayRate} onChange={event => setHolidayPayRate(Number(event.target.value))} /><small className="field-help">Vanligvis 10,2 % eller 12 %</small></label>
+            </div>
+          </div>}
           {agreement.notes && <div className="info-box compact-info agreement-notes">{agreement.notes.map(note => <span key={note}>{note}</span>)}</div>}
         </div>
       )}

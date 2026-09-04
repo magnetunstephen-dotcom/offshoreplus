@@ -14,11 +14,12 @@ export function loadTrip(): TripSetup | null {
       ...parsed,
       // Oppdater lagrede turer når lønnstabellen endres. Gruppe og trinn er
       // fasiten; brukeren skal ikke måtte starte turen på nytt.
-      hourlyRate: salaryGroup?.hourly[parsed.stepIndex] ?? parsed.hourlyRate,
+      hourlyRate: parsed.agreementId === "custom" ? parsed.hourlyRate : salaryGroup?.hourly[parsed.stepIndex] ?? parsed.hourlyRate,
       overtimeHours: parsed.overtimeHours ?? 0,
       taxMethod: parsed.taxMethod ?? "percentage",
       taxTable: parsed.taxTable ?? "",
-      overtimeRate: salaryGroup?.overtime[parsed.stepIndex] ?? parsed.overtimeRate ?? 0,
+      overtimeRate: parsed.agreementId === "custom" ? parsed.overtimeRate : salaryGroup?.overtime[parsed.stepIndex] ?? parsed.overtimeRate ?? 0,
+      holidayPayRate: parsed.holidayPayRate ?? 12,
       rotationOnDays: parsed.rotationOnDays ?? 14,
       rotationOffDays: parsed.rotationOffDays ?? 28,
       additionSessions: parsed.additionSessions ?? [],

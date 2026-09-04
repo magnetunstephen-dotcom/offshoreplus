@@ -45,6 +45,10 @@ export interface TripCalculation {
   activeExtrasNet: number;
   accruedNextPayoutGross: number;
   accruedNextPayoutNet: number;
+  accruedHolidayPay: number;
+  estimatedHolidayPay: number;
+  tripHolidayPay: number;
+  holidayPayRate: number;
   accruedRegularGross: number;
   accruedRegularNet: number;
   usesAgreementMonthlySalary: boolean;
@@ -241,9 +245,12 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   // Bruk avtalens oppgitte månedslønn når den finnes. Andre avtaler bruker
   // normalisert full tur som reserve. Tillegg på aktiv tur annualiseres aldri.
   const regularFullTripGross = totalPaidHours * setup.hourlyRate + totalNightHours * setup.nightAllowance;
-  const agreementMonthlyGross = salaryAgreements[setup.agreementId]
-    ?.groups[setup.group]?.monthly?.[setup.stepIndex];
-  const regularMonthlyGross = agreementMonthlyGross ?? (regularFullTripGross * 8.7) / 12;
+  const agreementMonthlyGross = setup.agreementId === "custom"
+    ? setup.customMonthlySalary
+    : salaryAgreements[setup.agreementId]?.groups[setup.group]?.monthly?.[setup.stepIndex];
+  const regularMonthlyGross = agreementMonthlyGross && agreementMonthlyGross > 0
+    ? agreementMonthlyGross
+    : (regularFullTripGross * tripsPerYear) / 12;
   const regularMonthlyNet = regularMonthlyGross * (1 - setup.taxRate / 100);
   const tripCustomExtrasPay = customAdditionResults
     .filter(result => !result.isMonthlyFixed)
@@ -289,6 +296,11 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const accruedTaxFreeGross = taxFreeMonthlyFixedGross * regularEarnedRatio + taxFreeTripCustomGross;
   const estimatedTaxableGross = regularMonthlyGross + taxableMonthlyFixedGross + liveTaxedExtrasGross + taxableTripCustomGross;
   const estimatedTaxFreeGross = taxFreeMonthlyFixedGross + taxFreeTripCustomGross;
+  const holidayPayRate = setup.holidayPayRate ?? 12;
+  // Trekkfrie refusjoner skal ikke inngå i det estimerte feriepengegrunnlaget.
+  const accruedHolidayPay = accruedTaxableGross * holidayPayRate / 100;
+  const estimatedHolidayPay = estimatedTaxableGross * holidayPayRate / 100;
+  const tripHolidayPay = (gross - taxFreeTripCustomGross) * holidayPayRate / 100;
 
   const activeSession = sessions.find((session) => !session.end);
   const scheduled = currentScheduledStatus(setup, now);
@@ -329,9 +341,13 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     activeExtrasNet,
     accruedNextPayoutGross,
     accruedNextPayoutNet,
+    accruedHolidayPay,
+    estimatedHolidayPay,
+    tripHolidayPay,
+    holidayPayRate,
     accruedRegularGross,
     accruedRegularNet,
-    usesAgreementMonthlySalary: agreementMonthlyGross !== undefined,
+    usesAgreementMonthlySalary: Boolean(agreementMonthlyGross && agreementMonthlyGross > 0),
     accruedTaxableGross,
     accruedTaxFreeGross,
     estimatedTaxableGross,
