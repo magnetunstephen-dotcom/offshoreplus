@@ -83,17 +83,73 @@ create table if not exists public.game_scores (
 alter table public.game_scores enable row level security;
 revoke all on public.game_scores from anon, authenticated;
 grant select on public.game_scores to anon, authenticated;
-grant insert, update on public.game_scores to authenticated;
 
 create policy "Everyone can read the Rig Runner leaderboard"
 on public.game_scores for select
 using (true);
 
-create policy "Players can add their own Rig Runner score"
-on public.game_scores for insert to authenticated
-with check ((select auth.uid()) = user_id);
+-- Spillresultater kan ikke skrives direkte fra nettleseren. En kortlivet
+-- serverregistrert spilløkt brukes til å avvise umulige poengsummer.
+create table if not exists public.game_runs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  final_score integer
+);
 
-create policy "Players can update their own Rig Runner score"
-on public.game_scores for update to authenticated
-using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+alter table public.game_runs enable row level security;
+revoke all on public.game_runs from anon, authenticated;
+
+create or replace function public.set_rig_runner_name(new_name text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare clean_name text := trim(regexp_replace(new_name, '\s+', ' ', 'g'));
+begin
+  if auth.uid() is null or char_length(clean_name) not between 3 and 20 then
+    raise exception 'Ugyldig spillnavn';
+  end if;
+  insert into public.game_scores(user_id, display_name, score)
+  values (auth.uid(), clean_name, 0)
+  on conflict (user_id) do update set display_name = excluded.display_name;
+end;
+$$;
+
+create or replace function public.start_rig_runner_run()
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare new_id uuid;
+begin
+  if auth.uid() is null or not exists (select 1 from public.game_scores where user_id = auth.uid()) then
+    raise exception 'Spillnavn må lagres først';
+  end if;
+  insert into public.game_runs(user_id) values (auth.uid()) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+create or replace function public.finish_rig_runner_run(p_run_id uuid, p_final_score integer)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare run_row public.game_runs%rowtype;
+declare elapsed_seconds numeric;
+begin
+  select * into run_row from public.game_runs
+  where id = p_run_id and user_id = auth.uid() and finished_at is null for update;
+  if not found then return false; end if;
+  elapsed_seconds := extract(epoch from (now() - run_row.started_at));
+  -- Et nytt poeng krever flere sekunders flyging. Litt slingringsmonn gis for tregt nett.
+  if p_final_score < 0 or p_final_score > 100 or p_final_score > floor(elapsed_seconds / 1.2) + 2 then
+    update public.game_runs set finished_at = now(), final_score = null where id = p_run_id;
+    return false;
+  end if;
+  update public.game_runs set finished_at = now(), final_score = p_final_score where id = p_run_id;
+  update public.game_scores set score = greatest(score, p_final_score), updated_at = now()
+  where user_id = auth.uid();
+  return true;
+end;
+$$;
+
+revoke all on function public.set_rig_runner_name(text) from public, anon;
+revoke all on function public.start_rig_runner_run() from public, anon;
+revoke all on function public.finish_rig_runner_run(uuid, integer) from public, anon;
+grant execute on function public.set_rig_runner_name(text) to authenticated;
+grant execute on function public.start_rig_runner_run() to authenticated;
+grant execute on function public.finish_rig_runner_run(uuid, integer) to authenticated;

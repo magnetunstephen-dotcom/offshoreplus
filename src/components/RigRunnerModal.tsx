@@ -27,6 +27,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | undefined>(undefined);
+  const gameRunRef = useRef<string | null>(null);
   const userRef = useRef(user);
   const gameRef = useRef({
     state: "ready" as GameState,
@@ -73,8 +74,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     localStorage.setItem("offshoreplus-game-name", clean);
     setNameMessage("Spillnavnet er lagret.");
     if (user) {
-      const { data } = await supabase.from("game_scores").select("score").eq("user_id", user.id).maybeSingle();
-      await supabase.from("game_scores").upsert({ user_id: user.id, display_name: clean, score: Math.max(best, data?.score || 0), updated_at: new Date().toISOString() });
+      const { error } = await supabase.rpc("set_rig_runner_name", { new_name: clean });
+      if (error) { setNameMessage("Kunne ikke lagre spillnavnet akkurat nå."); return; }
       loadLeaderboard();
     }
   }
@@ -82,11 +83,18 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   async function submitScore(nextScore: number) {
     const currentUser = userRef.current;
     const currentName = nicknameRef.current.trim();
-    if (!currentUser || currentName.length < 3 || !supabaseConfigured) return;
-    const { data } = await supabase.from("game_scores").select("score").eq("user_id", currentUser.id).maybeSingle();
-    if ((data?.score || 0) >= nextScore) return;
-    await supabase.from("game_scores").upsert({ user_id: currentUser.id, display_name: currentName, score: nextScore, updated_at: new Date().toISOString() });
+    const runId = gameRunRef.current;
+    gameRunRef.current = null;
+    if (!currentUser || !runId || currentName.length < 3 || !supabaseConfigured) return;
+    await supabase.rpc("finish_rig_runner_run", { p_run_id: runId, p_final_score: nextScore });
     loadLeaderboard();
+  }
+
+  async function startVerifiedRun() {
+    gameRunRef.current = null;
+    if (!userRef.current || nicknameRef.current.trim().length < 3 || !supabaseConfigured) return;
+    const { data } = await supabase.rpc("start_rig_runner_run");
+    if (typeof data === "string") gameRunRef.current = data;
   }
 
   async function toggleFullscreen() {
@@ -95,6 +103,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }
 
   function reset() {
+    startVerifiedRun();
     gameRef.current = {
       state: "running",
       y: 155,
