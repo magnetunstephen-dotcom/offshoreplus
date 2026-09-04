@@ -44,7 +44,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
   function lift() {
     const game = gameRef.current;
     if (game.state !== "running") { reset(); return; }
-    game.velocity = Math.max(-245, game.velocity - 145);
+    game.velocity = Math.max(-220, game.velocity - 125);
   }
 
   useEffect(() => {
@@ -80,6 +80,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
       context.save();
       context.translate(112, y);
       context.rotate(rotation);
+      context.scale(-1, 1);
       context.strokeStyle = "#eaf8f3";
       context.fillStyle = "#20c98b";
       context.lineWidth = 4;
@@ -176,7 +177,7 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
       game.lastTime = time;
       if (game.state === "running") {
         const speed = 115 + Math.min(75, game.score * 7);
-        game.velocity += 420 * delta;
+        game.velocity += 365 * delta;
         game.y += game.velocity * delta;
         game.distance += speed * delta;
         game.rigs.forEach(rig => { rig.x -= speed * delta; });
@@ -192,9 +193,14 @@ export function RigRunnerModal({ onClose }: { onClose: () => void }) {
 
         const heliBottom = game.y + 21;
         for (const rig of game.rigs) {
-          const overlapsPad = rig.x < 140 && rig.x + 75 > 82;
+          const overlapsPad = rig.x < 154 && rig.x + 88 > 72;
+          const approachingPad = overlapsPad && heliBottom > rig.padY - 38 && heliBottom < rig.padY - 5;
+          if (!rig.scored && approachingPad && game.velocity > 15) {
+            game.velocity *= .88;
+            game.y += (rig.padY - 21 - game.y) * .035;
+          }
           if (overlapsPad && heliBottom >= rig.padY - 5) {
-            if (!rig.scored && heliBottom <= rig.padY + 11 && game.velocity < 125) {
+            if (!rig.scored && heliBottom <= rig.padY + 13 && game.velocity < 185) {
               rig.scored = true;
               game.score += 1;
               game.velocity = -170;
