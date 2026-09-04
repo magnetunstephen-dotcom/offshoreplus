@@ -34,21 +34,30 @@ function createRig(x: number, index: number): Rig {
   };
 }
 
+function createStartingCourse() {
+  const startIndex = Math.floor(Math.random() * PLATFORM_NAMES.length);
+  const name = PLATFORM_NAMES[startIndex];
+  return {
+    rigs: [{ x: 570, padY: 270, scored: false, name, size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.18 : 1, ...PLATFORM_PROFILES[name] }] as Rig[],
+    nextRigIndex: startIndex + 1,
+    drones: [{ x: 470, y: 105 + Math.random() * 95, phase: Math.random() * 6 }] as Drone[],
+  };
+}
+
 export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void; user: User | null; onLogin: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | undefined>(undefined);
   const gameRunRef = useRef<string | null>(null);
   const userRef = useRef(user);
+  const initialCourseRef = useRef(createStartingCourse());
   const gameRef = useRef({
     state: "ready" as GameState,
     y: 155,
     velocity: 0,
     score: 0,
     distance: 0,
-    rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1, ...PLATFORM_PROFILES.Ula }] as Rig[],
-    nextRigIndex: 1,
-    drones: [{ x: 390, y: 135, phase: 0 }] as Drone[],
+    ...initialCourseRef.current,
     lastTime: 0,
   });
   const [state, setState] = useState<GameState>("ready");
@@ -115,15 +124,14 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
 
   function reset() {
     startVerifiedRun();
+    const startingCourse = createStartingCourse();
     gameRef.current = {
       state: "running",
       y: 155,
       velocity: -80,
       score: 0,
       distance: 0,
-      rigs: [{ x: 570, padY: 270, scored: false, name: "Ula", size: 1, ...PLATFORM_PROFILES.Ula }],
-      nextRigIndex: 1,
-      drones: [{ x: 390, y: 135, phase: 0 }],
+      ...startingCourse,
       lastTime: performance.now(),
     };
     setScore(0);
@@ -377,7 +385,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         }
         const droneHit = game.drones.some(drone => Math.abs(drone.x - 112) < 34 && Math.abs((drone.y + Math.sin(game.distance / 35 + drone.phase) * 7) - game.y) < 24);
         const flareHit = game.rigs.some(rig => rig.flare && Math.abs((rig.x + 205 * rig.size) - 112) < 27 && Math.abs((rig.padY - 104 * rig.size) - game.y) < 38);
-        if (droneHit || flareHit || game.y < 42 || heliBottom > SEA_Y + 3) finish();
+        if (droneHit || flareHit || game.y < 30 || heliBottom > SEA_Y + 3) finish();
       }
       draw();
       frameRef.current = requestAnimationFrame(loop);
