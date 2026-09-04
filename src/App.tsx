@@ -16,6 +16,7 @@ import { pushLocalData, syncAccount } from "./lib/cloud";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
 import { MoonIcon, OffshorePlusLogo, SunIcon } from "./components/Icons";
+import { InstallAppPrompt } from "./components/InstallAppPrompt";
 
 type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | null;
 
@@ -108,6 +109,7 @@ export default function App() {
       )}
 
       <button className="feedback-bubble" onClick={() => setModal("feedback")} aria-label="Send tilbakemelding"><span>💬</span><b>Tips eller feil?</b></button>
+      <InstallAppPrompt />
 
       {modal === "wizard" && (
         <Wizard
