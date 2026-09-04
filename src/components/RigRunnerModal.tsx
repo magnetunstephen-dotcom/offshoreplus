@@ -14,10 +14,10 @@ const HEIGHT = 400;
 const SEA_Y = 350;
 const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg"];
 const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean }> = {
-  Ula: { kind: "jacket", flare: true }, Statfjord: { kind: "concrete", flare: true }, Skarv: { kind: "fpso", flare: true },
-  Troll: { kind: "concrete", flare: false }, Oseberg: { kind: "jacket", flare: true }, Gullfaks: { kind: "concrete", flare: true },
-  Ekofisk: { kind: "jacket", flare: true }, Valhall: { kind: "jacket", flare: false }, Snorre: { kind: "semi", flare: true },
-  Heidrun: { kind: "semi", flare: true }, Åsgard: { kind: "semi", flare: true }, "Johan Sverdrup": { kind: "jacket", flare: false },
+  Ula: { kind: "jacket", flare: false }, Statfjord: { kind: "concrete", flare: true }, Skarv: { kind: "fpso", flare: true },
+  Troll: { kind: "concrete", flare: false }, Oseberg: { kind: "jacket", flare: false }, Gullfaks: { kind: "concrete", flare: false },
+  Ekofisk: { kind: "jacket", flare: true }, Valhall: { kind: "jacket", flare: false }, Snorre: { kind: "semi", flare: false },
+  Heidrun: { kind: "semi", flare: false }, Åsgard: { kind: "semi", flare: true }, "Johan Sverdrup": { kind: "jacket", flare: false },
   Goliat: { kind: "circular", flare: false }, "Johan Castberg": { kind: "fpso", flare: false },
 };
 
@@ -252,7 +252,10 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.strokeStyle = "#d7e9e5";
       context.beginPath(); context.moveTo(x + 115 * size, y - 45 * size); context.lineTo(x + 132 * size, y - 95 * size); context.lineTo(x + 142 * size, y - 45 * size); context.stroke();
       if (rig.flare) {
-        const flameX = x + 132 * size, flameY = y - 108 * size;
+        const flameX = x + 205 * size, flameY = y - 104 * size;
+        context.strokeStyle = "#d7e9e5"; context.lineWidth = 4;
+        context.beginPath(); context.moveTo(x + 132 * size, y - 95 * size); context.lineTo(flameX, flameY + 7); context.stroke();
+        context.lineWidth = 2; context.beginPath(); context.moveTo(x + 145 * size, y - 91 * size); context.lineTo(x + 158 * size, y - 78 * size); context.lineTo(x + 171 * size, y - 100 * size); context.lineTo(x + 184 * size, y - 83 * size); context.lineTo(flameX, flameY + 7); context.stroke();
         context.fillStyle = "rgba(255,148,40,.25)"; context.beginPath(); context.arc(flameX, flameY, 18 + Math.sin(phase) * 3, 0, Math.PI * 2); context.fill();
         context.fillStyle = "#ff5d32"; context.beginPath(); context.moveTo(flameX, flameY + 10); context.quadraticCurveTo(flameX - 13, flameY - 2, flameX + Math.sin(phase * 1.7) * 8, flameY - 27); context.quadraticCurveTo(flameX + 15, flameY - 3, flameX, flameY + 10); context.fill();
         context.fillStyle = "#ffd45c"; context.beginPath(); context.moveTo(flameX, flameY + 7); context.quadraticCurveTo(flameX - 6, flameY - 2, flameX + 2, flameY - 14); context.quadraticCurveTo(flameX + 7, flameY, flameX, flameY + 7); context.fill();
@@ -373,7 +376,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           }
         }
         const droneHit = game.drones.some(drone => Math.abs(drone.x - 112) < 34 && Math.abs((drone.y + Math.sin(game.distance / 35 + drone.phase) * 7) - game.y) < 24);
-        const flareHit = game.rigs.some(rig => rig.flare && Math.abs((rig.x + 132 * rig.size) - 112) < 27 && Math.abs((rig.padY - 119 * rig.size) - game.y) < 38);
+        const flareHit = game.rigs.some(rig => rig.flare && Math.abs((rig.x + 205 * rig.size) - 112) < 27 && Math.abs((rig.padY - 104 * rig.size) - game.y) < 38);
         if (droneHit || flareHit || game.y < 42 || heliBottom > SEA_Y + 3) finish();
       }
       draw();
