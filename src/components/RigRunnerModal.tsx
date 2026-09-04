@@ -338,10 +338,10 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       });
       drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4);
       context.fillStyle = "rgba(3,18,27,.72)";
-      context.fillRect(16, 15, 188, 48);
+      context.fillRect(16, 15, 224, 48);
       context.fillStyle = "#eaf8f3";
       context.font = "800 20px sans-serif";
-      context.fillText(`DRONEVAKT  ${game.score}`, 28, 46);
+      context.fillText(`ANTALL LANDINGER  ${game.score}`, 28, 46);
       if (game.state !== "running") {
         context.fillStyle = "rgba(3,13,22,.72)";
         context.fillRect(0, 0, WIDTH, HEIGHT);
@@ -417,7 +417,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     <div ref={gameAreaRef} className="game-fullscreen-area">
     <div className="game-header">
       <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Dronevakta</h2></div>
-      <div className="game-score"><span>Poeng <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
+      <div className="game-score"><span>Landinger <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
       <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
     <div className="game-layout">
