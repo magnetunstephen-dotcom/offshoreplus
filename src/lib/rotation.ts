@@ -30,11 +30,14 @@ export function rotationLabel(trip: TripSetup): string {
 export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatus {
   const anchor = new Date(trip.heliDeparture);
   const cycle = cycleDays(trip);
-  const cycleMs = cycle * 86_400_000;
   const elapsed = now.getTime() - anchor.getTime();
 
-  let cycleIndex = Math.floor(elapsed / cycleMs);
-  if (elapsed < 0) cycleIndex = -1;
+  // Finn omtrentlig syklus først, og korriger med kalenderdager. Dette gjør at
+  // eksempelvis tirsdag kl. 12:45 forblir tirsdag kl. 12:45 også over
+  // overgang mellom sommer- og vintertid.
+  let cycleIndex = elapsed < 0 ? -1 : Math.floor(elapsed / (cycle * 86_400_000));
+  while (cycleIndex >= 0 && addDays(anchor, (cycleIndex + 1) * cycle) <= now) cycleIndex += 1;
+  while (cycleIndex > 0 && addDays(anchor, cycleIndex * cycle) > now) cycleIndex -= 1;
 
   if (cycleIndex < 0) {
     return {
@@ -48,7 +51,7 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
     };
   }
 
-  const cycleStart = new Date(anchor.getTime() + cycleIndex * cycleMs);
+  const cycleStart = addDays(anchor, cycleIndex * cycle);
   const offshoreEnd = addDays(cycleStart, trip.rotationOnDays);
   const nextCycleStart = addDays(cycleStart, cycle);
   const isOffshore = now >= cycleStart && now < offshoreEnd;
@@ -72,17 +75,17 @@ export function offshorePeriodsForYear(trip: TripSetup, year: number): RotationP
   const anchor = new Date(trip.heliDeparture);
   const yearStart = new Date(year, 0, 1);
   const yearEnd = new Date(year + 1, 0, 1);
-  const cycleMs = cycleDays(trip) * 86_400_000;
+  const cycle = cycleDays(trip);
 
-  let index = Math.floor((yearStart.getTime() - anchor.getTime()) / cycleMs) - 1;
-  let start = new Date(anchor.getTime() + index * cycleMs);
+  let index = Math.floor((yearStart.getTime() - anchor.getTime()) / (cycle * 86_400_000)) - 1;
+  let start = addDays(anchor, index * cycle);
   const periods: RotationPeriod[] = [];
 
   while (start < yearEnd) {
     const end = addDays(start, trip.rotationOnDays);
     if (end > yearStart && start < yearEnd) periods.push({ start, end });
     index += 1;
-    start = new Date(anchor.getTime() + index * cycleMs);
+    start = addDays(anchor, index * cycle);
   }
   return periods;
 }
