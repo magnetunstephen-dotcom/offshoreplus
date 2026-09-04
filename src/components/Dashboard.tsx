@@ -5,7 +5,7 @@ import { rotationLabel, rotationStatus } from "../lib/rotation";
 import { useClock } from "../hooks/useClock";
 import { useMonthlyTableTax } from "../hooks/useMonthlyTableTax";
 import { salaryAgreements } from "../data/salaries";
-import type { TripSetup } from "../types";
+import type { EarningsView, TripSetup } from "../types";
 import {
   CalendarIcon,
   ChevronRightIcon,
@@ -91,7 +91,10 @@ export function Dashboard({
   const activeSession = (trip.additionSessions ?? []).find((session) => !session.end);
   const salaryAgreement = salaryAgreements[trip.agreementId];
   const salaryStep = salaryAgreement?.steps[trip.stepIndex] ?? String(trip.stepIndex + 1);
-  const view = trip.earningsView ?? "monthly-net";
+  // «Denne turen» ble ofte tolket som en ekstra turbetaling.
+  // Eldre lagrede valg flyttes derfor til månedslønnsvisningen.
+  const savedView = trip.earningsView ?? "monthly-net";
+  const view = (savedView === "trip" ? "monthly-net" : savedView) as EarningsView;
 
   const heroLabel = view === "trip"
     ? "Opptjent denne turen"
@@ -163,9 +166,8 @@ export function Dashboard({
             <span className="money-caption">{calculation.isMoneyRunning ? "Lønn opptjenes nå" : "Telleren står stille mens du ikke opptjener lønn"}</span>
           )}
           <div className="segmented earnings-toggle" aria-label="Velg lønnsvisning">
-            <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Neste utbetaling</button>
-            <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Brutto opptjent</button>
-            <button className={view === "trip" ? "selected" : ""} onClick={() => onChangeEarningsView("trip")}>Denne turen</button>
+            <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Estimert utbetalt</button>
+            <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Opptjent brutto</button>
           </div>
           {view !== "trip" && <span className="tax-note">Viser hvor mye av den faste månedslønnen du har opptjent gjennom denne 14-dagersturen. {usesTable ? `Trekkpliktig lønn beregnes med tabell ${trip.taxTable || "–"}.` : "Fastlønn og trekkpliktige tillegg bruker valgt skatteprosent."} Trekkfrie refusjoner legges til uten trekk.</span>}
           {view !== "trip" && <div className={`live-calculation-note ${calculation.isMoneyRunning ? "active" : "paused"}`}><span className="status-dot" /> <strong>{calculation.isMoneyRunning ? "Teller live nå" : "Telleren står nå"}</strong><span>{calculation.isMoneyRunning ? "Beløpet oppdateres mens aktivt skift eller tillegg pågår." : "Beløpet øker igjen ved neste planlagte skift eller aktive tillegg."}</span></div>}
@@ -229,8 +231,8 @@ export function Dashboard({
         </details>
 
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
-          <button onClick={onMyYear}><span className="action-icon">ÅR</span><strong>Mitt år</strong><small>Turer, feriepenger og prognose</small><ChevronRightIcon size={18} /></button>
-          <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon size={18} /></button>
+          <button onClick={onMyYear}><span className="action-icon">ÅR</span><strong>Mitt år</strong><small>Turer, feriepenger og prognose</small><ChevronRightIcon className="action-chevron" size={17} /></button>
+          <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon className="action-chevron" size={17} /></button>
           <button onClick={onAdditions}><span className="action-icon"><FlameIcon /></span><strong>Tillegg</strong><small>Overtid og ventetid</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onCalendar}><span className="action-icon"><CalendarIcon /></span><strong>Kalender</strong><small>Turnus og eksport</small><ChevronRightIcon className="action-chevron" size={17}/></button>
           <button onClick={onCv}><span className="action-icon">CV</span><strong>Profil & CV</strong><small>Lag profesjonell PDF</small><ChevronRightIcon className="action-chevron" size={17}/></button>

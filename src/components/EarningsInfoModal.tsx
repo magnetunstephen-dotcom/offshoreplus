@@ -28,16 +28,9 @@ export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
     <Modal onClose={onClose} labelledBy="earnings-info-title">
       <h2 id="earnings-info-title">Hva betyr tallene?</h2>
       <p>
-        <strong>Opptjent denne turen</strong> viser lønn som bygges opp mens du
-        jobber offshore. Det er ikke månedslønnen på lønnsslippen.
-      </p>
-      <p>
-        <strong>Estimert full tur</strong> er beregnet lønn for én komplett
-        offshoreperiode, inkludert registrerte tillegg.
-      </p>
-      <p>
-        <strong>Opptjent mot neste lønn</strong> fordeler den faste
-        månedslønnen fra tariff-/lønnstabellen over den planlagte 14-dagersturen.
+        <strong>Opptjent mot neste lønn</strong> tar årslønnen fra
+        tariff-/lønnstabellen, deler den på 12 og fordeler denne faste
+        månedslønnen over den planlagte 14-dagersperioden.
         Telleren starter på 0 og når full estimert fastlønn når alle planlagte
         arbeidstimer er gjennomført. Variable tillegg legges på fortløpende.
       </p>

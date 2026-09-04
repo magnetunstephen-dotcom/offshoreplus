@@ -54,3 +54,19 @@ create policy "Owner can update feedback"
 on public.feedback for update to authenticated
 using (lower(coalesce((select auth.jwt() ->> 'email'), '')) = 'magnetun.stephen@gmail.com')
 with check (lower(coalesce((select auth.jwt() ->> 'email'), '')) = 'magnetun.stephen@gmail.com');
+
+-- En innlogget bruker kan bare slette sin egen konto. Tilhørende data
+-- fjernes automatisk gjennom ON DELETE CASCADE.
+create or replace function public.delete_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  delete from auth.users where id = (select auth.uid());
+end;
+$$;
+
+revoke all on function public.delete_own_account() from public, anon;
+grant execute on function public.delete_own_account() to authenticated;

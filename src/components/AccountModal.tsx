@@ -3,16 +3,18 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { Modal } from "./Modal";
 
-interface Props { user: User | null; syncState: string; onClose: () => void; }
+interface Props { user: User | null; syncState: string; onClose: () => void; onPrivacy: () => void; onForgot: () => void; }
 
 interface Feedback { id: number; user_email: string; category: string; message: string; status: string; created_at: string; }
 const OWNER_EMAIL = "magnetun.stephen@gmail.com";
 
-export function AccountModal({ user, syncState, onClose }: Props) {
+export function AccountModal({ user, syncState, onClose, onPrivacy, onForgot }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [mode, setMode] = useState<"login" | "signup" | "verify">("login");
+  const [deleteText, setDeleteText] = useState("");
+  const [showDelete, setShowDelete] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [resendWait, setResendWait] = useState(0);
@@ -87,6 +89,18 @@ export function AccountModal({ user, syncState, onClose }: Props) {
     if (error) setMessage("Koden er feil eller har utløpt. Be om en ny kode og prøv igjen."); else onClose();
   }
 
+  async function deleteAccount() {
+    if (deleteText !== "SLETT") return;
+    setBusy(true); setMessage("");
+    const { error } = await supabase.rpc("delete_own_account");
+    if (error) { setBusy(false); setMessage("Kontoen kunne ikke slettes. Prøv igjen eller send oss en tilbakemelding."); return; }
+    await supabase.auth.signOut();
+    localStorage.clear();
+    setBusy(false);
+    onClose();
+    window.location.reload();
+  }
+
   async function signOut() { await supabase.auth.signOut(); onClose(); }
 
   return <Modal onClose={onClose} labelledBy="account-title" className="account-modal">
@@ -96,5 +110,7 @@ export function AccountModal({ user, syncState, onClose }: Props) {
       {mode === "verify" ? <><p>Skriv inn koden vi sendte til <strong>{email}</strong>. Du trenger ikke klikke på noen lenke.</p><label>Bekreftelseskode<input className="otp-input" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder="000000" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))} onKeyDown={e => e.key === "Enter" && verify()} /></label><button className="primary full-width" disabled={busy || code.length < 6} onClick={verify}>{busy ? "Kontrollerer …" : "Bekreft e-post"}</button><button className="text-button" disabled={busy || resendWait > 0} onClick={resendCode}>{resendWait > 0 ? `Send ny kode om ${resendWait} sek` : "Send ny kode"}</button><button className="text-button" onClick={() => { setMode("signup"); setCode(""); setMessage(""); }}>Tilbake</button></>
       : <><p>{mode === "login" ? "Logg inn med e-post og passord. Du trenger ingen e-postlenke." : "Opprett en sikker konto. Etterpå bekrefter du e-posten med en kort tallkode."}</p><label>E-post<input type="email" autoComplete="email" placeholder="navn@epost.no" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Passord<input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} placeholder={mode === "signup" ? "Minst 8 tegn" : "Passord"} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && (mode === "login" ? login() : signup())} /></label><button className="primary full-width" disabled={busy || !email.trim() || password.length < 8} onClick={mode === "login" ? login : signup}>{busy ? "Vent litt …" : mode === "login" ? "Logg inn" : "Opprett konto"}</button></>}
       {message && <div className="account-message">{message}</div>}<small>OffshorePlus lagrer aldri passordet ditt. Det håndteres sikkert av Supabase.</small></div>}
+    {!user && mode === "login" && <button className="text-button account-extra-action" onClick={onForgot}>Glemt passord?</button>}
+    {user && <div className="account-extra-actions"><button className="text-button" onClick={onPrivacy}>Personvern og bruksvilkår</button>{!showDelete ? <button className="text-button danger-link" onClick={() => setShowDelete(true)}>Slett konto</button> : <section className="delete-account"><strong>Slett konto og alle data?</strong><p>Dette kan ikke angres. Skriv SLETT for å bekrefte.</p><input value={deleteText} onChange={e => setDeleteText(e.target.value.toUpperCase())} placeholder="Skriv SLETT" /><button className="danger-button full-width" disabled={busy || deleteText !== "SLETT"} onClick={deleteAccount}>{busy ? "Sletter …" : "Slett kontoen permanent"}</button><button className="text-button" onClick={() => { setShowDelete(false); setDeleteText(""); }}>Avbryt</button></section>}</div>}
   </Modal>;
 }

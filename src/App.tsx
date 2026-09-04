@@ -17,8 +17,10 @@ import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
 import { MoonIcon, OffshorePlusLogo, SunIcon } from "./components/Icons";
 import { InstallAppPrompt } from "./components/InstallAppPrompt";
+import { PrivacyModal } from "./components/PrivacyModal";
+import { PasswordResetModal } from "./components/PasswordResetModal";
 
-type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | null;
+type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | "privacy" | "password-reset" | null;
 
 export default function App() {
   const initialTrip = loadTrip();
@@ -110,6 +112,7 @@ export default function App() {
 
       <button className="feedback-bubble" onClick={() => setModal("feedback")} aria-label="Send tilbakemelding"><span>💬</span><b>Tips eller feil?</b></button>
       <InstallAppPrompt />
+      <button className="privacy-footer" onClick={() => setModal("privacy")}>Personvern · Vilkår</button>
 
       {modal === "wizard" && (
         <Wizard
@@ -142,8 +145,10 @@ export default function App() {
       {modal === "cv" && <CvModal onClose={() => setModal(null)} />}
       {modal === "certificates" && <CertificatesModal onClose={() => setModal(null)} />}
       {modal === "my-year" && trip && <MyYearModal trip={trip} onClose={() => setModal(null)} />}
-      {modal === "account" && <AccountModal user={user} syncState={syncState} onClose={() => setModal(null)} />}
+      {modal === "account" && <AccountModal user={user} syncState={syncState} onClose={() => setModal(null)} onPrivacy={() => setModal("privacy")} onForgot={() => setModal("password-reset")} />}
       {modal === "feedback" && <FeedbackModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
+      {modal === "privacy" && <PrivacyModal onClose={() => setModal(null)} />}
+      {modal === "password-reset" && <PasswordResetModal onClose={() => setModal(null)} />}
 
       {modal === "earnings-info" && trip && (
         <EarningsInfoModal trip={trip} onClose={() => setModal(null)} />
