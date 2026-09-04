@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
-type PlatformKind = "jacket" | "concrete" | "semi" | "fpso" | "circular";
+type PlatformKind = "jacket" | "concrete" | "semi" | "tlp" | "fpso" | "circular" | "complex";
 type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number };
@@ -16,9 +16,9 @@ const HELI_X = 145;
 const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg"];
 const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean }> = {
   Ula: { kind: "jacket", flare: false }, Statfjord: { kind: "concrete", flare: true }, Skarv: { kind: "fpso", flare: true },
-  Troll: { kind: "concrete", flare: false }, Oseberg: { kind: "jacket", flare: false }, Gullfaks: { kind: "concrete", flare: false },
-  Ekofisk: { kind: "jacket", flare: true }, Valhall: { kind: "jacket", flare: false }, Snorre: { kind: "semi", flare: false },
-  Heidrun: { kind: "semi", flare: false }, Åsgard: { kind: "semi", flare: true }, "Johan Sverdrup": { kind: "jacket", flare: false },
+  Troll: { kind: "concrete", flare: false }, Oseberg: { kind: "complex", flare: false }, Gullfaks: { kind: "concrete", flare: false },
+  Ekofisk: { kind: "complex", flare: true }, Valhall: { kind: "complex", flare: false }, Snorre: { kind: "semi", flare: false },
+  Heidrun: { kind: "tlp", flare: false }, Åsgard: { kind: "semi", flare: true }, "Johan Sverdrup": { kind: "complex", flare: false },
   Goliat: { kind: "circular", flare: false }, "Johan Castberg": { kind: "fpso", flare: false },
 };
 
@@ -30,7 +30,7 @@ function createRig(x: number, index: number): Rig {
     padY: 278 + Math.random() * 78,
     scored: false,
     name,
-    size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.18 : .78 + Math.random() * .42,
+    size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.28 : profile.kind === "complex" ? 1.18 + Math.random() * .16 : .82 + Math.random() * .32,
     ...profile,
   };
 }
@@ -39,7 +39,7 @@ function createStartingCourse() {
   const startIndex = Math.floor(Math.random() * PLATFORM_NAMES.length);
   const name = PLATFORM_NAMES[startIndex];
   return {
-    rigs: [{ x: 720, padY: 335, scored: false, name, size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.18 : 1, ...PLATFORM_PROFILES[name] }] as Rig[],
+    rigs: [{ x: 720, padY: 335, scored: false, name, size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.28 : PLATFORM_PROFILES[name].kind === "complex" ? 1.24 : 1, ...PLATFORM_PROFILES[name] }] as Rig[],
     nextRigIndex: startIndex + 1,
     drones: [{ x: 600, y: 120 + Math.random() * 120, phase: Math.random() * 6 }] as Drone[],
   };
@@ -234,10 +234,30 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.fillStyle = "#e2ebee"; context.beginPath(); context.ellipse(x + width * .52, y + 12, width * .35, 13 * size, 0, 0, Math.PI * 2); context.fill(); context.stroke();
         context.strokeStyle = "rgba(215,233,229,.42)"; context.beginPath(); context.moveTo(x + 28, y + 42); context.lineTo(x + 18, SEA_Y + 10); context.moveTo(x + width - 28, y + 42); context.lineTo(x + width - 18, SEA_Y + 10); context.stroke();
       } else if (rig.kind === "fpso") {
-        context.beginPath(); context.moveTo(x - 12, y + 12); context.lineTo(x + width + 18, y + 12); context.lineTo(x + width, y + 36); context.lineTo(x + 10, y + 36); context.closePath(); context.fill(); context.stroke();
-        context.fillRect(x + 72 * size, y - 36 * size, 48 * size, 48 * size); context.strokeRect(x + 72 * size, y - 36 * size, 48 * size, 48 * size);
-        if (rig.name === "Johan Castberg") { context.fillStyle = "#d6473f"; context.fillRect(x + 7, y + 24, width - 3, 8); }
-        context.strokeStyle = "rgba(215,233,229,.45)"; context.beginPath(); context.moveTo(x + 24, y + 37); context.lineTo(x + 12, SEA_Y + 13); context.moveTo(x + width - 18, y + 37); context.lineTo(x + width, SEA_Y + 13); context.stroke();
+        // FPSO: langt skipsskrog med tydelig baug og et tett prosessanlegg på dekk.
+        context.fillStyle = rig.name === "Johan Castberg" ? "#9f2f32" : "#8d3036";
+        context.beginPath(); context.moveTo(x - 18 * size, y + 9); context.lineTo(x + width - 12 * size, y + 9); context.lineTo(x + width + 24 * size, y + 20); context.lineTo(x + width - 2 * size, y + 38); context.lineTo(x + 5 * size, y + 38); context.lineTo(x - 18 * size, y + 28); context.closePath(); context.fill(); context.stroke();
+        context.fillStyle = "#e7edf0"; context.fillRect(x + 82 * size, y - 42 * size, 48 * size, 51 * size); context.strokeRect(x + 82 * size, y - 42 * size, 48 * size, 51 * size);
+        context.fillStyle = "#244653";
+        for (let module = 0; module < 3; module++) context.fillRect(x + (22 + module * 20) * size, y - (18 + (module % 2) * 8) * size, 16 * size, (27 + (module % 2) * 8) * size);
+        context.strokeStyle = "#b9cbd0"; context.lineWidth = 2;
+        context.beginPath(); context.moveTo(x + 72 * size, y + 7); context.lineTo(x + 52 * size, y - 36 * size); context.lineTo(x + 34 * size, y + 7); context.stroke();
+        context.fillStyle = "#d7e9e5"; context.fillRect(x + width - 4 * size, y + 15, 18 * size, 4);
+        context.fillStyle = "#1b667f"; context.fillRect(x + 86 * size, y - 31 * size, 38 * size, 8 * size);
+      } else if (rig.kind === "complex") {
+        // Broforbundne plattformer gjør feltsentrene store som små landsbyer.
+        [0, 62, 124].forEach((offset, index) => {
+          const moduleX = x + offset * size;
+          const moduleW = (index === 1 ? 58 : 51) * size;
+          context.fillStyle = "#173846"; context.fillRect(moduleX, y, moduleW, 15); context.strokeRect(moduleX, y, moduleW, 15);
+          context.fillRect(moduleX + 12 * size, y - (30 + index * 7) * size, moduleW - 20 * size, (30 + index * 7) * size);
+          context.strokeRect(moduleX + 12 * size, y - (30 + index * 7) * size, moduleW - 20 * size, (30 + index * 7) * size);
+          context.beginPath(); context.moveTo(moduleX + 9 * size, y + 15); context.lineTo(moduleX + 17 * size, SEA_Y + 15); context.moveTo(moduleX + moduleW - 9 * size, y + 15); context.lineTo(moduleX + moduleW - 17 * size, SEA_Y + 15); context.stroke();
+        });
+        context.strokeStyle = "#f0c85b"; context.lineWidth = 4;
+        context.beginPath(); context.moveTo(x + 49 * size, y - 7); context.lineTo(x + 66 * size, y - 7); context.moveTo(x + 116 * size, y - 9); context.lineTo(x + 128 * size, y - 9); context.stroke();
+        context.strokeStyle = "#b9cbd0"; context.lineWidth = 3;
+        context.beginPath(); context.moveTo(x + 102 * size, y - 37 * size); context.lineTo(x + 80 * size, y - 83 * size); context.lineTo(x + 69 * size, y - 76 * size); context.stroke();
       } else {
         context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
         context.fillRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size); context.strokeRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size);
@@ -245,9 +265,11 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           context.fillStyle = "#315364";
           context.beginPath(); context.moveTo(x + 24 * size, y + 17); context.lineTo(x + 15 * size, SEA_Y + 18); context.lineTo(x + 57 * size, SEA_Y + 18); context.lineTo(x + 48 * size, y + 17); context.closePath(); context.fill(); context.stroke();
           context.beginPath(); context.moveTo(x + 108 * size, y + 17); context.lineTo(x + 101 * size, SEA_Y + 18); context.lineTo(x + 140 * size, SEA_Y + 18); context.lineTo(x + 132 * size, y + 17); context.closePath(); context.fill(); context.stroke();
-        } else if (rig.kind === "semi") {
+        } else if (rig.kind === "semi" || rig.kind === "tlp") {
           context.fillStyle = "#173846"; context.fillRect(x + 8, SEA_Y - 5, 58 * size, 16); context.fillRect(x + 91 * size, SEA_Y - 5, 58 * size, 16);
-          context.beginPath(); context.moveTo(x + 30 * size, y + 17); context.lineTo(x + 35 * size, SEA_Y); context.moveTo(x + 118 * size, y + 17); context.lineTo(x + 120 * size, SEA_Y); context.stroke();
+          context.fillStyle = rig.kind === "tlp" ? "#607985" : "#315364";
+          context.fillRect(x + 22 * size, y + 17, 28 * size, SEA_Y - y - 20); context.fillRect(x + 105 * size, y + 17, 28 * size, SEA_Y - y - 20);
+          if (rig.kind === "tlp") { context.strokeStyle = "rgba(215,233,229,.22)"; context.lineWidth = 1; context.beginPath(); context.moveTo(x + 25 * size, SEA_Y + 10); context.lineTo(x + 25 * size, HEIGHT); context.moveTo(x + 130 * size, SEA_Y + 10); context.lineTo(x + 130 * size, HEIGHT); context.stroke(); }
         } else {
           context.beginPath(); context.moveTo(x + 20 * size, y + 17); context.lineTo(x + 35 * size, SEA_Y + 18); context.moveTo(x + 135 * size, y + 17); context.lineTo(x + 120 * size, SEA_Y + 18); context.moveTo(x + 20 * size, y + 35); context.lineTo(x + 127 * size, SEA_Y - 10); context.moveTo(x + 134 * size, y + 35); context.lineTo(x + 29 * size, SEA_Y - 10); context.stroke();
         }
