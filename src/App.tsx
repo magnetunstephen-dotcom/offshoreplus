@@ -19,8 +19,9 @@ import { MoonIcon, OffshorePlusLogo, SunIcon } from "./components/Icons";
 import { InstallAppPrompt } from "./components/InstallAppPrompt";
 import { PrivacyModal } from "./components/PrivacyModal";
 import { PasswordResetModal } from "./components/PasswordResetModal";
+import { RigRunnerModal } from "./components/RigRunnerModal";
 
-type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | "privacy" | "password-reset" | null;
+type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | "privacy" | "password-reset" | "rig-runner" | null;
 
 export default function App() {
   const initialTrip = loadTrip();
@@ -97,6 +98,7 @@ export default function App() {
           onCv={() => setModal("cv")}
           onCertificates={() => setModal("certificates")}
           onMyYear={() => setModal("my-year")}
+          onGame={() => setModal("rig-runner")}
           onChangeEarningsView={changeEarningsView}
         />
       ) : (
@@ -149,6 +151,7 @@ export default function App() {
       {modal === "feedback" && <FeedbackModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
       {modal === "privacy" && <PrivacyModal onClose={() => setModal(null)} />}
       {modal === "password-reset" && <PasswordResetModal onClose={() => setModal(null)} />}
+      {modal === "rig-runner" && <RigRunnerModal onClose={() => setModal(null)} />}
 
       {modal === "earnings-info" && trip && (
         <EarningsInfoModal trip={trip} onClose={() => setModal(null)} />

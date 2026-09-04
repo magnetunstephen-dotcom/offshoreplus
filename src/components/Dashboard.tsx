@@ -26,6 +26,7 @@ interface DashboardProps {
   onCv: () => void;
   onCertificates: () => void;
   onMyYear: () => void;
+  onGame: () => void;
   onChangeEarningsView: (view: "monthly-net" | "monthly-gross" | "trip") => void;
 }
 
@@ -71,6 +72,7 @@ export function Dashboard({
   onCv,
   onCertificates,
   onMyYear,
+  onGame,
   onChangeEarningsView,
 }: DashboardProps) {
   const now = useClock();
@@ -233,6 +235,7 @@ export function Dashboard({
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
           <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon className="action-chevron" size={17} /></button>
           <button onClick={onSettings}><span className="action-icon"><SettingsIcon /></span><strong>Innstillinger</strong><small>Lønn og oppsett</small><ChevronRightIcon className="action-chevron" size={17}/></button>
+          <button onClick={onGame}><span className="action-icon">🚁</span><strong>Rig Runner</strong><small>Fly mellom riggene</small><ChevronRightIcon className="action-chevron" size={17}/></button>
         </section>
 
         {holidays.length > 0 && (

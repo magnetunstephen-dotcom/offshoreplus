@@ -414,6 +414,25 @@ input, select {
 .example-total strong { color:var(--accent); font-size:19px; white-space:nowrap; }
 .small-copy { font-size: 13px; line-height: 1.45; }
 
+.game-modal { width:min(820px,calc(100% - 20px)); }
+.game-header { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:16px; margin-bottom:14px; }
+.game-header h2 { margin:2px 0 0; }
+.game-score { display:flex; gap:14px; color:var(--muted); font-size:12px; }
+.game-score span { display:grid; justify-items:center; }
+.game-score b { color:var(--accent); font-size:18px; }
+.rig-runner-canvas { display:block; width:100%; height:auto; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:18px; background:#071723; touch-action:none; cursor:pointer; box-shadow:inset 0 0 50px rgb(0 0 0 / 28%); }
+.game-controls { display:flex; align-items:center; gap:14px; margin-top:12px; }
+.game-controls button { flex:0 0 auto; min-height:48px; padding:0 18px; border-color:color-mix(in srgb,var(--accent) 60%,var(--border)); color:var(--accent); font-weight:850; }
+.game-controls p { margin:0; color:var(--muted); font-size:12px; line-height:1.4; }
+@media (max-width:640px) {
+  .game-modal { padding:14px; }
+  .game-header { grid-template-columns:1fr auto; }
+  .game-score { grid-column:1; grid-row:2; justify-self:start; }
+  .game-header .calendar-close { grid-column:2; grid-row:1; }
+  .game-controls { display:grid; }
+  .game-controls button { width:100%; }
+}
+
 @media (max-width: 640px) {
   .bottom-nav { grid-template-columns: repeat(4, 1fr); }
   .addition-start-grid { grid-template-columns: 1fr; }
@@ -813,7 +832,7 @@ body {
 @media (min-width: 760px) {
   .mobile-dashboard { padding-top: 22px; padding-bottom: 118px; }
   .op-hero-section { padding: 22px; }
-  .op-tools { grid-template-columns: repeat(2, 1fr); }
+  .op-tools { grid-template-columns: repeat(3, 1fr); }
   .op-tools button { min-height: 100px; }
   .floating-new-trip { right: max(18px, calc((100vw - 760px)/2 + 18px)); }
 }
