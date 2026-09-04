@@ -28,10 +28,13 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://omnxllbfpwnvxzbvbzpg.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_TuOlsKHO29cE-rAe56Iuxw_fTqn6l_W
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
