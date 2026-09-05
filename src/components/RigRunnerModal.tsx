@@ -451,7 +451,9 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       const delta = Math.min(.034, Math.max(0, (time - (game.lastTime || time)) / 1000));
       game.lastTime = time;
       if (game.state === "running") {
-        const speed = 122 + Math.min(85, game.score * 8);
+        // Farten øker merkbart for hver landing og flater først ut på et høyere nivå.
+        // Det gjør lange vaktrunder vanskeligere uten å gjøre 100 landinger umulig.
+        const speed = 122 + Math.min(125, game.score * 10);
         game.velocity += 390 * delta;
         game.y += game.velocity * delta;
         game.distance += speed * delta;
