@@ -16,7 +16,9 @@ const HELI_X = 145;
 const PLATFORM_NAMES = [
   "Ula", "Njord", "Draupner", "Brage", "Skarv", "Heimdal", "Martin Linge", "Eldfisk", "Jotun FPSO", "Kristin",
   "Draugen", "Hugin", "Munin", "Grane", "Gudrun", "Ivar Aasen", "Gullfaks", "Gjøa", "Aasta Hansteen",
-  "Statfjord", "Troll", "Oseberg", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg",
+  "Balder FPSO", "Ringhorne", "Visund", "Norne FPSO", "Alvheim FPSO", "Sleipner A", "Kvitebjørn", "Valemon", "Edvard Grieg", "Fenris", "Yme",
+  "Statfjord A", "Statfjord B", "Statfjord C", "Troll A", "Oseberg A", "Oseberg B", "Oseberg D", "Gullfaks A", "Gullfaks B", "Gullfaks C",
+  "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg",
 ];
 const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; size?: number }> = {
   Ula: { kind: "jacket", flare: false }, Njord: { kind: "semi", flare: false, size: 1.05 }, Draupner: { kind: "complex", flare: false, size: 1.2 },
@@ -25,8 +27,15 @@ const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; si
   Kristin: { kind: "semi", flare: false, size: 1.06 }, Draugen: { kind: "monotower", flare: false, size: 1.08 }, Hugin: { kind: "jacket", flare: false, size: 1.02 },
   Munin: { kind: "jacket", flare: false, size: .82 }, Grane: { kind: "jacket", flare: false, size: 1.12 }, Gudrun: { kind: "jacket", flare: false, size: .96 },
   "Ivar Aasen": { kind: "jacket", flare: false, size: 1.02 }, Gullfaks: { kind: "concrete", flare: false, size: 1.16 }, Gjøa: { kind: "semi", flare: false, size: 1.08 },
-  "Aasta Hansteen": { kind: "spar", flare: false, size: 1.08 }, Statfjord: { kind: "concrete", flare: true, size: 1.14 }, Troll: { kind: "concrete", flare: false, size: 1.2 },
-  Oseberg: { kind: "complex", flare: false, size: 1.26 }, Ekofisk: { kind: "complex", flare: true, size: 1.3 }, Valhall: { kind: "complex", flare: false, size: 1.22 },
+  "Aasta Hansteen": { kind: "spar", flare: false, size: 1.08 },
+  "Balder FPSO": { kind: "fpso", flare: false, size: 1.25 }, Ringhorne: { kind: "jacket", flare: false, size: 1.02 }, Visund: { kind: "semi", flare: false, size: 1.08 },
+  "Norne FPSO": { kind: "fpso", flare: true, size: 1.25 }, "Alvheim FPSO": { kind: "fpso", flare: false, size: 1.25 }, "Sleipner A": { kind: "concrete", flare: false, size: 1.16 },
+  Kvitebjørn: { kind: "jacket", flare: false, size: 1.06 }, Valemon: { kind: "jacket", flare: false, size: .9 }, "Edvard Grieg": { kind: "jacket", flare: false, size: 1.1 },
+  Fenris: { kind: "jacket", flare: false, size: .86 }, Yme: { kind: "jacket", flare: false, size: 1.02 },
+  "Statfjord A": { kind: "concrete", flare: true, size: 1.18 }, "Statfjord B": { kind: "concrete", flare: false, size: 1.14 }, "Statfjord C": { kind: "concrete", flare: true, size: 1.15 },
+  "Troll A": { kind: "concrete", flare: false, size: 1.26 }, "Oseberg A": { kind: "complex", flare: false, size: 1.28 }, "Oseberg B": { kind: "jacket", flare: false, size: 1.02 },
+  "Oseberg D": { kind: "jacket", flare: false, size: .92 }, "Gullfaks A": { kind: "concrete", flare: false, size: 1.16 }, "Gullfaks B": { kind: "concrete", flare: true, size: 1.15 },
+  "Gullfaks C": { kind: "concrete", flare: false, size: 1.17 }, Ekofisk: { kind: "complex", flare: true, size: 1.3 }, Valhall: { kind: "complex", flare: false, size: 1.22 },
   Snorre: { kind: "semi", flare: false, size: 1.08 }, Heidrun: { kind: "tlp", flare: false, size: 1.08 }, Åsgard: { kind: "semi", flare: true, size: 1.08 },
   "Johan Sverdrup": { kind: "complex", flare: false, size: 1.32 }, Goliat: { kind: "circular", flare: false, size: 1.08 }, "Johan Castberg": { kind: "fpso", flare: false, size: 1.28 },
 };
@@ -286,7 +295,13 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.strokeStyle = "rgba(215,233,229,.42)"; context.beginPath(); context.moveTo(x + 28, y + 42); context.lineTo(x + 18, SEA_Y + 10); context.moveTo(x + width - 28, y + 42); context.lineTo(x + width - 18, SEA_Y + 10); context.stroke();
       } else if (rig.kind === "fpso") {
         // FPSO: langt skipsskrog med tydelig baug og et tett prosessanlegg på dekk.
-        context.fillStyle = rig.name === "Johan Castberg" ? "#a83036" : rig.name === "Jotun FPSO" ? "#b84b2c" : "#8d3036";
+        const fpsoHull = rig.name === "Johan Castberg" ? "#a83036"
+          : rig.name === "Jotun FPSO" ? "#b84b2c"
+          : rig.name === "Alvheim FPSO" ? "#274f73"
+          : rig.name === "Balder FPSO" ? "#394d59"
+          : rig.name === "Norne FPSO" ? "#a04435"
+          : "#8d3036";
+        context.fillStyle = fpsoHull;
         context.beginPath(); context.moveTo(x - 18 * size, y + 9); context.lineTo(x + width - 12 * size, y + 9); context.lineTo(x + width + 24 * size, y + 20); context.lineTo(x + width - 2 * size, y + 38); context.lineTo(x + 5 * size, y + 38); context.lineTo(x - 18 * size, y + 28); context.closePath(); context.fill(); context.stroke();
         context.fillStyle = "#e7edf0"; context.fillRect(x + 82 * size, y - 42 * size, 48 * size, 51 * size); context.strokeRect(x + 82 * size, y - 42 * size, 48 * size, 51 * size);
         context.fillStyle = "#244653";
