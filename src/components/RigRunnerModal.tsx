@@ -5,7 +5,7 @@ import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
 type PlatformKind = "jacket" | "concrete" | "monotower" | "semi" | "tlp" | "spar" | "fpso" | "circular" | "complex";
-type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean };
+type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean; landable?: boolean };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number };
 
@@ -20,7 +20,7 @@ const PLATFORM_NAMES = [
   "Statfjord A", "Statfjord B", "Statfjord C", "Troll A", "Oseberg A", "Oseberg B", "Oseberg D", "Gullfaks A", "Gullfaks B", "Gullfaks C",
   "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg",
 ];
-const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; size?: number }> = {
+const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; size?: number; landable?: boolean }> = {
   Ula: { kind: "jacket", flare: false }, Njord: { kind: "semi", flare: false, size: 1.05 }, Draupner: { kind: "complex", flare: false, size: 1.2 },
   Brage: { kind: "jacket", flare: false, size: 1.02 }, Skarv: { kind: "fpso", flare: true, size: 1.25 }, Heimdal: { kind: "jacket", flare: false, size: .96 },
   "Martin Linge": { kind: "jacket", flare: false, size: 1.08 }, Eldfisk: { kind: "complex", flare: true, size: 1.28 }, "Jotun FPSO": { kind: "fpso", flare: false, size: 1.24 },
@@ -31,7 +31,7 @@ const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; si
   "Balder FPSO": { kind: "fpso", flare: false, size: 1.25 }, Ringhorne: { kind: "jacket", flare: false, size: 1.02 }, Visund: { kind: "semi", flare: false, size: 1.08 },
   "Norne FPSO": { kind: "fpso", flare: true, size: 1.25 }, "Alvheim FPSO": { kind: "fpso", flare: false, size: 1.25 }, "Sleipner A": { kind: "concrete", flare: false, size: 1.16 },
   Kvitebjørn: { kind: "jacket", flare: false, size: 1.06 }, Valemon: { kind: "jacket", flare: false, size: .9 }, "Edvard Grieg": { kind: "jacket", flare: false, size: 1.1 },
-  Fenris: { kind: "jacket", flare: false, size: .86 }, Yme: { kind: "jacket", flare: false, size: 1.02 },
+  Fenris: { kind: "jacket", flare: false, size: .86, landable: false }, Yme: { kind: "jacket", flare: false, size: 1.02 },
   "Statfjord A": { kind: "concrete", flare: true, size: 1.18 }, "Statfjord B": { kind: "concrete", flare: false, size: 1.14 }, "Statfjord C": { kind: "concrete", flare: true, size: 1.15 },
   "Troll A": { kind: "concrete", flare: false, size: 1.26 }, "Oseberg A": { kind: "complex", flare: false, size: 1.28 }, "Oseberg B": { kind: "jacket", flare: false, size: 1.02 },
   "Oseberg D": { kind: "jacket", flare: false, size: .92 }, "Gullfaks A": { kind: "concrete", flare: false, size: 1.16 }, "Gullfaks B": { kind: "concrete", flare: true, size: 1.15 },
@@ -354,12 +354,17 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           context.beginPath(); context.moveTo(x + 20 * size, y + 17); context.lineTo(x + 35 * size, SEA_Y + 18); context.moveTo(x + 135 * size, y + 17); context.lineTo(x + 120 * size, SEA_Y + 18); context.moveTo(x + 20 * size, y + 35); context.lineTo(x + 127 * size, SEA_Y - 10); context.moveTo(x + 134 * size, y + 35); context.lineTo(x + 29 * size, SEA_Y - 10); context.stroke();
         }
       }
-      context.strokeStyle = "#20c98b";
-      context.lineWidth = 4;
-      context.beginPath(); context.arc(x + 38 * size, y - 2, 25 * size, Math.PI, 0); context.stroke();
-      context.font = `bold ${Math.max(13, 17 * size)}px sans-serif`;
-      context.fillStyle = "#20c98b";
-      context.fillText("H", x + 31 * size, y - 5);
+      if (rig.landable !== false) {
+        context.strokeStyle = "#20c98b";
+        context.lineWidth = 4;
+        context.beginPath(); context.arc(x + 38 * size, y - 2, 25 * size, Math.PI, 0); context.stroke();
+        context.font = `bold ${Math.max(13, 17 * size)}px sans-serif`;
+        context.fillStyle = "#20c98b";
+        context.fillText("H", x + 31 * size, y - 5);
+      } else {
+        context.fillStyle = "#f05252";
+        context.fillRect(x + 10 * size, y - 5, 55 * size, 5);
+      }
       // Arbeidslys, moduler og kran gir installasjonene en tydeligere offshore-silhuett.
       context.fillStyle = "#ffd45c";
       for (let light = 0; light < 3; light++) context.fillRect(x + (86 + light * 12) * size, y - 33 * size, 5 * size, 5 * size);
@@ -491,6 +496,10 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         const heliBottom = game.y + 25;
         for (const rig of game.rigs) {
           const overlapsPad = rig.x < HELI_X + 42 && rig.x + 88 * rig.size > HELI_X - 40;
+          if (rig.landable === false) {
+            if (overlapsPad && heliBottom >= rig.padY - 3 && heliBottom <= rig.padY + 22) finish();
+            continue;
+          }
           const approachingPad = overlapsPad && heliBottom > rig.padY - 40 && heliBottom < rig.padY - 3;
           if (!rig.scored && approachingPad && game.velocity > 15) {
             game.velocity *= .91;
