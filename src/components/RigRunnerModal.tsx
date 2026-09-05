@@ -82,6 +82,9 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     velocity: 0,
     score: 0,
     distance: 0,
+    crashAt: 0,
+    crashX: HELI_X,
+    crashY: 190,
     ...initialCourseRef.current,
     lastTime: 0,
   });
@@ -192,6 +195,9 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       velocity: -80,
       score: 0,
       distance: 0,
+      crashAt: 0,
+      crashX: HELI_X,
+      crashY: 190,
       ...startingCourse,
       lastTime: performance.now(),
     };
@@ -224,6 +230,10 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
 
     function finish() {
       const game = gameRef.current;
+      if (game.state !== "running") return;
+      game.crashAt = performance.now();
+      game.crashX = HELI_X;
+      game.crashY = game.y;
       game.state = "over";
       setState("over");
       setBest(previous => {
@@ -416,6 +426,19 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillRect(0, 0, WIDTH, HEIGHT);
       context.fillStyle = "rgba(255,255,255,.07)";
       context.beginPath(); context.arc(585, 72, 45, 0, Math.PI * 2); context.fill();
+      if (game.score >= 50) {
+        // Sjeldne, lokale lyn gir stormfølelse uten et ubehagelig helskjermblink.
+        const lightningPhase = game.distance % 920;
+        if (lightningPhase < 58) {
+          const storm = Math.floor(game.distance / 920);
+          const lightningX = 330 + ((storm * 173) % 420);
+          context.save();
+          context.shadowColor = "rgba(210,236,255,.9)"; context.shadowBlur = 18;
+          context.strokeStyle = `rgba(225,242,255,${.8 - lightningPhase / 90})`; context.lineWidth = 4;
+          context.beginPath(); context.moveTo(lightningX, 5); context.lineTo(lightningX - 24, 61); context.lineTo(lightningX + 3, 55); context.lineTo(lightningX - 31, 125); context.stroke();
+          context.restore();
+        }
+      }
       // Et saktegående supply-/standbyfartøy i bakgrunnen.
       const vesselX = WIDTH + 110 - ((game.distance * .2) % (WIDTH + 320));
       context.fillStyle = "rgba(225,238,239,.52)";
@@ -503,6 +526,31 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.font = "800 17px sans-serif";
         context.fillText(game.state === "ready" ? "TRYKK FOR Å STARTE VAKTRUNDEN" : "TRYKK FOR Å PRØVE IGJEN", WIDTH / 2, 282);
         context.textAlign = "start";
+      }
+      if (game.crashAt) {
+        const elapsed = performance.now() - game.crashAt;
+        if (elapsed < 1050) {
+          const progress = elapsed / 1050;
+          const radius = 16 + progress * 72;
+          context.save();
+          context.globalAlpha = Math.max(0, 1 - progress);
+          context.fillStyle = "rgba(255,90,28,.24)"; context.beginPath(); context.arc(game.crashX, game.crashY, radius * 1.35, 0, Math.PI * 2); context.fill();
+          context.fillStyle = "#ff5d24"; context.beginPath(); context.arc(game.crashX, game.crashY, radius * .72, 0, Math.PI * 2); context.fill();
+          context.fillStyle = "#ffd45c"; context.beginPath(); context.arc(game.crashX - 5, game.crashY - 5, radius * .4, 0, Math.PI * 2); context.fill();
+          for (let spark = 0; spark < 18; spark++) {
+            const angle = spark * (Math.PI * 2 / 18) + .35;
+            const travel = radius * (.7 + (spark % 4) * .14);
+            const sparkX = game.crashX + Math.cos(angle) * travel;
+            const sparkY = game.crashY + Math.sin(angle) * travel + progress * 24;
+            context.fillStyle = spark % 3 ? "#ffd45c" : "#ff6b32";
+            context.beginPath(); context.arc(sparkX, sparkY, Math.max(1, 4 - progress * 3), 0, Math.PI * 2); context.fill();
+          }
+          context.fillStyle = "rgba(35,43,48,.72)";
+          for (let smoke = 0; smoke < 5; smoke++) {
+            context.beginPath(); context.arc(game.crashX + (smoke - 2) * 12, game.crashY - radius * .5 - smoke * 5, 10 + progress * 12, 0, Math.PI * 2); context.fill();
+          }
+          context.restore();
+        }
       }
     }
 
