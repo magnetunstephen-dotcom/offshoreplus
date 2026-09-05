@@ -136,7 +136,7 @@ begin
   if not found then return false; end if;
   elapsed_seconds := extract(epoch from (now() - run_row.started_at));
   -- Et nytt poeng krever flere sekunders flyging. Litt slingringsmonn gis for tregt nett.
-  if p_final_score < 0 or p_final_score > 100 or p_final_score > floor(elapsed_seconds / 1.2) + 2 then
+  if p_final_score < 0 or p_final_score > 500 or p_final_score > floor(elapsed_seconds / 1.2) + 2 then
     update public.game_runs set finished_at = now(), final_score = null where id = p_run_id;
     return false;
   end if;
