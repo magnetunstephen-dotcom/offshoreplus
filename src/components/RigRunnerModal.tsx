@@ -388,6 +388,17 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       } else {
         context.strokeStyle = "#20c98b"; context.beginPath(); context.moveTo(x + 132 * size, y - 105 * size); context.lineTo(x + 132 * size, y - 84 * size); context.moveTo(x + 121 * size, y - 94 * size); context.lineTo(x + 143 * size, y - 94 * size); context.stroke();
       }
+      // Blinkende navigasjonslys og skum gjør feltet mer levende uten å påvirke fysikken.
+      if (Math.sin(phase * 2.2 + x / 80) > -.15) {
+        context.fillStyle = "#ff5d5d"; context.beginPath(); context.arc(x + 132 * size, y - 107 * size, 3.5, 0, Math.PI * 2); context.fill();
+      }
+      if (["fpso", "circular", "semi", "tlp", "spar"].includes(rig.kind)) {
+        context.strokeStyle = "rgba(220,247,250,.42)"; context.lineWidth = 2;
+        for (let foam = 0; foam < 3; foam++) {
+          const foamX = x + (18 + foam * 48) * size;
+          context.beginPath(); context.arc(foamX, SEA_Y + 3, 17 * size, Math.PI, Math.PI * 2); context.stroke();
+        }
+      }
       context.fillStyle = "rgba(3,18,27,.82)";
       context.fillRect(x + 3, y + 24, Math.max(72, rig.name.length * 10), 25);
       context.fillStyle = "#eaf8f3";
@@ -405,6 +416,15 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillRect(0, 0, WIDTH, HEIGHT);
       context.fillStyle = "rgba(255,255,255,.07)";
       context.beginPath(); context.arc(585, 72, 45, 0, Math.PI * 2); context.fill();
+      // Et saktegående supply-/standbyfartøy i bakgrunnen.
+      const vesselX = WIDTH + 110 - ((game.distance * .2) % (WIDTH + 320));
+      context.fillStyle = "rgba(225,238,239,.52)";
+      context.fillRect(vesselX + 30, SEA_Y - 29, 35, 18);
+      context.fillStyle = "rgba(31,78,91,.72)";
+      context.beginPath(); context.moveTo(vesselX, SEA_Y - 12); context.lineTo(vesselX + 95, SEA_Y - 12); context.lineTo(vesselX + 77, SEA_Y + 2); context.lineTo(vesselX + 13, SEA_Y + 2); context.closePath(); context.fill();
+      context.fillStyle = "rgba(255,210,82,.7)"; context.fillRect(vesselX + 36, SEA_Y - 24, 6, 5); context.fillRect(vesselX + 48, SEA_Y - 24, 6, 5);
+      context.strokeStyle = "rgba(220,247,250,.28)"; context.lineWidth = 2;
+      context.beginPath(); context.moveTo(vesselX - 20, SEA_Y + 3); context.lineTo(vesselX + 100, SEA_Y + 3); context.stroke();
       context.strokeStyle = "rgba(206,239,244,.18)";
       context.lineWidth = 2;
       for (let row = 0; row < 4; row++) {
@@ -444,11 +464,31 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.textAlign = "start";
       });
       drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4);
+      if (game.score >= 15) {
+        const rainAmount = Math.min(48, 18 + game.score);
+        context.strokeStyle = `rgba(200,232,240,${Math.min(.34, .16 + game.score / 300)})`;
+        context.lineWidth = 1.5;
+        for (let drop = 0; drop < rainAmount; drop++) {
+          const rainX = (drop * 79 + game.distance * 2.1) % (WIDTH + 80) - 40;
+          const rainY = (drop * 47 + game.distance * 1.15) % (SEA_Y + 80) - 40;
+          context.beginPath(); context.moveTo(rainX, rainY); context.lineTo(rainX - 8, rainY + 21); context.stroke();
+        }
+      }
+      if (game.score >= 30) {
+        const fog = Math.min(.18, .06 + (game.score - 30) / 350);
+        context.fillStyle = `rgba(205,225,226,${fog})`; context.fillRect(0, 110, WIDTH, 270);
+      }
       context.fillStyle = "rgba(3,18,27,.72)";
       context.fillRect(16, 15, 224, 48);
       context.fillStyle = "#eaf8f3";
       context.font = "800 20px sans-serif";
       context.fillText(`ANTALL LANDINGER  ${game.score}`, 28, 46);
+      if (game.score >= 10) {
+        const gust = Math.sin(game.distance / 125);
+        context.fillStyle = "rgba(3,18,27,.65)"; context.fillRect(WIDTH - 150, 15, 134, 48);
+        context.fillStyle = "#b8d0d6"; context.font = "800 16px sans-serif";
+        context.fillText(`VIND ${gust > 0 ? "↓" : "↑"} ${Math.round(Math.abs(gust) * Math.min(18, 7 + game.score / 5))} m/s`, WIDTH - 136, 46);
+      }
       if (game.state !== "running") {
         context.fillStyle = "rgba(3,13,22,.72)";
         context.fillRect(0, 0, WIDTH, HEIGHT);
@@ -474,7 +514,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         // Farten øker merkbart for hver landing og flater først ut på et høyere nivå.
         // Det gjør lange vaktrunder vanskeligere uten å gjøre 100 landinger umulig.
         const speed = 122 + Math.min(125, game.score * 10);
-        game.velocity += 390 * delta;
+        const gustForce = game.score >= 10 ? Math.sin(game.distance / 125) * Math.min(34, 10 + (game.score - 10) * .55) : 0;
+        game.velocity += (390 + gustForce) * delta;
         game.y += game.velocity * delta;
         game.distance += speed * delta;
         game.rigs.forEach(rig => { rig.x -= speed * delta; });
