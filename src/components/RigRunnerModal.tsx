@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
-type PlatformKind = "jacket" | "concrete" | "semi" | "tlp" | "fpso" | "circular" | "complex";
+type PlatformKind = "jacket" | "concrete" | "monotower" | "semi" | "tlp" | "spar" | "fpso" | "circular" | "complex";
 type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number };
@@ -13,14 +13,28 @@ const WIDTH = 900;
 const HEIGHT = 480;
 const SEA_Y = 420;
 const HELI_X = 145;
-const PLATFORM_NAMES = ["Ula", "Statfjord", "Skarv", "Troll", "Oseberg", "Gullfaks", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg"];
-const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean }> = {
-  Ula: { kind: "jacket", flare: false }, Statfjord: { kind: "concrete", flare: true }, Skarv: { kind: "fpso", flare: true },
-  Troll: { kind: "concrete", flare: false }, Oseberg: { kind: "complex", flare: false }, Gullfaks: { kind: "concrete", flare: false },
-  Ekofisk: { kind: "complex", flare: true }, Valhall: { kind: "complex", flare: false }, Snorre: { kind: "semi", flare: false },
-  Heidrun: { kind: "tlp", flare: false }, Åsgard: { kind: "semi", flare: true }, "Johan Sverdrup": { kind: "complex", flare: false },
-  Goliat: { kind: "circular", flare: false }, "Johan Castberg": { kind: "fpso", flare: false },
+const PLATFORM_NAMES = [
+  "Ula", "Njord", "Draupner", "Brage", "Skarv", "Heimdal", "Martin Linge", "Eldfisk", "Jotun FPSO", "Kristin",
+  "Draugen", "Hugin", "Munin", "Grane", "Gudrun", "Ivar Aasen", "Gullfaks", "Gjøa", "Aasta Hansteen",
+  "Statfjord", "Troll", "Oseberg", "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg",
+];
+const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; size?: number }> = {
+  Ula: { kind: "jacket", flare: false }, Njord: { kind: "semi", flare: false, size: 1.05 }, Draupner: { kind: "complex", flare: false, size: 1.2 },
+  Brage: { kind: "jacket", flare: false, size: 1.02 }, Skarv: { kind: "fpso", flare: true, size: 1.25 }, Heimdal: { kind: "jacket", flare: false, size: .96 },
+  "Martin Linge": { kind: "jacket", flare: false, size: 1.08 }, Eldfisk: { kind: "complex", flare: true, size: 1.28 }, "Jotun FPSO": { kind: "fpso", flare: false, size: 1.24 },
+  Kristin: { kind: "semi", flare: false, size: 1.06 }, Draugen: { kind: "monotower", flare: false, size: 1.08 }, Hugin: { kind: "jacket", flare: false, size: 1.02 },
+  Munin: { kind: "jacket", flare: false, size: .82 }, Grane: { kind: "jacket", flare: false, size: 1.12 }, Gudrun: { kind: "jacket", flare: false, size: .96 },
+  "Ivar Aasen": { kind: "jacket", flare: false, size: 1.02 }, Gullfaks: { kind: "concrete", flare: false, size: 1.16 }, Gjøa: { kind: "semi", flare: false, size: 1.08 },
+  "Aasta Hansteen": { kind: "spar", flare: false, size: 1.08 }, Statfjord: { kind: "concrete", flare: true, size: 1.14 }, Troll: { kind: "concrete", flare: false, size: 1.2 },
+  Oseberg: { kind: "complex", flare: false, size: 1.26 }, Ekofisk: { kind: "complex", flare: true, size: 1.3 }, Valhall: { kind: "complex", flare: false, size: 1.22 },
+  Snorre: { kind: "semi", flare: false, size: 1.08 }, Heidrun: { kind: "tlp", flare: false, size: 1.08 }, Åsgard: { kind: "semi", flare: true, size: 1.08 },
+  "Johan Sverdrup": { kind: "complex", flare: false, size: 1.32 }, Goliat: { kind: "circular", flare: false, size: 1.08 }, "Johan Castberg": { kind: "fpso", flare: false, size: 1.28 },
 };
+
+function rigSize(name: string) {
+  const profile = PLATFORM_PROFILES[name];
+  return profile.size ?? (profile.kind === "complex" ? 1.18 + Math.random() * .16 : .86 + Math.random() * .24);
+}
 
 function createRig(x: number, index: number): Rig {
   const name = PLATFORM_NAMES[index % PLATFORM_NAMES.length];
@@ -30,7 +44,7 @@ function createRig(x: number, index: number): Rig {
     padY: 278 + Math.random() * 78,
     scored: false,
     name,
-    size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.28 : profile.kind === "complex" ? 1.18 + Math.random() * .16 : .82 + Math.random() * .32,
+    size: rigSize(name),
     ...profile,
   };
 }
@@ -39,7 +53,7 @@ function createStartingCourse() {
   const startIndex = Math.floor(Math.random() * PLATFORM_NAMES.length);
   const name = PLATFORM_NAMES[startIndex];
   return {
-    rigs: [{ x: 720, padY: 335, scored: false, name, size: name === "Goliat" ? 1.08 : name === "Johan Castberg" ? 1.28 : PLATFORM_PROFILES[name].kind === "complex" ? 1.24 : 1, ...PLATFORM_PROFILES[name] }] as Rig[],
+    rigs: [{ x: 720, padY: 335, scored: false, name, size: rigSize(name), ...PLATFORM_PROFILES[name] }] as Rig[],
     nextRigIndex: startIndex + 1,
     drones: [{ x: 600, y: 120 + Math.random() * 120, phase: Math.random() * 6 }] as Drone[],
   };
@@ -272,7 +286,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.strokeStyle = "rgba(215,233,229,.42)"; context.beginPath(); context.moveTo(x + 28, y + 42); context.lineTo(x + 18, SEA_Y + 10); context.moveTo(x + width - 28, y + 42); context.lineTo(x + width - 18, SEA_Y + 10); context.stroke();
       } else if (rig.kind === "fpso") {
         // FPSO: langt skipsskrog med tydelig baug og et tett prosessanlegg på dekk.
-        context.fillStyle = rig.name === "Johan Castberg" ? "#9f2f32" : "#8d3036";
+        context.fillStyle = rig.name === "Johan Castberg" ? "#a83036" : rig.name === "Jotun FPSO" ? "#b84b2c" : "#8d3036";
         context.beginPath(); context.moveTo(x - 18 * size, y + 9); context.lineTo(x + width - 12 * size, y + 9); context.lineTo(x + width + 24 * size, y + 20); context.lineTo(x + width - 2 * size, y + 38); context.lineTo(x + 5 * size, y + 38); context.lineTo(x - 18 * size, y + 28); context.closePath(); context.fill(); context.stroke();
         context.fillStyle = "#e7edf0"; context.fillRect(x + 82 * size, y - 42 * size, 48 * size, 51 * size); context.strokeRect(x + 82 * size, y - 42 * size, 48 * size, 51 * size);
         context.fillStyle = "#244653";
@@ -295,6 +309,20 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.beginPath(); context.moveTo(x + 49 * size, y - 7); context.lineTo(x + 66 * size, y - 7); context.moveTo(x + 116 * size, y - 9); context.lineTo(x + 128 * size, y - 9); context.stroke();
         context.strokeStyle = "#b9cbd0"; context.lineWidth = 3;
         context.beginPath(); context.moveTo(x + 102 * size, y - 37 * size); context.lineTo(x + 80 * size, y - 83 * size); context.lineTo(x + 69 * size, y - 76 * size); context.stroke();
+      } else if (rig.kind === "spar") {
+        // Aasta Hansteen: flytende SPAR med ett dypt, smalt sylinderskrog.
+        context.fillStyle = "#d9e6e9"; context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
+        context.fillStyle = "#b53a3c";
+        context.beginPath(); context.roundRect(x + 60 * size, y + 14, 48 * size, SEA_Y - y + 38, 18 * size); context.fill(); context.stroke();
+        context.fillStyle = "#173846"; context.fillRect(x + 70 * size, y - 54 * size, 54 * size, 54 * size); context.strokeRect(x + 70 * size, y - 54 * size, 54 * size, 54 * size);
+        context.strokeStyle = "rgba(215,233,229,.28)"; context.lineWidth = 2;
+        context.beginPath(); context.moveTo(x + 64 * size, SEA_Y + 7); context.lineTo(x + 22 * size, HEIGHT); context.moveTo(x + 104 * size, SEA_Y + 7); context.lineTo(x + 148 * size, HEIGHT); context.stroke();
+      } else if (rig.kind === "monotower") {
+        // Draugen: bredt dekk på én markant betongsøyle, ikke vanlige jacket-bein.
+        context.fillStyle = "#173846"; context.fillRect(x - 8 * size, y, width + 18 * size, 18); context.strokeRect(x - 8 * size, y, width + 18 * size, 18);
+        context.fillStyle = "#315364";
+        context.beginPath(); context.moveTo(x + 55 * size, y + 17); context.lineTo(x + 43 * size, SEA_Y + 18); context.lineTo(x + 116 * size, SEA_Y + 18); context.lineTo(x + 105 * size, y + 17); context.closePath(); context.fill(); context.stroke();
+        context.fillStyle = "#e1e8eb"; context.fillRect(x + 78 * size, y - 50 * size, 50 * size, 50 * size); context.strokeRect(x + 78 * size, y - 50 * size, 50 * size, 50 * size);
       } else {
         context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
         context.fillRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size); context.strokeRect(x + 82 * size, y - 45 * size, 45 * size, 45 * size);
