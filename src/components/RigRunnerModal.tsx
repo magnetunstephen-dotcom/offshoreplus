@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
-type PlatformKind = "jacket" | "concrete" | "monotower" | "semi" | "tlp" | "spar" | "fpso" | "circular" | "complex";
+type PlatformKind = "jacket" | "jackup" | "concrete" | "monotower" | "semi" | "tlp" | "spar" | "fpso" | "circular" | "complex";
 type Rig = { x: number; padY: number; scored: boolean; missed?: boolean; name: string; size: number; kind: PlatformKind; flare: boolean; landable?: boolean };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number; best_streak: number };
@@ -20,7 +20,7 @@ const PLATFORM_NAMES = [
   "Draugen", "Hugin", "Munin", "Grane", "Gudrun", "Ivar Aasen", "Gullfaks", "Gjøa", "Aasta Hansteen",
   "Balder FPSO", "Ringhorne", "Visund", "Norne FPSO", "Alvheim FPSO", "Sleipner A", "Kvitebjørn", "Valemon", "Edvard Grieg", "Fenris", "Yme",
   "Statfjord A", "Statfjord B", "Statfjord C", "Troll A", "Oseberg A", "Oseberg B", "Oseberg D", "Gullfaks A", "Gullfaks B", "Gullfaks C",
-  "Ekofisk", "Valhall", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg",
+  "Ekofisk", "Valhall", "Haven", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg",
 ];
 const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; size?: number; landable?: boolean }> = {
   Ula: { kind: "jacket", flare: false }, Njord: { kind: "semi", flare: false, size: 1.05 }, Draupner: { kind: "complex", flare: false, size: 1.2 },
@@ -37,7 +37,7 @@ const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; si
   "Statfjord A": { kind: "concrete", flare: true, size: 1.18 }, "Statfjord B": { kind: "concrete", flare: false, size: 1.14 }, "Statfjord C": { kind: "concrete", flare: true, size: 1.15 },
   "Troll A": { kind: "concrete", flare: false, size: 1.26 }, "Oseberg A": { kind: "complex", flare: false, size: 1.28 }, "Oseberg B": { kind: "jacket", flare: false, size: 1.02 },
   "Oseberg D": { kind: "jacket", flare: false, size: .92 }, "Gullfaks A": { kind: "concrete", flare: false, size: 1.16 }, "Gullfaks B": { kind: "concrete", flare: true, size: 1.15 },
-  "Gullfaks C": { kind: "concrete", flare: false, size: 1.17 }, Ekofisk: { kind: "complex", flare: true, size: 1.3 }, Valhall: { kind: "complex", flare: false, size: 1.22 },
+  "Gullfaks C": { kind: "concrete", flare: false, size: 1.17 }, Ekofisk: { kind: "complex", flare: true, size: 1.3 }, Valhall: { kind: "complex", flare: false, size: 1.22 }, Haven: { kind: "jackup", flare: false, size: 1.12 },
   Snorre: { kind: "semi", flare: false, size: 1.08 }, Heidrun: { kind: "tlp", flare: false, size: 1.08 }, Åsgard: { kind: "semi", flare: true, size: 1.08 },
   "Johan Sverdrup": { kind: "complex", flare: false, size: 1.32 }, Goliat: { kind: "circular", flare: false, size: 1.08 }, "Johan Castberg": { kind: "fpso", flare: false, size: 1.28 },
 };
@@ -61,7 +61,8 @@ function createRig(x: number, index: number): Rig {
 }
 
 function createStartingCourse() {
-  const startIndex = Math.floor(Math.random() * PLATFORM_NAMES.length);
+  let startIndex = Math.floor(Math.random() * PLATFORM_NAMES.length);
+  if (PLATFORM_NAMES[startIndex] === "Haven") startIndex -= 1;
   const name = PLATFORM_NAMES[startIndex];
   return {
     rigs: [{ x: 720, padY: 335, scored: false, name, size: rigSize(name), ...PLATFORM_PROFILES[name] }] as Rig[],
@@ -407,6 +408,17 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.beginPath(); context.moveTo(x + 49 * size, y - 7); context.lineTo(x + 66 * size, y - 7); context.moveTo(x + 116 * size, y - 9); context.lineTo(x + 128 * size, y - 9); context.stroke();
         context.strokeStyle = "#b9cbd0"; context.lineWidth = 3;
         context.beginPath(); context.moveTo(x + 102 * size, y - 37 * size); context.lineTo(x + 80 * size, y - 83 * size); context.lineTo(x + 69 * size, y - 76 * size); context.stroke();
+      } else if (rig.kind === "jackup") {
+        // Haven: stor, gangveiforbundet jack-up boliginnretning med fire markante bein.
+        context.fillStyle = "#dce7e8"; context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
+        context.fillStyle = "#eef3f2"; context.fillRect(x + 62 * size, y - 82 * size, 76 * size, 82 * size); context.strokeRect(x + 62 * size, y - 82 * size, 76 * size, 82 * size);
+        context.fillStyle = "#1f5367"; context.fillRect(x + 70 * size, y - 67 * size, 60 * size, 13 * size);
+        context.fillStyle = "#ffd45c";
+        for (let light = 0; light < 4; light++) context.fillRect(x + (72 + light * 15) * size, y - 43 * size, 7 * size, 7 * size);
+        context.strokeStyle = "#b9cbd0"; context.lineWidth = 5;
+        [18, 52, 112, 146].forEach(offset => { context.beginPath(); context.moveTo(x + offset * size, y + 12); context.lineTo(x + offset * size, HEIGHT); context.stroke(); });
+        context.lineWidth = 3;
+        context.beginPath(); context.moveTo(x - 54 * size, y - 7 * size); context.lineTo(x + 7 * size, y - 7 * size); context.lineTo(x + 28 * size, y - 1 * size); context.stroke();
       } else if (rig.kind === "spar") {
         // Aasta Hansteen: flytende SPAR med ett dypt, smalt sylinderskrog.
         context.fillStyle = "#d9e6e9"; context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
@@ -643,7 +655,11 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
 
         const lastRig = game.rigs[game.rigs.length - 1];
         if (lastRig.x < 510) {
-          game.rigs.push(createRig(lastRig.x + 475 + Math.random() * 120, game.nextRigIndex));
+          const nextName = PLATFORM_NAMES[game.nextRigIndex % PLATFORM_NAMES.length];
+          const pairedWithValhall = lastRig.name === "Valhall" && nextName === "Haven";
+          const nextRig = createRig(lastRig.x + (pairedWithValhall ? 245 : 475 + Math.random() * 120), game.nextRigIndex);
+          if (pairedWithValhall) nextRig.padY = lastRig.padY + 8;
+          game.rigs.push(nextRig);
           game.nextRigIndex += 1;
         }
         game.rigs = game.rigs.filter(rig => rig.x > -180);
