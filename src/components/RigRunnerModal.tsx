@@ -110,6 +110,33 @@ function createStartingCourse() {
   };
 }
 
+function resultFeedback(score: number) {
+  if (score < 20) return {
+    title: "Oi, det gikk visst ikke helt etter planen!",
+    subtitle: `Godt du ikke er helikopterpilot · ${score} landinger`,
+  };
+  if (score < 40) return {
+    title: "Du begynner å få dreisen på dette!",
+    subtitle: `${score} landinger · passasjerene er bare litt bleke`,
+  };
+  if (score < 70) return {
+    title: "Dette begynner å ligne offshoreflyging!",
+    subtitle: `${score} landinger · stødig levert`,
+  };
+  if (score < 100) return {
+    title: "Sterk flyging – nå kjenner du feltet!",
+    subtitle: `${score} landinger · kapteinen har kontroll`,
+  };
+  if (score < 150) return {
+    title: "Imponerende vaktrunde!",
+    subtitle: `${score} landinger · dette er pilotklasse`,
+  };
+  return {
+    title: "Legendarisk flyging!",
+    subtitle: `${score} landinger · Nordsjøen er din`,
+  };
+}
+
 export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void; user: User | null; onLogin: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -790,15 +817,16 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.fillText(`VIND ${gust > 0 ? "↓" : "↑"} ${Math.round(Math.abs(gust) * Math.min(18, 7 + game.score / 5))} m/s`, WIDTH - 136, 46);
       }
       if (game.state !== "running") {
+        const feedback = resultFeedback(game.score);
         context.fillStyle = "rgba(3,13,22,.72)";
         context.fillRect(0, 0, WIDTH, HEIGHT);
         context.textAlign = "center";
         context.fillStyle = "#fff";
         context.font = "900 34px sans-serif";
-        context.fillText(game.state === "ready" ? "SPLIT FLIGHT" : "Oi, det gikk visst ikke helt etter planen!", WIDTH / 2, 184);
+        context.fillText(game.state === "ready" ? "SPLIT FLIGHT" : feedback.title, WIDTH / 2, 184);
         context.font = "600 18px sans-serif";
         context.fillStyle = "#b8d0d6";
-        context.fillText(game.state === "ready" ? "Patruljer feltet og unngå de russiske dronene" : `Du landet på ${game.score} ${game.score === 1 ? "installasjon" : "installasjoner"}`, WIDTH / 2, 222);
+        context.fillText(game.state === "ready" ? "Patruljer feltet og unngå de russiske dronene" : feedback.subtitle, WIDTH / 2, 222);
         context.fillStyle = "#20c98b";
         context.font = "800 17px sans-serif";
         context.fillText(game.state === "ready" ? "TRYKK FOR Å STARTE VAKTRUNDEN" : "TRYKK FOR Å PRØVE IGJEN", WIDTH / 2, 282);
