@@ -4,8 +4,9 @@ import { Modal } from "./Modal";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
-type PlatformKind = "jacket" | "jackup" | "concrete" | "monotower" | "semi" | "tlp" | "spar" | "fpso" | "circular" | "complex";
-type Rig = { x: number; padY: number; scored: boolean; missed?: boolean; name: string; size: number; kind: PlatformKind; flare: boolean; landable?: boolean };
+type PlatformKind = "jacket" | "jackup" | "drilljackup" | "drillsemi" | "concrete" | "monotower" | "semi" | "tlp" | "spar" | "fpso" | "circular" | "complex";
+type RigTheme = "cosl" | "transocean" | "odfjell" | "noble" | "island" | "saipem" | "shelf" | "floatel" | "catj";
+type Rig = { x: number; padY: number; scored: boolean; missed?: boolean; name: string; size: number; kind: PlatformKind; flare: boolean; landable?: boolean; theme?: RigTheme };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number; best_streak: number };
 type PendingScore = { runId: string; score: number; streak: number };
@@ -30,8 +31,12 @@ const PLATFORM_NAMES = [
   "Balder FPSO", "Ringhorne", "Visund", "Norne FPSO", "Alvheim FPSO", "Sleipner A", "Kvitebjørn", "Valemon", "Edvard Grieg", "Fenris", "Yme",
   "Statfjord A", "Statfjord B", "Statfjord C", "Troll A", "Oseberg A", "Oseberg B", "Oseberg D", "Gullfaks A", "Gullfaks B", "Gullfaks C",
   "Ekofisk", "Valhall", "Haven", "Snorre", "Heidrun", "Åsgard", "Johan Sverdrup", "Goliat", "Johan Castberg",
+  "COSL Pioneer", "Transocean Norge", "Deepsea Stavanger", "Noble Invincible", "COSL Innovator", "West Elara",
+  "Deepsea Aberdeen", "Transocean Enabler", "COSL Prospector", "Noble Integrator", "Deepsea Nordkapp", "Island Innovator",
+  "Transocean Encourage", "COSL Promoter", "Deepsea Bergen", "Noble Interceptor", "Scarabeo 8", "Deepsea Yantai",
+  "Transocean Spitsbergen", "Shelf Drilling Barsk", "Floatel Superior", "Askepott", "Askeladden", "Yme Inspirer",
 ];
-const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; size?: number; landable?: boolean }> = {
+const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; size?: number; landable?: boolean; theme?: RigTheme }> = {
   Ula: { kind: "jacket", flare: false }, Njord: { kind: "semi", flare: false, size: 1.05 }, Draupner: { kind: "complex", flare: false, size: 1.2 },
   Brage: { kind: "jacket", flare: false, size: 1.02 }, Skarv: { kind: "fpso", flare: true, size: 1.25 }, Heimdal: { kind: "jacket", flare: false, size: .96 },
   "Martin Linge": { kind: "jacket", flare: false, size: 1.08 }, Eldfisk: { kind: "complex", flare: true, size: 1.28 }, "Jotun FPSO": { kind: "fpso", flare: false, size: 1.24 },
@@ -49,7 +54,21 @@ const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; si
   "Gullfaks C": { kind: "concrete", flare: false, size: 1.17 }, Ekofisk: { kind: "complex", flare: true, size: 1.3 }, Valhall: { kind: "complex", flare: false, size: 1.22 }, Haven: { kind: "jackup", flare: false, size: 1.12 },
   Snorre: { kind: "semi", flare: false, size: 1.08 }, Heidrun: { kind: "tlp", flare: false, size: 1.08 }, Åsgard: { kind: "semi", flare: true, size: 1.08 },
   "Johan Sverdrup": { kind: "complex", flare: false, size: 1.32 }, Goliat: { kind: "circular", flare: false, size: 1.08 }, "Johan Castberg": { kind: "fpso", flare: false, size: 1.28 },
+  "COSL Pioneer": { kind: "drillsemi", flare: false, size: 1.05, theme: "cosl" }, "COSL Innovator": { kind: "drillsemi", flare: false, size: 1.05, theme: "cosl" },
+  "COSL Prospector": { kind: "drillsemi", flare: false, size: 1.08, theme: "cosl" }, "COSL Promoter": { kind: "drillsemi", flare: false, size: 1.05, theme: "cosl" },
+  "Transocean Norge": { kind: "drillsemi", flare: false, size: 1.13, theme: "transocean" }, "Transocean Enabler": { kind: "drillsemi", flare: false, size: 1.09, theme: "transocean" },
+  "Transocean Encourage": { kind: "drillsemi", flare: false, size: 1.09, theme: "transocean" }, "Transocean Spitsbergen": { kind: "drillsemi", flare: false, size: 1.1, theme: "transocean" },
+  "Deepsea Stavanger": { kind: "drillsemi", flare: false, size: 1.11, theme: "odfjell" }, "Deepsea Aberdeen": { kind: "drillsemi", flare: false, size: 1.11, theme: "odfjell" },
+  "Deepsea Nordkapp": { kind: "drillsemi", flare: false, size: 1.12, theme: "odfjell" }, "Deepsea Bergen": { kind: "drillsemi", flare: false, size: 1.1, theme: "odfjell" },
+  "Deepsea Yantai": { kind: "drillsemi", flare: false, size: 1.12, theme: "odfjell" }, "Island Innovator": { kind: "drillsemi", flare: false, size: 1.06, theme: "island" },
+  "Scarabeo 8": { kind: "drillsemi", flare: false, size: 1.08, theme: "saipem" }, "Floatel Superior": { kind: "drillsemi", flare: false, size: 1.11, theme: "floatel" },
+  "Noble Invincible": { kind: "drilljackup", flare: false, size: 1.08, theme: "noble" }, "Noble Integrator": { kind: "drilljackup", flare: false, size: 1.08, theme: "noble" },
+  "Noble Interceptor": { kind: "drilljackup", flare: false, size: 1.08, theme: "noble" }, "West Elara": { kind: "drilljackup", flare: false, size: 1.04, theme: "transocean" },
+  "Shelf Drilling Barsk": { kind: "drilljackup", flare: false, size: 1.05, theme: "shelf" }, "Askepott": { kind: "drilljackup", flare: false, size: 1.07, theme: "catj" },
+  "Askeladden": { kind: "drilljackup", flare: false, size: 1.07, theme: "catj" }, "Yme Inspirer": { kind: "drilljackup", flare: false, size: 1.07, theme: "noble" },
 };
+
+export const LANDABLE_INSTALLATION_COUNT = PLATFORM_NAMES.filter(name => PLATFORM_PROFILES[name].landable !== false).length;
 
 function rigSize(name: string) {
   const profile = PLATFORM_PROFILES[name];
@@ -481,6 +500,58 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.beginPath(); context.moveTo(x + 49 * size, y - 7); context.lineTo(x + 66 * size, y - 7); context.moveTo(x + 116 * size, y - 9); context.lineTo(x + 128 * size, y - 9); context.stroke();
         context.strokeStyle = "#b9cbd0"; context.lineWidth = 3;
         context.beginPath(); context.moveTo(x + 102 * size, y - 37 * size); context.lineTo(x + 80 * size, y - 83 * size); context.lineTo(x + 69 * size, y - 76 * size); context.stroke();
+      } else if (rig.kind === "drillsemi") {
+        const semiThemes: Partial<Record<RigTheme, { hull: string; deck: string; house: string; accent: string }>> = {
+          cosl: { hull: "#e2b72e", deck: "#f0c83f", house: "#e9eef0", accent: "#bf3636" },
+          transocean: { hull: "#b7333b", deck: "#d9e3e6", house: "#f0f3f4", accent: "#c52d38" },
+          odfjell: { hull: "#b94435", deck: "#e7ecee", house: "#f5f5f0", accent: "#e07b2d" },
+          island: { hull: "#243f60", deck: "#e0b832", house: "#ecf1f2", accent: "#e0b832" },
+          saipem: { hull: "#b53338", deck: "#e3bb2e", house: "#e9edef", accent: "#d94432" },
+          floatel: { hull: "#9f3139", deck: "#dce5e8", house: "#f1f2ed", accent: "#28729a" },
+        };
+        const theme = semiThemes[rig.theme ?? "odfjell"] ?? { hull: "#315364", deck: "#d9e3e6", house: "#eef2f2", accent: "#f0c85b" };
+        // Bore-rigger har brede pongtonger, fire søyler og en markant boretårnsilhuett.
+        context.fillStyle = theme.hull;
+        context.fillRect(x + 3 * size, SEA_Y - 9, 62 * size, 20); context.fillRect(x + 90 * size, SEA_Y - 9, 62 * size, 20);
+        context.fillStyle = theme.hull;
+        [18, 49, 101, 132].forEach(offset => context.fillRect(x + offset * size, y + 14, 18 * size, SEA_Y - y - 18));
+        context.fillStyle = theme.deck; context.fillRect(x - 7 * size, y, width + 14 * size, 18); context.strokeRect(x - 7 * size, y, width + 14 * size, 18);
+        context.fillStyle = theme.house; context.fillRect(x + 78 * size, y - 49 * size, 51 * size, 49 * size); context.strokeRect(x + 78 * size, y - 49 * size, 51 * size, 49 * size);
+        context.fillStyle = theme.accent; context.fillRect(x + 84 * size, y - 39 * size, 39 * size, 8 * size);
+        context.strokeStyle = "#d7e9e5"; context.lineWidth = 3;
+        context.beginPath(); context.moveTo(x + 58 * size, y); context.lineTo(x + 76 * size, y - 92 * size); context.lineTo(x + 95 * size, y); context.moveTo(x + 63 * size, y - 25 * size); context.lineTo(x + 89 * size, y - 25 * size); context.moveTo(x + 67 * size, y - 48 * size); context.lineTo(x + 85 * size, y - 48 * size); context.stroke();
+        context.fillStyle = "#ffd45c";
+        for (let light = 0; light < 4; light++) context.fillRect(x + (84 + light * 10) * size, y - 20 * size, 5 * size, 5 * size);
+        if (rig.name === "COSL Prospector") {
+          // Prospector er vinterisert: lukkede, lyse arbeidsområder rundt boredekket.
+          context.fillStyle = "rgba(236,244,245,.94)";
+          context.beginPath(); context.roundRect(x + 24 * size, y - 43 * size, 48 * size, 43 * size, 6 * size); context.fill(); context.stroke();
+          context.fillStyle = "#d9ad22"; context.fillRect(x + 28 * size, y - 34 * size, 40 * size, 7 * size);
+          context.fillStyle = "rgba(211,239,245,.7)"; context.fillRect(x + 32 * size, y - 20 * size, 32 * size, 9 * size);
+        }
+      } else if (rig.kind === "drilljackup") {
+        const jackupThemes: Partial<Record<RigTheme, { deck: string; accent: string }>> = {
+          noble: { deck: "#284e70", accent: "#e9edf0" },
+          transocean: { deck: "#b8343b", accent: "#eef2f3" },
+          shelf: { deck: "#e3812c", accent: "#244b6a" },
+          catj: { deck: "#b83a35", accent: "#f0c33d" },
+        };
+        const theme = jackupThemes[rig.theme ?? "noble"] ?? { deck: "#315364", accent: "#e9edf0" };
+        context.fillStyle = theme.deck; context.fillRect(x - 7 * size, y, width + 14 * size, 19); context.strokeRect(x - 7 * size, y, width + 14 * size, 19);
+        context.strokeStyle = "#b9cbd0"; context.lineWidth = 4;
+        [13, 76, 143].forEach(offset => {
+          context.beginPath(); context.moveTo(x + offset * size, y + 12); context.lineTo(x + offset * size, HEIGHT); context.stroke();
+          context.lineWidth = 1.5;
+          for (let brace = 0; brace < 5; brace++) {
+            const top = y + 18 + brace * 37;
+            context.beginPath(); context.moveTo(x + (offset - 5) * size, top); context.lineTo(x + (offset + 5) * size, top + 28); context.stroke();
+          }
+          context.lineWidth = 4;
+        });
+        context.fillStyle = theme.accent; context.fillRect(x + 88 * size, y - 47 * size, 43 * size, 47 * size); context.strokeRect(x + 88 * size, y - 47 * size, 43 * size, 47 * size);
+        context.strokeStyle = "#d7e9e5"; context.lineWidth = 3;
+        context.beginPath(); context.moveTo(x + 48 * size, y); context.lineTo(x + 65 * size, y - 88 * size); context.lineTo(x + 83 * size, y); context.moveTo(x + 54 * size, y - 31 * size); context.lineTo(x + 77 * size, y - 31 * size); context.stroke();
+        context.fillStyle = "#ffd45c"; context.fillRect(x + 95 * size, y - 35 * size, 7 * size, 7 * size); context.fillRect(x + 108 * size, y - 35 * size, 7 * size, 7 * size);
       } else if (rig.kind === "jackup") {
         // Haven: stor, gangveiforbundet jack-up boliginnretning med fire markante bein.
         context.fillStyle = "#dce7e8"; context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);

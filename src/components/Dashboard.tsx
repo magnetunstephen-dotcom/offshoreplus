@@ -15,6 +15,7 @@ import {
   InfoIcon,
   SettingsIcon,
 } from "./Icons";
+import { LANDABLE_INSTALLATION_COUNT } from "./RigRunnerModal";
 
 interface DashboardProps {
   trip: TripSetup;
@@ -129,7 +130,7 @@ export function Dashboard({
         </section>
 
         <button className="featured-game-launch" onClick={onGame}>
-          <span>🚁</span><span><strong>Split Flight</strong><small>Land på plattformer i Nordsjøen, og unngå de russiske dronene.</small></span><ChevronRightIcon size={20}/>
+          <span>🚁</span><span><strong>Split Flight</strong><small>Land på {LANDABLE_INSTALLATION_COUNT} forskjellige installasjoner i Nordsjøen og unngå de russiske dronene. Klarer du alle?</small></span><ChevronRightIcon size={20}/>
         </button>
 
         <section className="trip-progress-card op-progress-card">
