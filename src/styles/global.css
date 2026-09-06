@@ -447,6 +447,8 @@ input, select {
 .game-mobile-fullscreen { display:none; }
 .game-leaderboard { display:grid; gap:14px; min-height:400px; padding:16px; border:1px solid var(--border); border-radius:18px; background:var(--panel-strong); }
 .game-leaderboard h3 { margin:3px 0 0; }
+.game-leaderboard-tabs { grid-template-columns:1fr 1fr; }
+.game-leaderboard-tabs button { min-height:36px; padding:7px 8px; font-size:10px; }
 .game-leaderboard ol { display:grid; gap:5px; margin:0; padding:0; list-style:none; }
 .game-leaderboard li { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:32px; padding:5px 8px; border-radius:9px; color:var(--muted); font-size:13px; }
 .game-leaderboard li:nth-child(-n+3) { color:var(--text); background:color-mix(in srgb,var(--accent) 7%,transparent); }

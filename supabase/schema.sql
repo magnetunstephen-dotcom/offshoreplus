@@ -79,6 +79,7 @@ create table if not exists public.game_scores (
   score integer not null default 0 check (score between 0 and 1000000),
   updated_at timestamptz not null default now()
 );
+alter table public.game_scores add column if not exists best_streak integer not null default 0 check (best_streak between 0 and 1000000);
 
 alter table public.game_scores enable row level security;
 revoke all on public.game_scores from anon, authenticated;
@@ -147,9 +148,32 @@ begin
 end;
 $$;
 
+create or replace function public.finish_rig_runner_run(p_run_id uuid, p_final_score integer, p_best_streak integer)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare run_row public.game_runs%rowtype;
+declare elapsed_seconds numeric;
+begin
+  select * into run_row from public.game_runs
+  where id = p_run_id and user_id = auth.uid() and finished_at is null for update;
+  if not found then return false; end if;
+  elapsed_seconds := extract(epoch from (now() - run_row.started_at));
+  if p_final_score < 0 or p_final_score > 500 or p_best_streak < 0 or p_best_streak > p_final_score or p_final_score > floor(elapsed_seconds / 1.2) + 2 then
+    update public.game_runs set finished_at = now(), final_score = null where id = p_run_id;
+    return false;
+  end if;
+  update public.game_runs set finished_at = now(), final_score = p_final_score where id = p_run_id;
+  update public.game_scores
+  set score = greatest(score, p_final_score), best_streak = greatest(best_streak, p_best_streak), updated_at = now()
+  where user_id = auth.uid();
+  return true;
+end;
+$$;
+
 revoke all on function public.set_rig_runner_name(text) from public, anon;
 revoke all on function public.start_rig_runner_run() from public, anon;
 revoke all on function public.finish_rig_runner_run(uuid, integer) from public, anon;
 grant execute on function public.set_rig_runner_name(text) to authenticated;
 grant execute on function public.start_rig_runner_run() to authenticated;
 grant execute on function public.finish_rig_runner_run(uuid, integer) to authenticated;
+revoke all on function public.finish_rig_runner_run(uuid, integer, integer) from public, anon;
+grant execute on function public.finish_rig_runner_run(uuid, integer, integer) to authenticated;

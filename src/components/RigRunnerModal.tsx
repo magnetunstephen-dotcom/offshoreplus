@@ -5,10 +5,10 @@ import { supabase, supabaseConfigured } from "../lib/supabase";
 
 type GameState = "ready" | "running" | "over";
 type PlatformKind = "jacket" | "concrete" | "monotower" | "semi" | "tlp" | "spar" | "fpso" | "circular" | "complex";
-type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean; landable?: boolean };
+type Rig = { x: number; padY: number; scored: boolean; missed?: boolean; name: string; size: number; kind: PlatformKind; flare: boolean; landable?: boolean };
 type Drone = { x: number; y: number; phase: number };
-type LeaderboardEntry = { user_id: string; display_name: string; score: number };
-type PendingScore = { runId: string; score: number };
+type LeaderboardEntry = { user_id: string; display_name: string; score: number; best_streak: number };
+type PendingScore = { runId: string; score: number; streak: number };
 const PENDING_SCORE_KEY = "offshoreplus-pending-game-score";
 
 const WIDTH = 900;
@@ -27,7 +27,7 @@ const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; si
   Brage: { kind: "jacket", flare: false, size: 1.02 }, Skarv: { kind: "fpso", flare: true, size: 1.25 }, Heimdal: { kind: "jacket", flare: false, size: .96 },
   "Martin Linge": { kind: "jacket", flare: false, size: 1.08 }, Eldfisk: { kind: "complex", flare: true, size: 1.28 }, "Jotun FPSO": { kind: "fpso", flare: false, size: 1.24 },
   Kristin: { kind: "semi", flare: false, size: 1.06 }, Draugen: { kind: "monotower", flare: false, size: 1.08 }, Hugin: { kind: "jacket", flare: false, size: 1.02 },
-  Munin: { kind: "jacket", flare: false, size: .82 }, Grane: { kind: "jacket", flare: false, size: 1.12 }, Gudrun: { kind: "jacket", flare: false, size: .96 },
+  Munin: { kind: "jacket", flare: false, size: .82, landable: false }, Grane: { kind: "jacket", flare: false, size: 1.12 }, Gudrun: { kind: "jacket", flare: false, size: .96 },
   "Ivar Aasen": { kind: "jacket", flare: false, size: 1.02 }, Gullfaks: { kind: "concrete", flare: false, size: 1.16 }, Gjøa: { kind: "semi", flare: false, size: 1.08 },
   "Aasta Hansteen": { kind: "spar", flare: false, size: 1.08 },
   "Balder FPSO": { kind: "fpso", flare: false, size: 1.25 }, Ringhorne: { kind: "jacket", flare: false, size: 1.02 }, Visund: { kind: "semi", flare: false, size: 1.08 },
@@ -85,6 +85,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     y: 190,
     velocity: 0,
     score: 0,
+    streak: 0,
+    bestStreak: 0,
     distance: 0,
     crashAt: 0,
     crashX: HELI_X,
@@ -94,8 +96,12 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   });
   const [state, setState] = useState<GameState>("ready");
   const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-streak") || 0));
   const [best, setBest] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-best") || 0));
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [streakLeaderboard, setStreakLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardMode, setLeaderboardMode] = useState<"score" | "streak">("score");
   const [nickname, setNickname] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nameMessage, setNameMessage] = useState("");
@@ -109,13 +115,17 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
 
   async function loadLeaderboard() {
     if (!supabaseConfigured) return;
-    const { data } = await supabase.from("game_scores").select("user_id,display_name,score").order("score", { ascending: false }).order("updated_at", { ascending: true }).limit(10);
+    const [{ data }, { data: streakData }] = await Promise.all([
+      supabase.from("game_scores").select("user_id,display_name,score,best_streak").order("score", { ascending: false }).order("updated_at", { ascending: true }).limit(10),
+      supabase.from("game_scores").select("user_id,display_name,score,best_streak").order("best_streak", { ascending: false }).order("updated_at", { ascending: true }).limit(10),
+    ]);
+    if (streakData) setStreakLeaderboard(streakData as LeaderboardEntry[]);
     if (data) {
       const entries = data as LeaderboardEntry[];
       setLeaderboard(entries);
       let ownEntry = entries.find(entry => entry.user_id === userRef.current?.id);
       if (!ownEntry && userRef.current) {
-        const { data: ownData } = await supabase.from("game_scores").select("user_id,display_name,score").eq("user_id", userRef.current.id).maybeSingle();
+        const { data: ownData } = await supabase.from("game_scores").select("user_id,display_name,score,best_streak").eq("user_id", userRef.current.id).maybeSingle();
         ownEntry = ownData as LeaderboardEntry | undefined;
       }
       if (ownEntry && !nicknameRef.current.trim()) {
@@ -134,7 +144,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     if (!saved) return;
     try {
       const pending = JSON.parse(saved) as PendingScore;
-      supabase.rpc("finish_rig_runner_run", { p_run_id: pending.runId, p_final_score: pending.score }).then(async ({ data, error }) => {
+      supabase.rpc("finish_rig_runner_run", { p_run_id: pending.runId, p_final_score: pending.score, p_best_streak: pending.streak ?? 0 }).then(async ({ data, error }) => {
         if (!error || data === false) localStorage.removeItem(PENDING_SCORE_KEY);
         if (data === true) {
           setScoreMessage("Den ventende toppscoren ble lagret på poengtavlen.");
@@ -190,7 +200,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     }
   }
 
-  async function submitScore(nextScore: number) {
+  async function submitScore(nextScore: number, nextStreak: number) {
     const currentUser = userRef.current;
     const runId = gameRunRef.current ?? await gameRunPromiseRef.current;
     gameRunRef.current = null;
@@ -199,8 +209,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       if (currentUser) setScoreMessage("Resultatet ble lagret på telefonen, men kom ikke på poengtavlen. Kontroller spillnavnet og prøv igjen.");
       return;
     }
-    localStorage.setItem(PENDING_SCORE_KEY, JSON.stringify({ runId, score: nextScore } satisfies PendingScore));
-    const { data, error } = await supabase.rpc("finish_rig_runner_run", { p_run_id: runId, p_final_score: nextScore });
+    localStorage.setItem(PENDING_SCORE_KEY, JSON.stringify({ runId, score: nextScore, streak: nextStreak } satisfies PendingScore));
+    const { data, error } = await supabase.rpc("finish_rig_runner_run", { p_run_id: runId, p_final_score: nextScore, p_best_streak: nextStreak });
     if (error) {
       setScoreMessage("Nettet svarte ikke. Resultatet sendes automatisk på nytt.");
       return;
@@ -250,6 +260,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       y: 190,
       velocity: -80,
       score: 0,
+      streak: 0,
+      bestStreak: 0,
       distance: 0,
       crashAt: 0,
       crashX: HELI_X,
@@ -258,6 +270,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       lastTime: performance.now(),
     };
     setScore(0);
+    setStreak(0);
     setState("running");
   }
 
@@ -297,7 +310,12 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         localStorage.setItem("offshoreplus-rig-runner-best", String(next));
         return next;
       });
-      submitScore(game.score);
+      setBestStreak(previous => {
+        const next = Math.max(previous, game.bestStreak);
+        localStorage.setItem("offshoreplus-rig-runner-streak", String(next));
+        return next;
+      });
+      submitScore(game.score, game.bestStreak);
     }
 
     function drawHelicopter(y: number, rotation: number, rotorPhase: number) {
@@ -561,7 +579,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillRect(16, 15, 224, 48);
       context.fillStyle = "#eaf8f3";
       context.font = "800 20px sans-serif";
-      context.fillText(`ANTALL LANDINGER  ${game.score}`, 28, 46);
+      context.fillText(`LANDINGER  ${game.score}   ·   REKKE  ${game.streak}`, 28, 46);
       if (game.score >= 10) {
         const gust = Math.sin(game.distance / 125);
         context.fillStyle = "rgba(3,18,27,.65)"; context.fillRect(WIDTH - 150, 15, 134, 48);
@@ -631,6 +649,13 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           game.nextRigIndex += 1;
         }
         game.rigs = game.rigs.filter(rig => rig.x > -180);
+        game.rigs.forEach(rig => {
+          if (rig.landable !== false && !rig.scored && !rig.missed && rig.x + 88 * rig.size < HELI_X - 40) {
+            rig.missed = true;
+            game.streak = 0;
+            setStreak(0);
+          }
+        });
         if (!game.drones.length || game.drones[game.drones.length - 1].x < 470) {
           game.drones.push({ x: WIDTH + 40 + Math.random() * 220, y: 105 + Math.random() * 185, phase: Math.random() * 6 });
         }
@@ -654,9 +679,12 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
             if (!rig.scored && heliBottom <= rig.padY + 14 && game.velocity < 190) {
               rig.scored = true;
               game.score += 1;
+              game.streak += 1;
+              game.bestStreak = Math.max(game.bestStreak, game.streak);
               game.velocity = -170;
               game.y = rig.padY - 29;
               setScore(game.score);
+              setStreak(game.streak);
             } else if (!rig.scored) finish();
           }
         }
@@ -677,7 +705,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     <div ref={gameAreaRef} className={`game-fullscreen-area${mobilePlayMode ? " mobile-game-mode" : ""}`}>
     <div className="game-header">
       <div><span className="eyebrow">DRONEVAKTA</span><h2 id="rig-runner-title">Split Flight</h2></div>
-      <div className="game-score"><span>Landinger <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
+      <div className="game-score"><span>Landinger <b>{score}</b></span><span>Rekke <b>{streak}</b></span><span>Rekord <b>{best}</b></span><span>Beste rekke <b>{bestStreak}</b></span></div>
       <div className="game-window-actions"><button onClick={toggleSound} aria-label={soundOn ? "Slå av musikk" : "Slå på musikk"} title={soundOn ? "Slå av musikk" : "Slå på musikk"}>{soundOn ? "🔊" : "🔇"}</button><button onClick={toggleFullscreen} aria-label={isFullscreen || mobilePlayMode ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen || mobilePlayMode ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
     <div className="game-layout">
@@ -692,7 +720,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       </div>
       <aside className="game-leaderboard" aria-label="Poengtavle">
         <div><span className="eyebrow">TOPP 10</span><h3>Poengtavle</h3></div>
-        {leaderboard.length ? <ol>{leaderboard.map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.score}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå. Bli den første!</p>}
+        <div className="segmented game-leaderboard-tabs"><button className={leaderboardMode === "score" ? "selected" : ""} onClick={() => setLeaderboardMode("score")}>Flest landinger</button><button className={leaderboardMode === "streak" ? "selected" : ""} onClick={() => setLeaderboardMode("streak")}>Lengste rekke</button></div>
+        {(leaderboardMode === "score" ? leaderboard : streakLeaderboard).length ? <ol>{(leaderboardMode === "score" ? leaderboard : streakLeaderboard).map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{leaderboardMode === "score" ? entry.score : entry.best_streak}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå. Bli den første!</p>}
         {scoreMessage && <p className="game-score-message" role="status">{scoreMessage}</p>}
         {!user ? <><p className="leaderboard-login-help">Logg inn for å lagre toppscoren din og velge spillnavn.</p><button className="secondary full-width" onClick={onLogin}>Logg inn for å lagre toppscore</button></> : <form className="game-name-form" onSubmit={saveNickname}><label htmlFor="game-name">Ditt spillnavn</label><div><input id="game-name" value={nicknameDraft} maxLength={20} placeholder="F.eks. Nordsjøpiloten" onChange={event => setNicknameDraft(event.target.value)} /><button type="submit">Lagre</button></div>{nameMessage && <small>{nameMessage}</small>}</form>}
       </aside>
