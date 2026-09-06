@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { TripSetup, UserProfile, YearTrip } from "../types";
 import { formatDate } from "../lib/date";
 import { loadAutoDisabledYears, loadUserProfile, loadYearTrips, saveAutoDisabledYears, saveUserProfile, saveYearTrips } from "../lib/storage";
-import { changeYearTripPattern, snapshotTrip, summarizeYear, upgradeLegacyYearTrips } from "../lib/year";
+import { changeYearTripPattern, refreshMatchingYearTrip, snapshotTrip, summarizeYear, upgradeLegacyYearTrips } from "../lib/year";
 import { Modal } from "./Modal";
 
 interface Props { trip: TripSetup; onClose: () => void; }
@@ -18,7 +18,8 @@ export function MyYearModal({ trip, onClose }: Props) {
 
   useEffect(() => {
     const upgraded = upgradeLegacyYearTrips(trips, trip, profile);
-    if (upgraded !== trips) { setTrips(upgraded); saveYearTrips(upgraded); }
+    const refreshed = refreshMatchingYearTrip(upgraded, trip, profile);
+    if (refreshed !== trips) { setTrips(refreshed); saveYearTrips(refreshed); }
   }, []);
 
   function persistTrips(next: YearTrip[]) { setTrips(next); saveYearTrips(next); }
@@ -47,7 +48,7 @@ export function MyYearModal({ trip, onClose }: Props) {
       {summary.rows.length === 0 ? <div className="year-empty"><strong>Ingen fullførte turer i {year}</strong><p>Fullførte turer legges automatisk til fra turnuskalenderen. Du kan også legge inn den aktive turen manuelt.</p><button className="primary" onClick={addCurrentTrip}>Legg til aktiv tur</button></div> : <>
         <section className="year-forecast"><span className="eyebrow">Forventet årslønn akkurat nå</span><strong>{money(summary.projectedGross)}</strong><small>Basert på registrerte turer hittil · forventet netto {money(summary.projectedNet)}</small></section>
         <div className="year-kpis"><article><span>Brutto opptjent</span><strong>{money(summary.gross)}</strong></article><article><span>Netto registrert</span><strong>{money(summary.actualNet)}</strong></article><article><span>Feriepenger opptjent</span><strong>{money(summary.holidayAccrued)}</strong></article><article><span>Offshore</span><strong>{summary.offshoreDays} døgn</strong></article><article><span>Overtid</span><strong>{summary.overtimeHours.toFixed(1)} t</strong></article><article><span>Avvik mot estimat</span><strong className={summary.variance < 0 ? "negative" : "positive"}>{money(summary.variance)}</strong></article></div>
-        <section className="card year-breakdown"><h3>Hva du har tjent</h3><div><span>Ordinær lønn</span><strong>{money(summary.regular)}</strong></div><div><span>Overtid</span><strong>{money(summary.overtime)}</strong></div><div><span>Natt og andre tillegg</span><strong>{money(summary.additions)}</strong></div><div className="total"><span>Brutto opptjent</span><strong>{money(summary.gross)}</strong></div></section>
+        <section className="card year-breakdown"><h3>Hva du har tjent</h3><div><span>Ordinær lønn</span><strong>{money(summary.regular)}</strong></div><div><span>Overtid · {summary.overtimeHours.toFixed(1)} t</span><strong>{money(summary.overtime)}</strong></div><div><span>Natt, ventetid og andre tillegg</span><strong>{money(summary.additions)}</strong></div><div className="total"><span>Brutto opptjent</span><strong>{money(summary.gross)}</strong></div></section>
       </>}
     </div>}
 

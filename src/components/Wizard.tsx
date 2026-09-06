@@ -112,6 +112,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
 
   return (
     <Modal onClose={onCancel} labelledBy="wizard-title">
+      <button className="modal-corner-close" onClick={onCancel} aria-label="Lukk oppsett">×</button>
       <div className="progress" aria-label={`Steg ${step} av 5`}>
         {[1, 2, 3, 4, 5].map((number) => (
           <span className={number <= step ? "active" : ""} key={number} />
@@ -146,11 +147,11 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
             <div className="form-grid">
               <label>
                 Dager offshore
-                <input type="number" min={1} value={customOnDays} onChange={(event) => setCustomOnDays(Number(event.target.value))} />
+                <input type="number" min={1} value={customOnDays || ""} onChange={(event) => setCustomOnDays(Number(event.target.value))} />
               </label>
               <label>
                 Dager fri
-                <input type="number" min={0} value={customOffDays} onChange={(event) => setCustomOffDays(Number(event.target.value))} />
+                <input type="number" min={0} value={customOffDays || ""} onChange={(event) => setCustomOffDays(Number(event.target.value))} />
               </label>
             </div>
           )}
@@ -240,10 +241,10 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
           {agreement.groupDescriptions?.[group] && <p className="muted agreement-group-help"><strong>Gruppe {group}:</strong> {agreement.groupDescriptions[group]}</p>}
           {agreementId === "custom" && <div className="custom-salary-box">
             <div className="form-grid">
-              <label>Fast månedslønn<input type="number" min={0} step={100} value={customMonthlySalary} onChange={event => setCustomMonthlySalary(Number(event.target.value))} /><small className="field-help">Brutto før tillegg</small></label>
-              <label>Timelønn<input type="number" min={0} step={0.01} value={customHourlyRate} onChange={event => setCustomHourlyRate(Number(event.target.value))} /></label>
-              <label>Overtid per time<input type="number" min={0} step={0.01} value={customOvertimeRate} onChange={event => setCustomOvertimeRate(Number(event.target.value))} /></label>
-              <label>Feriepenger<input type="number" min={0} max={20} step={0.1} value={holidayPayRate} onChange={event => setHolidayPayRate(Number(event.target.value))} /><small className="field-help">Vanligvis 10,2 % eller 12 %</small></label>
+              <label>Fast månedslønn<input type="number" min={0} step={100} value={customMonthlySalary || ""} onChange={event => setCustomMonthlySalary(Number(event.target.value))} /><small className="field-help">Brutto før tillegg</small></label>
+              <label>Timelønn<input type="number" min={0} step={0.01} value={customHourlyRate || ""} onChange={event => setCustomHourlyRate(Number(event.target.value))} /></label>
+              <label>Overtid per time<input type="number" min={0} step={0.01} value={customOvertimeRate || ""} onChange={event => setCustomOvertimeRate(Number(event.target.value))} /></label>
+              <label>Feriepenger<input type="number" min={0} max={20} step={0.1} value={holidayPayRate || ""} onChange={event => setHolidayPayRate(Number(event.target.value))} /><small className="field-help">Vanligvis 10,2 % eller 12 %</small></label>
             </div>
           </div>}
           {agreement.notes && <div className="info-box compact-info agreement-notes">{agreement.notes.map(note => <span key={note}>{note}</span>)}</div>}
@@ -279,7 +280,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
               <button className={nightAllowance === 136 ? "selected" : ""} onClick={() => setNightAllowance(136)}>136 kr · med handover</button>
               <button className={nightAllowance === 106 ? "selected" : ""} onClick={() => setNightAllowance(106)}>106 kr · uten</button>
             </div>
-            <label>Egen sats<input type="number" min={0} step={0.01} value={nightAllowance} onChange={(event) => setNightAllowance(Number(event.target.value))} /></label>
+            <label>Egen sats<input type="number" min={0} step={0.01} value={nightAllowance || ""} onChange={(event) => setNightAllowance(Number(event.target.value))} /></label>
             <small className="field-help">2026-sats: 136 kr når nødvendig konferanse/handover ved skiftbytte inngår, ellers 106 kr.</small>
           </div>}
         </div>

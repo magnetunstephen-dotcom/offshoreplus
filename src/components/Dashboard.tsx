@@ -128,6 +128,10 @@ export function Dashboard({
           </div>
         </section>
 
+        <button className="featured-game-launch" onClick={onGame}>
+          <span>🚁</span><span><strong>Split Flight</strong><small>Dronevakta · slå kollegaenes rekord</small></span><ChevronRightIcon size={20}/>
+        </button>
+
         <section className="trip-progress-card op-progress-card">
           <div className="trip-progress-top">
             <div>
@@ -238,7 +242,6 @@ export function Dashboard({
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
           <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon className="action-chevron" size={17} /></button>
           <button onClick={onSettings}><span className="action-icon"><SettingsIcon /></span><strong>Innstillinger</strong><small>Lønn og oppsett</small><ChevronRightIcon className="action-chevron" size={17}/></button>
-          <button onClick={onGame}><span className="action-icon">🚁</span><strong>Dronevakta</strong><small>Patruljer feltet og unngå de russiske dronene</small><ChevronRightIcon className="action-chevron" size={17}/></button>
         </section>
 
         {holidays.length > 0 && (

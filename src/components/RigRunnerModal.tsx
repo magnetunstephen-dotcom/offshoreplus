@@ -518,7 +518,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.textAlign = "center";
         context.fillStyle = "#fff";
         context.font = "900 34px sans-serif";
-        context.fillText(game.state === "ready" ? "DRONEVAKTA" : "Vaktrunden er over", WIDTH / 2, 184);
+        context.fillText(game.state === "ready" ? "SPLIT FLIGHT" : "Vaktrunden er over", WIDTH / 2, 184);
         context.font = "600 18px sans-serif";
         context.fillStyle = "#b8d0d6";
         context.fillText(game.state === "ready" ? "Patruljer feltet og unngå de russiske dronene" : `Du landet på ${game.score} ${game.score === 1 ? "installasjon" : "installasjoner"}`, WIDTH / 2, 222);
@@ -618,7 +618,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   return <Modal onClose={onClose} labelledBy="rig-runner-title" className="game-modal">
     <div ref={gameAreaRef} className={`game-fullscreen-area${mobilePlayMode ? " mobile-game-mode" : ""}`}>
     <div className="game-header">
-      <div><span className="eyebrow">PAUSEMODUS</span><h2 id="rig-runner-title">Dronevakta</h2></div>
+      <div><span className="eyebrow">DRONEVAKTA</span><h2 id="rig-runner-title">Split Flight</h2></div>
       <div className="game-score"><span>Landinger <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
       <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen || mobilePlayMode ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen || mobilePlayMode ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>

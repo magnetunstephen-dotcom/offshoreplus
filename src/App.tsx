@@ -118,10 +118,12 @@ export default function App() {
         <main className="empty-state">
           <div className="large-mark"><OffshorePlusLogo size={65} /></div>
           <h1>OffshorePlus</h1>
-          <p>En enkel oversikt over offshore-tur, lønn og turnus.</p>
-          <button className="primary large-button" onClick={() => setModal("wizard")}>
-            Start ny tur
-          </button>
+          <p>Gratis oversikt over offshore-tur, lønn og turnus. Du kan bruke tjenesten med eller uten konto.</p>
+          <div className="welcome-actions">
+            <button className="primary large-button" onClick={() => setModal("account")}>Jeg har konto · logg inn</button>
+            <button className="secondary large-button" onClick={() => setModal("wizard")}>Fortsett uten konto</button>
+          </div>
+          <small className="welcome-help">Ny bruker? Velg «Logg inn» og deretter «Opprett konto» – det er gratis.</small>
         </main>
       )}
 
@@ -133,7 +135,7 @@ export default function App() {
         <Wizard
           existingTrip={trip}
           onComplete={(nextTrip) => storeTrip(nextTrip)}
-          onCancel={trip ? () => setModal(null) : undefined}
+          onCancel={() => setModal(null)}
         />
       )}
 

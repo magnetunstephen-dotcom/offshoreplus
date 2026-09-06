@@ -152,7 +152,10 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
 
   return (
     <Modal onClose={onClose} labelledBy="additions-title">
-      <h2 id="additions-title">Tillegg denne turen</h2>
+      <div className="account-header">
+        <div><span className="eyebrow">REGISTRERING</span><h2 id="additions-title">Tillegg denne turen</h2></div>
+        <button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button>
+      </div>
       <p className="muted">
         Start live-teller for overtid eller ventetid. Legg også inn faste og lokale tillegg.
       </p>
@@ -215,7 +218,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
             </label>
             {kind === "trip-hours" && (
               <>
-                <label>Timer<input type="number" min={0} step={0.25} value={hours} onChange={(event) => setHours(Number(event.target.value))} /></label>
+                <label>Timer<input type="number" min={0} step={0.25} value={hours || ""} onChange={(event) => setHours(Number(event.target.value))} /></label>
                 <label>Sats
                   <select value={rateBasis} onChange={(event) => setRateBasis(event.target.value as CustomAdditionRateBasis)}>
                     <option value="hourly">Ordinær timelønn</option>
@@ -223,10 +226,10 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
                     <option value="custom">Egen timesats</option>
                   </select>
                 </label>
-                {rateBasis === "custom" && <label>Egen timesats<input type="number" min={0} step={0.01} value={customRate} onChange={(event) => setCustomRate(Number(event.target.value))} /></label>}
+                {rateBasis === "custom" && <label>Egen timesats<input type="number" min={0} step={0.01} value={customRate || ""} onChange={(event) => setCustomRate(Number(event.target.value))} /></label>}
               </>
             )}
-            {kind !== "trip-hours" && <label>Beløp<input type="number" min={0} step={1} value={amount} onChange={(event) => setAmount(Number(event.target.value))} /></label>}
+            {kind !== "trip-hours" && <label>Beløp<input type="number" min={0} step={1} value={amount || ""} onChange={(event) => setAmount(Number(event.target.value))} /></label>}
             <label>Skattetrekk
               <select value={taxTreatment} onChange={(event) => setTaxTreatment(event.target.value as TaxTreatment)}>
                 <option value="normal">Vanlig valgt skatteprosent</option>
@@ -247,7 +250,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
               </label>
             </div>
             {addition.kind !== "monthly-fixed" && (
-              <label className="compact-number">Antall denne turen<input type="number" min={0} step={1} value={addition.occurrences} onChange={(event) => updateCustom(addition.id, { occurrences: Number(event.target.value) })} /></label>
+              <label className="compact-number">Antall denne turen<input type="number" min={0} step={1} value={addition.occurrences || ""} onChange={(event) => updateCustom(addition.id, { occurrences: Number(event.target.value) })} /></label>
             )}
             <button className="text-button danger-text" onClick={() => removeCustom(addition.id)}>Slett</button>
           </article>

@@ -6,15 +6,14 @@ interface ModalProps extends PropsWithChildren {
   className?: string;
 }
 
-export function Modal({ children, onClose, labelledBy, className = "" }: ModalProps) {
+export function Modal({ children, onClose: _onClose, labelledBy, className = "" }: ModalProps) {
   return (
-    <div className="overlay" role="presentation" onMouseDown={onClose}>
+    <div className="overlay" role="presentation">
       <section
         className={`modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        onMouseDown={(event) => event.stopPropagation()}
       >
         {children}
       </section>
