@@ -129,7 +129,7 @@ export function Dashboard({
         </section>
 
         <button className="featured-game-launch" onClick={onGame}>
-          <span>🚁</span><span><strong>Split Flight</strong><small>Dronevakta · slå kollegaenes rekord</small></span><ChevronRightIcon size={20}/>
+          <span>🚁</span><span><strong>Split Flight</strong><small>Land på plattformer i Nordsjøen, og unngå de russiske dronene.</small></span><ChevronRightIcon size={20}/>
         </button>
 
         <section className="trip-progress-card op-progress-card">

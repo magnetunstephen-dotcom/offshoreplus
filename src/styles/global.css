@@ -922,7 +922,7 @@ body {
 @media (min-width: 760px) {
   .mobile-dashboard { padding-top: 22px; padding-bottom: 118px; }
   .op-hero-section { padding: 22px; }
-  .op-tools { grid-template-columns: repeat(3, 1fr); }
+  .op-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .op-tools button { min-height: 100px; }
   .floating-new-trip { right: max(18px, calc((100vw - 760px)/2 + 18px)); }
 }
