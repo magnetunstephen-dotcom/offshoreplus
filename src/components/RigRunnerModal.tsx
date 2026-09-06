@@ -12,7 +12,7 @@ type PendingScore = { runId: string; score: number; streak: number };
 const PENDING_SCORE_KEY = "offshoreplus-pending-game-score";
 
 const WIDTH = 900;
-const HEIGHT = 480;
+const HEIGHT = 520;
 const SEA_Y = 420;
 const HELI_X = 145;
 const PLATFORM_NAMES = [
@@ -521,7 +521,13 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillStyle = "rgba(255,210,82,.7)"; context.fillRect(vesselX + 36, SEA_Y - 24, 6, 5); context.fillRect(vesselX + 48, SEA_Y - 24, 6, 5);
       context.strokeStyle = "rgba(220,247,250,.28)"; context.lineWidth = 2;
       context.beginPath(); context.moveTo(vesselX - 20, SEA_Y + 3); context.lineTo(vesselX + 100, SEA_Y + 3); context.stroke();
-      context.strokeStyle = "rgba(206,239,244,.18)";
+      const seaGradient = context.createLinearGradient(0, SEA_Y, 0, HEIGHT);
+      seaGradient.addColorStop(0, "#0b3850");
+      seaGradient.addColorStop(.35, "#082b40");
+      seaGradient.addColorStop(1, "#041521");
+      context.fillStyle = seaGradient;
+      context.fillRect(0, SEA_Y, WIDTH, HEIGHT - SEA_Y);
+      context.strokeStyle = "rgba(206,239,244,.24)";
       context.lineWidth = 2;
       for (let row = 0; row < 4; row++) {
         context.beginPath();
@@ -531,8 +537,6 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         }
         context.stroke();
       }
-      context.fillStyle = "#06121d";
-      context.fillRect(0, SEA_Y + 7, WIDTH, HEIGHT - SEA_Y);
       game.rigs.forEach(rig => drawRig(rig, game.distance / 9));
       game.drones.forEach(drone => {
         const bob = Math.sin(game.distance / 35 + drone.phase) * 7;
@@ -574,10 +578,6 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         const fog = Math.min(.18, .06 + (game.score - 30) / 350);
         context.fillStyle = `rgba(205,225,226,${fog})`; context.fillRect(0, 110, WIDTH, 270);
       }
-      context.fillStyle = "rgba(3,18,27,.72)";
-      context.fillRect(16, 15, 224, 48);
-      context.fillStyle = "#eaf8f3";
-      context.font = "800 20px sans-serif";
       if (game.score >= 10) {
         const gust = Math.sin(game.distance / 125);
         context.fillStyle = "rgba(3,18,27,.65)"; context.fillRect(WIDTH - 150, 15, 134, 48);
