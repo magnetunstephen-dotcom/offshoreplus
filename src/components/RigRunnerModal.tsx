@@ -120,7 +120,7 @@ function resultFeedback(score: number) {
     subtitle: `${score} landinger · passasjerene er bare litt bleke`,
   };
   if (score < 70) return {
-    title: "Dette begynner å ligne offshoreflyging!",
+    title: "Det begynner å ligne noe!",
     subtitle: `${score} landinger · stødig levert`,
   };
   if (score < 100) return {
