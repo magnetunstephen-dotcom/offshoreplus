@@ -73,6 +73,7 @@ function createStartingCourse() {
 export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void; user: User | null; onLogin: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const frameRef = useRef<number | undefined>(undefined);
   const gameRunRef = useRef<string | null>(null);
   const gameRunPromiseRef = useRef<PromiseLike<string | null> | null>(null);
@@ -100,6 +101,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const [scoreMessage, setScoreMessage] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobilePlayMode, setMobilePlayMode] = useState(false);
+  const [soundOn, setSoundOn] = useState(() => localStorage.getItem("offshoreplus-game-sound") === "on");
   const nicknameRef = useRef(nickname);
   userRef.current = user;
   nicknameRef.current = nickname;
@@ -148,6 +150,25 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     document.addEventListener("fullscreenchange", syncFullscreen);
     return () => document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = .32;
+    if (soundOn && state !== "over") audio.play().catch(() => undefined);
+    else audio.pause();
+  }, [soundOn, state]);
+
+  async function toggleSound() {
+    const next = !soundOn;
+    setSoundOn(next);
+    localStorage.setItem("offshoreplus-game-sound", next ? "on" : "off");
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = .32;
+    if (next) await audio.play().catch(() => undefined);
+    else audio.pause();
+  }
 
   async function saveNickname(event: FormEvent) {
     event.preventDefault();
@@ -213,6 +234,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }
 
   function reset() {
+    if (soundOn) audioRef.current?.play().catch(() => undefined);
     startVerifiedRun();
     const startingCourse = createStartingCourse();
     gameRef.current = {
@@ -642,11 +664,12 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }, []);
 
   return <Modal onClose={onClose} labelledBy="rig-runner-title" className="game-modal">
+    <audio ref={audioRef} src="/split-flight-theme.mp3" loop preload="none" />
     <div ref={gameAreaRef} className={`game-fullscreen-area${mobilePlayMode ? " mobile-game-mode" : ""}`}>
     <div className="game-header">
       <div><span className="eyebrow">DRONEVAKTA</span><h2 id="rig-runner-title">Split Flight</h2></div>
       <div className="game-score"><span>Landinger <b>{score}</b></span><span>Rekord <b>{best}</b></span></div>
-      <div className="game-window-actions"><button onClick={toggleFullscreen} aria-label={isFullscreen || mobilePlayMode ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen || mobilePlayMode ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
+      <div className="game-window-actions"><button onClick={toggleSound} aria-label={soundOn ? "Slå av musikk" : "Slå på musikk"} title={soundOn ? "Slå av musikk" : "Slå på musikk"}>{soundOn ? "🔊" : "🔇"}</button><button onClick={toggleFullscreen} aria-label={isFullscreen || mobilePlayMode ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen || mobilePlayMode ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
     <div className="game-layout">
       <div className="game-play-column">
