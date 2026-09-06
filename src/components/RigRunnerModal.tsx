@@ -417,8 +417,15 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         for (let light = 0; light < 4; light++) context.fillRect(x + (72 + light * 15) * size, y - 43 * size, 7 * size, 7 * size);
         context.strokeStyle = "#b9cbd0"; context.lineWidth = 5;
         [18, 52, 112, 146].forEach(offset => { context.beginPath(); context.moveTo(x + offset * size, y + 12); context.lineTo(x + offset * size, HEIGHT); context.stroke(); });
-        context.lineWidth = 3;
-        context.beginPath(); context.moveTo(x - 54 * size, y - 7 * size); context.lineTo(x + 7 * size, y - 7 * size); context.lineTo(x + 28 * size, y - 1 * size); context.stroke();
+        // Gangveien går fra Haven mot Valhall-dekket på venstre side.
+        const bridgeStart = x - 72 * size, bridgeEnd = x + 10 * size;
+        context.strokeStyle = "#d7e9e5"; context.lineWidth = 3;
+        context.beginPath(); context.moveTo(bridgeStart, y - 11 * size); context.lineTo(bridgeEnd, y - 7 * size); context.moveTo(bridgeStart, y + 1 * size); context.lineTo(bridgeEnd, y - 3 * size); context.stroke();
+        context.lineWidth = 2;
+        for (let span = 0; span < 6; span++) {
+          const spanX = bridgeStart + span * 14 * size;
+          context.beginPath(); context.moveTo(spanX, y - 10 * size); context.lineTo(spanX + 14 * size, y - 3 * size); context.stroke();
+        }
       } else if (rig.kind === "spar") {
         // Aasta Hansteen: flytende SPAR med ett dypt, smalt sylinderskrog.
         context.fillStyle = "#d9e6e9"; context.fillRect(x, y, width, 17); context.strokeRect(x, y, width, 17);
