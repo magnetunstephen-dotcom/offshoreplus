@@ -118,6 +118,10 @@ button.secondary { color: var(--text); border: 1px solid var(--border); backgrou
 .large-button { min-width: 220px; }
 .welcome-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; }
 .welcome-help { display:block; max-width:460px; margin:12px auto 0; color:var(--muted); line-height:1.45; }
+.welcome-about { max-width:680px; margin:28px auto 0; padding:20px 24px; border:1px solid var(--line); border-radius:20px; background:var(--surface); text-align:left; }
+.welcome-about h2 { margin:0 0 10px; font-size:20px; }
+.welcome-about p { max-width:none; margin:0; font-size:14px; line-height:1.6; }
+.welcome-about p + p { margin-top:8px; }
 .overlay {
   position: fixed; inset: 0; z-index: 100;
   display: flex; align-items: flex-start; justify-content: center;

@@ -124,6 +124,11 @@ export default function App() {
             <button className="secondary large-button" onClick={() => setModal("wizard")}>Fortsett uten konto</button>
           </div>
           <small className="welcome-help">Ny bruker? Velg «Logg inn» og deretter «Opprett konto» – det er gratis.</small>
+          <section className="welcome-about" aria-labelledby="welcome-about-title">
+            <h2 id="welcome-about-title">Turnus og lønn offshore – samlet på ett sted</h2>
+            <p>OffshorePlus er en gratis norsk turnuskalender, skiftkalender og lønnskalkulator for offshorearbeidere. Se nedtelling til utreise og hjemreise, beregn månedslønn, overtid, nattillegg og andre tillegg, og legg 2/4-turnusen i telefonkalenderen.</p>
+            <p>Du kan også lagre kurs og sertifikater, få årsoversikt og prøve Split Flight – et lite offshore-spill med helikopter, plattformer og russiske droner.</p>
+          </section>
         </main>
       )}
 
