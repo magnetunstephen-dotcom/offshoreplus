@@ -37,13 +37,15 @@ export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
       </p>
 
       <div className="example-box">
-        <strong className="example-title">Beregnet akkurat nå</strong>
-        <div className="example-row"><span>Opptjent brutto</span><b>{money(calculation.accruedNextPayoutGross)}</b></div>
-        <div className="example-row"><span>Fast månedslønn</span><b>{money(calculation.regularMonthlyGross)}</b></div>
-        <div className="example-row"><span>Tillegg på aktiv tur</span><b>{money(calculation.activeExtrasGross)}</b></div>
+        <strong className="example-title">Opptjent hittil</strong>
+        <div className="example-row"><span>Fastlønn jobbet inn hittil</span><b>{money(calculation.accruedRegularGross)}</b></div>
+        <div className="example-row"><span>Tillegg registrert hittil</span><b>+ {money(calculation.activeExtrasGross)}</b></div>
+        <div className="example-row"><span>Sum før skatt hittil</span><b>{money(calculation.accruedNextPayoutGross)}</b></div>
         {usesTable && <div className="example-row"><span>Estimert tabelltrekk {trip.taxTable || "–"}</span><b>− {money(tableResult.tax ?? 0)}</b></div>}
-        <div className="example-total"><span>Estimert opptjent netto</span><strong>ca. {money(displayedNet)}</strong></div>
+        <div className="example-total"><span>Estimert etter skatt hittil</span><strong>ca. {money(displayedNet)}</strong></div>
       </div>
+
+      <p className="muted small-copy">Den ordinære månedslønnen er hele den faste lønnen for måneden. Derfor er den høyere enn fastlønnen jobbet inn hittil før alle planlagte timer er gjennomført.</p>
 
       <p className="muted small-copy">{usesTable ? `Trekkpliktig lønn slås opp i Skatteetatens månedstabell ${trip.taxTable || "–"} for 2026.` : `Fastlønn og trekkpliktige tillegg bruker ${trip.taxRate}% fra prosentkortet.`} Trekkfrie refusjoner legges til etterpå. Feriepenger, halv skatt og andre lønnstrekk kan gi avvik.</p>
 

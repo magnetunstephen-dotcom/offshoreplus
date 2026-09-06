@@ -102,7 +102,7 @@ export function Dashboard({
 
   const heroLabel = view === "trip"
     ? "Opptjent denne turen"
-    : view === "monthly-gross" ? "Brutto opptjent mot neste lønn" : "Opptjent mot neste lønn";
+    : view === "monthly-gross" ? "Brutto opptjent hittil" : "Estimert netto opptjent hittil";
   const heroValue = view === "trip"
     ? calculation.gross
     : view === "monthly-gross" ? calculation.accruedNextPayoutGross : accruedNet;
@@ -164,20 +164,20 @@ export function Dashboard({
             <button className="info-button" onClick={onEarningsInfo} aria-label="Forklaring av lønnstall"><InfoIcon size={18} /></button>
           </div>
           <strong className="hero-money">{money(heroValue, liveMoney ? 2 : 0)}</strong>
-          {view === "monthly-net" && <span className="muted">Brutto opptjent {money(calculation.accruedNextPayoutGross)}</span>}
-          {view === "monthly-gross" && <span className="muted">Ca. {money(accruedNet)} utbetalt</span>}
+          {view === "monthly-net" && <span className="muted">Tilsvarer {money(calculation.accruedNextPayoutGross)} før skatt</span>}
+          {view === "monthly-gross" && <span className="muted">Tilsvarer ca. {money(accruedNet)} etter skatt</span>}
           {view === "trip" && <span className="muted">Brutto opptjent på aktiv tur</span>}
-          {view !== "trip" && <div className="pay-target"><span>Ved fullført tur, med tillegg hittil</span><strong>{view === "monthly-gross" ? money(calculation.estimatedMonthlyGross) : `ca. ${money(finalNet)} netto`}</strong><small>{salaryAgreement?.name} · gruppe {trip.group} · trinn {salaryStep}{usesTable ? ` · tabell ${trip.taxTable || "mangler"}` : ` · ${trip.taxRate}% trekk`}</small></div>}
+          {view !== "trip" && <div className="pay-target"><span>Forventet ved fullført tur · med tillegg registrert hittil</span><strong>{view === "monthly-gross" ? `${money(calculation.estimatedMonthlyGross)} før skatt` : `ca. ${money(finalNet)} etter skatt`}</strong><small>{salaryAgreement?.name} · gruppe {trip.group} · trinn {salaryStep}{usesTable ? ` · tabell ${trip.taxTable || "mangler"}` : ` · ${trip.taxRate}% trekk`}</small></div>}
           {usesTable && (accruedTable.loading || finalTable.loading) && <span className="tax-table-state">Laster Skatteetatens 2026-tabell …</span>}
           {usesTable && (accruedTable.error || finalTable.error) && <span className="tax-table-state error">{accruedTable.error || finalTable.error}</span>}
           {view === "trip" && (
             <span className="money-caption">{calculation.isMoneyRunning ? "Lønn opptjenes nå" : "Telleren står stille mens du ikke opptjener lønn"}</span>
           )}
           <div className="segmented earnings-toggle" aria-label="Velg lønnsvisning">
-            <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Estimert utbetalt</button>
-            <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Opptjent brutto</button>
+            <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Etter skatt</button>
+            <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Før skatt</button>
           </div>
-          {view !== "trip" && <span className="tax-note">Viser hvor mye av den faste månedslønnen du har opptjent gjennom denne 14-dagersturen. {usesTable ? `Trekkpliktig lønn beregnes med tabell ${trip.taxTable || "–"}.` : "Fastlønn og trekkpliktige tillegg bruker valgt skatteprosent."} Trekkfrie refusjoner legges til uten trekk.</span>}
+          {view !== "trip" && <span className="tax-note">Beløpet hittil består av den delen av månedslønnen du har jobbet inn, pluss registrerte tillegg. Det forventede beløpet viser hele månedslønnen pluss de samme tilleggene. {usesTable ? `Trekkpliktig lønn beregnes med tabell ${trip.taxTable || "–"}.` : "Fastlønn og trekkpliktige tillegg bruker valgt skatteprosent."}</span>}
           {view !== "trip" && <div className={`live-calculation-note ${calculation.isMoneyRunning ? "active" : "paused"}`}><span className="status-dot" /> <strong>{calculation.isMoneyRunning ? "Teller live nå" : "Telleren står nå"}</strong><span>{calculation.isMoneyRunning ? "Beløpet oppdateres mens aktivt skift eller tillegg pågår." : "Beløpet øker igjen ved neste planlagte skift eller aktive tillegg."}</span></div>}
         </section>
 
