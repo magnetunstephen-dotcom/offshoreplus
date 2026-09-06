@@ -486,6 +486,33 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.beginPath(); context.arc(shipX + 25, SEA_Y + 3, 18, Math.PI, Math.PI * 2); context.arc(shipX + 92, SEA_Y + 3, 23, Math.PI, Math.PI * 2); context.stroke();
         context.restore();
       }
+      if (rig.name === "Ekofisk") {
+        // Ekofisk 2/4 T – «Tanken»: den store betongtanken med den
+        // karakteristiske beskyttelsesveggen står igjen uten overbygning.
+        const tankCenter = x - 53 * size;
+        const tankTop = y + 18;
+        const tankWidth = 88 * size;
+        const tankBottom = SEA_Y + 19;
+        context.save();
+        context.strokeStyle = "#b8c8c9";
+        context.lineWidth = 4;
+        const concrete = context.createLinearGradient(tankCenter - tankWidth / 2, 0, tankCenter + tankWidth / 2, 0);
+        concrete.addColorStop(0, "#536b70"); concrete.addColorStop(.5, "#91a2a2"); concrete.addColorStop(1, "#425b61");
+        context.fillStyle = concrete;
+        context.fillRect(tankCenter - tankWidth / 2, tankTop, tankWidth, tankBottom - tankTop);
+        context.beginPath(); context.ellipse(tankCenter, tankTop, tankWidth / 2, 12 * size, 0, Math.PI, Math.PI * 2); context.fill(); context.stroke();
+        context.beginPath(); context.moveTo(tankCenter - tankWidth / 2, tankTop); context.lineTo(tankCenter - tankWidth / 2, tankBottom); context.moveTo(tankCenter + tankWidth / 2, tankTop); context.lineTo(tankCenter + tankWidth / 2, tankBottom); context.stroke();
+        // Den senere monterte, runde beskyttelsesveggen rundt tanken.
+        context.strokeStyle = "rgba(201,213,211,.9)"; context.lineWidth = 7;
+        context.beginPath(); context.ellipse(tankCenter, SEA_Y + 7, tankWidth * .68, 18 * size, 0, Math.PI, Math.PI * 2); context.stroke();
+        context.strokeStyle = "#d7e9e5"; context.lineWidth = 3;
+        context.beginPath(); context.moveTo(tankCenter + tankWidth * .34, tankTop - 3); context.lineTo(x + 5 * size, y - 5); context.moveTo(tankCenter + tankWidth * .34, tankTop + 5); context.lineTo(x + 5 * size, y + 3); context.stroke();
+        context.fillStyle = "rgba(3,18,27,.8)"; context.fillRect(tankCenter - 31 * size, tankTop + 22, 62 * size, 20);
+        context.fillStyle = "#eaf8f3"; context.font = `800 ${Math.max(10, 11 * size)}px sans-serif`; context.textAlign = "center";
+        context.fillText("2/4 T · Tanken", tankCenter, tankTop + 36);
+        context.textAlign = "start";
+        context.restore();
+      }
       context.strokeStyle = "#d7e9e5";
       context.fillStyle = "#173846";
       context.lineWidth = 5;
