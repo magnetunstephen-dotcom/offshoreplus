@@ -2,6 +2,7 @@ import { useState } from "react";
 import { salaryAgreements } from "../data/salaries";
 import type { AgreementId, TaxMethod, TripSetup } from "../types";
 import { Modal } from "./Modal";
+import { deriveCustomSalary } from "../lib/customSalary";
 
 interface SettingsModalProps {
   trip: TripSetup;
@@ -22,6 +23,8 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
   const [rotationOffDays, setRotationOffDays] = useState(trip.rotationOffDays);
   const [overtimeRate, setOvertimeRate] = useState(trip.overtimeRate);
   const [monthlySalary, setMonthlySalary] = useState(trip.customMonthlySalary ?? 0);
+  const [annualSalary, setAnnualSalary] = useState(trip.customAnnualSalary ?? 0);
+  const [annualIncludesHolidayPay, setAnnualIncludesHolidayPay] = useState(trip.customAnnualIncludesHolidayPay ?? false);
   const [holidayPayRate, setHolidayPayRate] = useState(trip.holidayPayRate ?? 12);
   const agreement = salaryAgreements[agreementId];
 
@@ -33,12 +36,20 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
   }
 
   function selectedRates() {
-    if (agreementId === "custom") return { hourlyRate, overtimeRate };
+    if (agreementId === "custom") {
+      if (annualSalary > 0) {
+        const derived = deriveCustomSalary(annualSalary, annualIncludesHolidayPay, holidayPayRate, rotationOnDays, rotationOffDays);
+        return { hourlyRate: derived.hourlyRate, overtimeRate: derived.overtimeRate };
+      }
+      return { hourlyRate, overtimeRate };
+    }
     return {
       hourlyRate: agreement.groups[group].hourly[stepIndex],
       overtimeRate: agreement.groups[group].overtime[stepIndex],
     };
   }
+
+  const derivedSalary = deriveCustomSalary(annualSalary, annualIncludesHolidayPay, holidayPayRate, rotationOnDays, rotationOffDays);
 
   return (
     <Modal onClose={onClose} labelledBy="settings-title">
@@ -68,19 +79,26 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
             </select>
           </label>
         </div>
+        {agreementId === "custom" && <>
+          <div className="form-grid">
+            <label>Årslønn (valgfritt)<input type="number" min={0} step={1000} placeholder="F.eks. 900 000" value={annualSalary || ""} onChange={event => setAnnualSalary(Number(event.target.value))} /><small className="field-help">Gir automatisk måneds-, time- og overtidslønn</small></label>
+            <label>Årslønnen er<select value={annualIncludesHolidayPay ? "with" : "without"} onChange={event => setAnnualIncludesHolidayPay(event.target.value === "with")}><option value="without">Uten feriepenger</option><option value="with">Inkludert feriepenger</option></select></label>
+          </div>
+          {annualSalary > 0 && <div className="info-box compact-info"><strong>Automatisk beregnet for {rotationOnDays}/{rotationOffDays}-rotasjon</strong><span>Grunnlønn per måned: {Math.round(derivedSalary.monthlySalary).toLocaleString("nb-NO")} kr</span><span>Timelønn: {derivedSalary.hourlyRate.toFixed(2).replace(".", ",")} kr · overtid: {derivedSalary.overtimeRate.toFixed(2).replace(".", ",")} kr/time</span><small>{Math.round(derivedSalary.annualWorkHours).toLocaleString("nb-NO")} planlagte timer per år · overtid 165 %</small></div>}
+        </>}
         <label>
           Timelønn
           <input
             type="number"
             min={0}
             step={0.01}
-            value={agreementId === "custom" ? (hourlyRate || "") : agreement.groups[group].hourly[stepIndex]}
-            readOnly={agreementId !== "custom"}
+            value={agreementId === "custom" ? (annualSalary > 0 ? derivedSalary.hourlyRate.toFixed(2) : (hourlyRate || "")) : agreement.groups[group].hourly[stepIndex]}
+            readOnly={agreementId !== "custom" || annualSalary > 0}
             onChange={(event) => setHourlyRate(Number(event.target.value))}
           />
         </label>
-        {agreementId === "custom" && <label>Fast månedslønn<input type="number" min={0} step={100} value={monthlySalary || ""} onChange={event => setMonthlySalary(Number(event.target.value))} /></label>}
-        <label>Overtidssats per time<input type="number" min={0} step={0.01} value={agreementId === "custom" ? (overtimeRate || "") : agreement.groups[group].overtime[stepIndex]} readOnly={agreementId !== "custom"} onChange={event => setOvertimeRate(Number(event.target.value))} /></label>
+        {agreementId === "custom" && <label>Fast månedslønn<input type="number" min={0} step={100} readOnly={annualSalary > 0} value={annualSalary > 0 ? Math.round(derivedSalary.monthlySalary) : (monthlySalary || "")} onChange={event => setMonthlySalary(Number(event.target.value))} /></label>}
+        <label>Overtidssats per time<input type="number" min={0} step={0.01} value={agreementId === "custom" ? (annualSalary > 0 ? derivedSalary.overtimeRate.toFixed(2) : (overtimeRate || "")) : agreement.groups[group].overtime[stepIndex]} readOnly={agreementId !== "custom" || annualSalary > 0} onChange={event => setOvertimeRate(Number(event.target.value))} /></label>
         <label>Feriepengesats<input type="number" min={0} max={20} step={0.1} value={holidayPayRate || ""} onChange={event => setHolidayPayRate(Number(event.target.value))} /><small className="field-help">Vises som opptjening og legges ikke til neste lønn.</small></label>
         <label>
           Natt-tillegg per time
@@ -119,7 +137,7 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
         <button className="secondary" onClick={onClose}>Lukk</button>
         <button
           className="primary"
-          onClick={() => onSave({ ...trip, agreementId, group, stepIndex, ...selectedRates(), customMonthlySalary: agreementId === "custom" ? monthlySalary : undefined, holidayPayRate, nightAllowance, taxMethod, taxTable, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
+          onClick={() => onSave({ ...trip, agreementId, group, stepIndex, ...selectedRates(), customMonthlySalary: agreementId === "custom" ? (annualSalary > 0 ? derivedSalary.monthlySalary : monthlySalary) : undefined, customAnnualSalary: agreementId === "custom" && annualSalary > 0 ? annualSalary : undefined, customAnnualIncludesHolidayPay: agreementId === "custom" && annualSalary > 0 ? annualIncludesHolidayPay : undefined, holidayPayRate, nightAllowance, taxMethod, taxTable, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
         >
           Lagre
         </button>

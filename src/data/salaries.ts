@@ -4,10 +4,10 @@ export const salaryAgreements: Record<AgreementId, SalaryAgreement> = {
   custom: {
     id: "custom",
     name: "Egendefinert lønn",
-    description: "For deg som ikke finner tariffen din. Legg inn satsene fra arbeidsavtalen eller lønnsslippen.",
+    description: "For deg som ikke finner tariffen din. Legg inn årslønn eller satsene fra arbeidsavtalen.",
     steps: ["Egen sats"],
     groups: { Egen: { hourly: [0], overtime: [0], monthly: [0] } },
-    notes: ["Bruk avtalte bruttosatser. OffshorePlus beregner ikke en ukjent tariff automatisk."],
+    notes: ["Ved årslønn beregnes måneds-, time- og overtidslønn automatisk fra rotasjonen. Kontroller satsene mot arbeidsavtalen."],
   },
   sokkel4a2025: {
     id: "sokkel4a2025",

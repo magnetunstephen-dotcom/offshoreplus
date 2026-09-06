@@ -60,6 +60,8 @@ export interface TripSetup {
   overtimeHours: number;
   overtimeRate: number;
   customMonthlySalary?: number;
+  customAnnualSalary?: number;
+  customAnnualIncludesHolidayPay?: boolean;
   holidayPayRate?: number;
   rotationOnDays: number;
   rotationOffDays: number;
