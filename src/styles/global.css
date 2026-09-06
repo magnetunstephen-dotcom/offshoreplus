@@ -445,10 +445,10 @@ input, select {
 .game-controls button:active,.game-window-actions button:active,.game-mobile-fullscreen:active,.game-name-form button:active { transform:scale(.97); }
 .game-controls p { margin:0; color:var(--muted); font-size:12px; line-height:1.4; }
 .game-mobile-fullscreen { display:none; }
-.game-leaderboard { display:grid; gap:14px; min-height:400px; padding:16px; border:1px solid var(--border); border-radius:18px; background:var(--panel-strong); }
+.game-leaderboard { display:grid; align-content:start; gap:16px; min-height:400px; max-height:min(760px,calc(100vh - 130px)); overflow-y:auto; padding:16px; border:1px solid var(--border); border-radius:18px; background:var(--panel-strong); }
 .game-leaderboard h3 { margin:3px 0 0; }
-.game-leaderboard-tabs { grid-template-columns:1fr 1fr; }
-.game-leaderboard-tabs button { min-height:36px; padding:7px 8px; font-size:10px; }
+.leaderboard-section { display:grid; gap:9px; }
+.leaderboard-section + .leaderboard-section { padding-top:14px; border-top:1px solid var(--border); }
 .game-leaderboard ol { display:grid; gap:5px; margin:0; padding:0; list-style:none; }
 .game-leaderboard li { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:32px; padding:5px 8px; border-radius:9px; color:var(--muted); font-size:13px; }
 .game-leaderboard li:nth-child(-n+3) { color:var(--text); background:color-mix(in srgb,var(--accent) 7%,transparent); }

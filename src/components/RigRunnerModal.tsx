@@ -101,7 +101,6 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const [best, setBest] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-best") || 0));
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [streakLeaderboard, setStreakLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [leaderboardMode, setLeaderboardMode] = useState<"score" | "streak">("score");
   const [nickname, setNickname] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nameMessage, setNameMessage] = useState("");
@@ -579,7 +578,6 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillRect(16, 15, 224, 48);
       context.fillStyle = "#eaf8f3";
       context.font = "800 20px sans-serif";
-      context.fillText(`LANDINGER  ${game.score}   ·   REKKE  ${game.streak}`, 28, 46);
       if (game.score >= 10) {
         const gust = Math.sin(game.distance / 125);
         context.fillStyle = "rgba(3,18,27,.65)"; context.fillRect(WIDTH - 150, 15, 134, 48);
@@ -705,7 +703,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     <div ref={gameAreaRef} className={`game-fullscreen-area${mobilePlayMode ? " mobile-game-mode" : ""}`}>
     <div className="game-header">
       <div><span className="eyebrow">DRONEVAKTA</span><h2 id="rig-runner-title">Split Flight</h2></div>
-      <div className="game-score"><span>Landinger <b>{score}</b></span><span>Rekke <b>{streak}</b></span><span>Rekord <b>{best}</b></span><span>Beste rekke <b>{bestStreak}</b></span></div>
+      <div className="game-score"><span>Landinger <b>{score}</b></span><span>På rad <b>{streak}</b></span><span>Rekord <b>{best}</b></span><span>Best på rad <b>{bestStreak}</b></span></div>
       <div className="game-window-actions"><button onClick={toggleSound} aria-label={soundOn ? "Slå av musikk" : "Slå på musikk"} title={soundOn ? "Slå av musikk" : "Slå på musikk"}>{soundOn ? "🔊" : "🔇"}</button><button onClick={toggleFullscreen} aria-label={isFullscreen || mobilePlayMode ? "Avslutt fullskjerm" : "Vis i fullskjerm"}>{isFullscreen || mobilePlayMode ? "↙" : "⛶"}</button><button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button></div>
     </div>
     <div className="game-layout">
@@ -719,9 +717,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         {state === "over" && <button className="primary full-width" onClick={reset}>Prøv igjen</button>}
       </div>
       <aside className="game-leaderboard" aria-label="Poengtavle">
-        <div><span className="eyebrow">TOPP 10</span><h3>Poengtavle</h3></div>
-        <div className="segmented game-leaderboard-tabs"><button className={leaderboardMode === "score" ? "selected" : ""} onClick={() => setLeaderboardMode("score")}>Flest landinger</button><button className={leaderboardMode === "streak" ? "selected" : ""} onClick={() => setLeaderboardMode("streak")}>Lengste rekke</button></div>
-        {(leaderboardMode === "score" ? leaderboard : streakLeaderboard).length ? <ol>{(leaderboardMode === "score" ? leaderboard : streakLeaderboard).map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{leaderboardMode === "score" ? entry.score : entry.best_streak}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå. Bli den første!</p>}
+        <section className="leaderboard-section"><div><span className="eyebrow">TOPP 10</span><h3>Flest landinger</h3></div>{leaderboard.length ? <ol>{leaderboard.map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.score}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå.</p>}</section>
+        <section className="leaderboard-section"><div><span className="eyebrow">TOPP 10</span><h3>Lengste rekke</h3></div>{streakLeaderboard.filter(entry => entry.best_streak > 0).length ? <ol>{streakLeaderboard.filter(entry => entry.best_streak > 0).map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.best_streak}</strong></li>)}</ol> : <p className="leaderboard-empty">Første landingsrekord er fortsatt ledig!</p>}</section>
         {scoreMessage && <p className="game-score-message" role="status">{scoreMessage}</p>}
         {!user ? <><p className="leaderboard-login-help">Logg inn for å lagre toppscoren din og velge spillnavn.</p><button className="secondary full-width" onClick={onLogin}>Logg inn for å lagre toppscore</button></> : <form className="game-name-form" onSubmit={saveNickname}><label htmlFor="game-name">Ditt spillnavn</label><div><input id="game-name" value={nicknameDraft} maxLength={20} placeholder="F.eks. Nordsjøpiloten" onChange={event => setNicknameDraft(event.target.value)} /><button type="submit">Lagre</button></div>{nameMessage && <small>{nameMessage}</small>}</form>}
       </aside>
