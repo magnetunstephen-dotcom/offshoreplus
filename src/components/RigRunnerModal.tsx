@@ -523,12 +523,39 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       if (!context) return;
       const game = gameRef.current;
       const gradient = context.createLinearGradient(0, 0, 0, HEIGHT);
-      gradient.addColorStop(0, "#071723");
-      gradient.addColorStop(1, "#14516a");
+      gradient.addColorStop(0, "#030d18");
+      gradient.addColorStop(.48, "#0b2b3f");
+      gradient.addColorStop(.82, "#185873");
+      gradient.addColorStop(1, "#28758b");
       context.fillStyle = gradient;
       context.fillRect(0, 0, WIDTH, HEIGHT);
-      context.fillStyle = "rgba(255,255,255,.07)";
+
+      // Små stjerner og lave skybanker gir dybde, men holder landingsområdet ryddig.
+      context.fillStyle = "rgba(214,239,245,.38)";
+      for (let star = 0; star < 24; star++) {
+        const starX = (star * 173 + 47) % WIDTH;
+        const starY = 18 + ((star * 67) % 165);
+        const twinkle = .45 + Math.sin(game.distance / 90 + star) * .25;
+        context.globalAlpha = twinkle;
+        context.beginPath(); context.arc(starX, starY, star % 5 === 0 ? 1.5 : .8, 0, Math.PI * 2); context.fill();
+      }
+      context.globalAlpha = 1;
+      const moonGlow = context.createRadialGradient(585, 72, 8, 585, 72, 85);
+      moonGlow.addColorStop(0, "rgba(218,241,246,.18)");
+      moonGlow.addColorStop(.55, "rgba(180,224,234,.07)");
+      moonGlow.addColorStop(1, "rgba(180,224,234,0)");
+      context.fillStyle = moonGlow; context.beginPath(); context.arc(585, 72, 85, 0, Math.PI * 2); context.fill();
+      context.fillStyle = "rgba(224,240,242,.12)";
       context.beginPath(); context.arc(585, 72, 45, 0, Math.PI * 2); context.fill();
+      for (let cloud = 0; cloud < 4; cloud++) {
+        const cloudX = ((cloud * 310 - game.distance * (.025 + cloud * .004)) % (WIDTH + 320)) - 110;
+        const cloudY = 105 + (cloud % 2) * 58;
+        const cloudGradient = context.createRadialGradient(cloudX, cloudY, 8, cloudX, cloudY, 95);
+        cloudGradient.addColorStop(0, "rgba(164,205,217,.10)");
+        cloudGradient.addColorStop(1, "rgba(70,125,145,0)");
+        context.fillStyle = cloudGradient;
+        context.beginPath(); context.ellipse(cloudX, cloudY, 125, 32, 0, 0, Math.PI * 2); context.fill();
+      }
       if (game.score >= 50) {
         // Sjeldne, lokale lyn gir stormfølelse uten et ubehagelig helskjermblink.
         const lightningPhase = game.distance % 920;
@@ -552,11 +579,26 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.strokeStyle = "rgba(220,247,250,.28)"; context.lineWidth = 2;
       context.beginPath(); context.moveTo(vesselX - 20, SEA_Y + 3); context.lineTo(vesselX + 100, SEA_Y + 3); context.stroke();
       const seaGradient = context.createLinearGradient(0, SEA_Y, 0, HEIGHT);
-      seaGradient.addColorStop(0, "#0b3850");
-      seaGradient.addColorStop(.35, "#082b40");
-      seaGradient.addColorStop(1, "#041521");
+      seaGradient.addColorStop(0, "#13536b");
+      seaGradient.addColorStop(.12, "#0b3d56");
+      seaGradient.addColorStop(.48, "#082b40");
+      seaGradient.addColorStop(1, "#03111d");
       context.fillStyle = seaGradient;
       context.fillRect(0, SEA_Y, WIDTH, HEIGHT - SEA_Y);
+      // Måneskinn og myke speilinger under installasjonene binder sjø og objekter sammen.
+      const reflection = context.createLinearGradient(0, SEA_Y, 0, HEIGHT);
+      reflection.addColorStop(0, "rgba(180,229,237,.16)");
+      reflection.addColorStop(1, "rgba(180,229,237,0)");
+      context.fillStyle = reflection;
+      context.beginPath(); context.moveTo(548, SEA_Y); context.lineTo(622, SEA_Y); context.lineTo(665, HEIGHT); context.lineTo(505, HEIGHT); context.closePath(); context.fill();
+      game.rigs.forEach(rig => {
+        const center = rig.x + 77 * rig.size;
+        const rigReflection = context.createLinearGradient(center, SEA_Y, center, HEIGHT);
+        rigReflection.addColorStop(0, "rgba(138,211,220,.10)");
+        rigReflection.addColorStop(1, "rgba(26,91,111,0)");
+        context.fillStyle = rigReflection;
+        context.beginPath(); context.moveTo(center - 30 * rig.size, SEA_Y); context.lineTo(center + 30 * rig.size, SEA_Y); context.lineTo(center + 12 * rig.size, HEIGHT); context.lineTo(center - 12 * rig.size, HEIGHT); context.closePath(); context.fill();
+      });
       context.strokeStyle = "rgba(206,239,244,.24)";
       context.lineWidth = 2;
       for (let row = 0; row < 4; row++) {
@@ -593,6 +635,14 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.fillText("★", drone.x, y + 4);
         context.textAlign = "start";
       });
+      // Et svakt søkelys følger helikopteret og gir mer nattflygingsfølelse.
+      if (game.state === "running" && game.y < SEA_Y - 45) {
+        const beam = context.createLinearGradient(HELI_X, game.y + 10, HELI_X, SEA_Y);
+        beam.addColorStop(0, "rgba(255,231,145,.11)");
+        beam.addColorStop(1, "rgba(255,231,145,0)");
+        context.fillStyle = beam;
+        context.beginPath(); context.moveTo(HELI_X - 5, game.y + 8); context.lineTo(HELI_X + 5, game.y + 8); context.lineTo(HELI_X + 62, SEA_Y); context.lineTo(HELI_X - 34, SEA_Y); context.closePath(); context.fill();
+      }
       drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4);
       if (game.score >= 15) {
         const rainAmount = Math.min(48, 18 + game.score);
