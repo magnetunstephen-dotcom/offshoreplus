@@ -592,7 +592,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.textAlign = "center";
         context.fillStyle = "#fff";
         context.font = "900 34px sans-serif";
-        context.fillText(game.state === "ready" ? "SPLIT FLIGHT" : "Vaktrunden er over", WIDTH / 2, 184);
+        context.fillText(game.state === "ready" ? "SPLIT FLIGHT" : "Oi, det gikk visst ikke helt etter planen!", WIDTH / 2, 184);
         context.font = "600 18px sans-serif";
         context.fillStyle = "#b8d0d6";
         context.fillText(game.state === "ready" ? "Patruljer feltet og unngå de russiske dronene" : `Du landet på ${game.score} ${game.score === 1 ? "installasjon" : "installasjoner"}`, WIDTH / 2, 222);
