@@ -15,6 +15,15 @@ const WIDTH = 900;
 const HEIGHT = 520;
 const SEA_Y = 420;
 const HELI_X = 145;
+const HELICOPTER_COLORS = [
+  { body: "#ffcc33", trim: "#f47b20" },
+  { body: "#e94f64", trim: "#f6efe5" },
+  { body: "#3f8fd2", trim: "#f3f7f8" },
+  { body: "#36b889", trim: "#ffe17a" },
+  { body: "#f28c28", trim: "#173b5c" },
+  { body: "#9b72cf", trim: "#f3c4df" },
+  { body: "#e8edf0", trim: "#2b78b8" },
+] as const;
 const PLATFORM_NAMES = [
   "Ula", "Njord", "Draupner", "Brage", "Skarv", "Heimdal", "Martin Linge", "Eldfisk", "Jotun FPSO", "Kristin",
   "Draugen", "Hugin", "Munin", "Grane", "Gudrun", "Ivar Aasen", "Gullfaks", "Gjøa", "Aasta Hansteen",
@@ -103,6 +112,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     crashAt: 0,
     crashX: HELI_X,
     crashY: 190,
+    helicopterColor: Math.floor(Math.random() * HELICOPTER_COLORS.length),
     ...initialCourseRef.current,
     lastTime: 0,
   });
@@ -266,6 +276,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     if (soundOn) audioRef.current?.play().catch(() => undefined);
     startVerifiedRun();
     const startingCourse = createStartingCourse();
+    const previousColor = gameRef.current.helicopterColor;
+    const helicopterColor = (previousColor + 1 + Math.floor(Math.random() * (HELICOPTER_COLORS.length - 1))) % HELICOPTER_COLORS.length;
     gameRef.current = {
       state: "running",
       y: 190,
@@ -277,6 +289,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       crashAt: 0,
       crashX: HELI_X,
       crashY: 190,
+      helicopterColor,
       ...startingCourse,
       lastTime: performance.now(),
     };
@@ -329,22 +342,23 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       submitScore(game.score, game.bestStreak);
     }
 
-    function drawHelicopter(y: number, rotation: number, rotorPhase: number) {
+    function drawHelicopter(y: number, rotation: number, rotorPhase: number, colorIndex: number) {
       if (!context) return;
+      const colors = HELICOPTER_COLORS[colorIndex % HELICOPTER_COLORS.length];
       context.save();
       context.translate(HELI_X, y);
       context.rotate(rotation);
       context.scale(-1, 1);
-      context.strokeStyle = "#f7c948";
-      context.fillStyle = "#ffcc33";
+      context.strokeStyle = colors.body;
+      context.fillStyle = colors.body;
       context.lineWidth = 3;
       context.lineCap = "round";
       context.beginPath(); context.ellipse(0, 0, 29, 14, 0, 0, Math.PI * 2); context.fill(); context.stroke();
       context.fillStyle = "#12304a";
       context.beginPath(); context.ellipse(1, -5, 27, 8, 0, Math.PI, Math.PI * 2); context.fill();
-      context.fillStyle = "#f47b20";
+      context.fillStyle = colors.trim;
       context.beginPath(); context.moveTo(-24, 6); context.lineTo(22, 1); context.lineTo(17, 8); context.lineTo(-16, 12); context.closePath(); context.fill();
-      context.fillStyle = "#ffcc33";
+      context.fillStyle = colors.body;
       context.beginPath(); context.moveTo(23, -2); context.lineTo(51, -10); context.lineTo(53, 1); context.lineTo(25, 7); context.closePath(); context.fill(); context.stroke();
       context.fillStyle = "#12304a";
       context.beginPath(); context.moveTo(29, -4); context.lineTo(50, -10); context.lineTo(50, -5); context.lineTo(29, 1); context.closePath(); context.fill();
@@ -352,7 +366,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.beginPath(); context.arc(-10, -3, 7, 0, Math.PI * 2); context.fill();
       context.fillStyle = "#8bd3e6";
       context.beginPath(); context.arc(-10, -3, 4, 0, Math.PI * 2); context.fill();
-      context.strokeStyle = "#f7c948";
+      context.strokeStyle = colors.body;
       context.beginPath(); context.moveTo(-3, -15); context.lineTo(1, -25); context.stroke();
       const rotorWidth = 35 + Math.abs(Math.sin(rotorPhase)) * 22;
       context.strokeStyle = "rgba(235,245,248,.9)";
@@ -362,10 +376,10 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.lineWidth = 2;
       context.beginPath(); context.moveTo(-rotorWidth * .75, -29); context.lineTo(rotorWidth * .75, -23); context.stroke();
       context.save(); context.translate(52, -5); context.rotate(rotorPhase * 2.4);
-      context.strokeStyle = "#f47b20"; context.lineWidth = 2;
+      context.strokeStyle = colors.trim; context.lineWidth = 2;
       context.beginPath(); context.moveTo(-8, 0); context.lineTo(8, 0); context.moveTo(0, -8); context.lineTo(0, 8); context.stroke();
       context.restore();
-      context.strokeStyle = "#f7c948"; context.lineWidth = 3;
+      context.strokeStyle = colors.body; context.lineWidth = 3;
       context.beginPath(); context.moveTo(-16, 13); context.lineTo(-18, 20); context.moveTo(15, 13); context.lineTo(18, 20); context.stroke();
       context.fillStyle = "#263944";
       context.beginPath(); context.arc(-18, 21, 4, 0, Math.PI * 2); context.arc(18, 21, 4, 0, Math.PI * 2); context.fill();
@@ -635,15 +649,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.fillText("★", drone.x, y + 4);
         context.textAlign = "start";
       });
-      // Et svakt søkelys følger helikopteret og gir mer nattflygingsfølelse.
-      if (game.state === "running" && game.y < SEA_Y - 45) {
-        const beam = context.createLinearGradient(HELI_X, game.y + 10, HELI_X, SEA_Y);
-        beam.addColorStop(0, "rgba(255,231,145,.11)");
-        beam.addColorStop(1, "rgba(255,231,145,0)");
-        context.fillStyle = beam;
-        context.beginPath(); context.moveTo(HELI_X - 5, game.y + 8); context.lineTo(HELI_X + 5, game.y + 8); context.lineTo(HELI_X + 62, SEA_Y); context.lineTo(HELI_X - 34, SEA_Y); context.closePath(); context.fill();
-      }
-      drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4);
+      drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4, game.helicopterColor);
       if (game.score >= 15) {
         const rainAmount = Math.min(48, 18 + game.score);
         context.strokeStyle = `rgba(200,232,240,${Math.min(.34, .16 + game.score / 300)})`;
