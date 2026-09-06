@@ -392,6 +392,54 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       const y = rig.padY;
       const size = rig.size;
       const width = 155 * size;
+
+      // Fenris besøkes fra CSOV/W2W-fartøy. Olympic Notos følger derfor
+      // installasjonen som en samlet scene med boligdel, gangveitårn og bro.
+      if (rig.name === "Fenris") {
+        const shipX = x + width + 22;
+        const deckY = SEA_Y - 27;
+        context.save();
+        context.strokeStyle = "#cddfe4";
+        context.lineJoin = "round";
+        context.lineCap = "round";
+        context.lineWidth = 3;
+        // Skrog med markert CSOV-baug.
+        context.fillStyle = "#173f61";
+        context.beginPath(); context.moveTo(shipX, deckY); context.lineTo(shipX + 116, deckY); context.lineTo(shipX + 137, deckY + 8); context.lineTo(shipX + 122, deckY + 25); context.lineTo(shipX + 16, deckY + 25); context.lineTo(shipX - 5, deckY + 13); context.closePath(); context.fill(); context.stroke();
+        context.fillStyle = "#e76538";
+        context.beginPath(); context.moveTo(shipX + 5, deckY + 17); context.lineTo(shipX + 126, deckY + 13); context.lineTo(shipX + 119, deckY + 23); context.lineTo(shipX + 17, deckY + 23); context.closePath(); context.fill();
+        // Hvit bolig-/broseksjon og blå vindusbånd.
+        context.fillStyle = "#e8f0f1";
+        context.fillRect(shipX + 56, deckY - 47, 62, 47); context.strokeRect(shipX + 56, deckY - 47, 62, 47);
+        context.fillStyle = "#75b9d0";
+        context.fillRect(shipX + 64, deckY - 39, 45, 8);
+        context.fillStyle = "#ffd45c";
+        for (let window = 0; window < 4; window++) context.fillRect(shipX + 65 + window * 12, deckY - 21, 6, 6);
+        // Tårn og bevegelseskompensert Walk-to-Work-gangbro mot Fenris.
+        const towerX = shipX + 31;
+        context.strokeStyle = "#d7e9e5"; context.lineWidth = 4;
+        context.beginPath(); context.moveTo(towerX, deckY); context.lineTo(towerX, deckY - 59); context.moveTo(towerX - 10, deckY); context.lineTo(towerX + 10, deckY - 59); context.stroke();
+        const bridgeStartX = x + width - 3;
+        const bridgeStartY = y + 2;
+        const bridgeEndX = towerX + 5;
+        const bridgeEndY = deckY - 51;
+        context.lineWidth = 3;
+        context.beginPath(); context.moveTo(bridgeStartX, bridgeStartY - 5); context.lineTo(bridgeEndX, bridgeEndY - 5); context.moveTo(bridgeStartX, bridgeStartY + 4); context.lineTo(bridgeEndX, bridgeEndY + 4); context.stroke();
+        context.lineWidth = 1.5;
+        for (let span = 0; span < 5; span++) {
+          const progress = span / 5;
+          const nextProgress = (span + 1) / 5;
+          context.beginPath();
+          context.moveTo(bridgeStartX + (bridgeEndX - bridgeStartX) * progress, bridgeStartY - 4 + (bridgeEndY - bridgeStartY) * progress);
+          context.lineTo(bridgeStartX + (bridgeEndX - bridgeStartX) * nextProgress, bridgeStartY + 4 + (bridgeEndY - bridgeStartY) * nextProgress);
+          context.stroke();
+        }
+        context.fillStyle = "rgba(3,18,27,.82)"; context.fillRect(shipX + 47, deckY + 28, 93, 21);
+        context.fillStyle = "#eaf8f3"; context.font = "800 11px sans-serif"; context.fillText("Olympic Notos · W2W", shipX + 53, deckY + 43);
+        context.strokeStyle = "rgba(220,247,250,.42)"; context.lineWidth = 2;
+        context.beginPath(); context.arc(shipX + 25, SEA_Y + 3, 18, Math.PI, Math.PI * 2); context.arc(shipX + 92, SEA_Y + 3, 23, Math.PI, Math.PI * 2); context.stroke();
+        context.restore();
+      }
       context.strokeStyle = "#d7e9e5";
       context.fillStyle = "#173846";
       context.lineWidth = 5;
