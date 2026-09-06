@@ -4,6 +4,7 @@ import { formatDate } from "../lib/date";
 import { loadAutoDisabledYears, loadUserProfile, loadYearTrips, saveAutoDisabledYears, saveUserProfile, saveYearTrips } from "../lib/storage";
 import { changeYearTripPattern, refreshMatchingYearTrip, snapshotTrip, summarizeYear, upgradeLegacyYearTrips } from "../lib/year";
 import { Modal } from "./Modal";
+import { calculateTrip } from "../lib/calculation";
 
 interface Props { trip: TripSetup; onClose: () => void; }
 type Tab = "overview" | "trips" | "profile";
@@ -15,6 +16,24 @@ export function MyYearModal({ trip, onClose }: Props) {
   const [tab, setTab] = useState<Tab>("overview");
   const [year, setYear] = useState(new Date(trip.paidStart).getFullYear());
   const summary = useMemo(() => summarizeYear(trips, profile, year), [trips, profile, year]);
+  const salary = useMemo(() => {
+    const calculation = calculateTrip(trip);
+    const monthlyGross = calculation.regularMonthlyGross;
+    const taxRate = Math.min(60, Math.max(0, trip.taxRate ?? profile.defaultTaxRate));
+    const monthlyTax = monthlyGross * taxRate / 100;
+    const annualGross = monthlyGross * 12;
+    const annualTax = annualGross * taxRate / 100;
+    return {
+      monthlyGross,
+      monthlyTax,
+      monthlyNet: monthlyGross - monthlyTax,
+      annualGross,
+      annualTax,
+      annualNet: annualGross - annualTax,
+      annualHolidayPay: annualGross * (trip.holidayPayRate ?? profile.holidayPayRate) / 100,
+      taxRate,
+    };
+  }, [trip, profile.defaultTaxRate, profile.holidayPayRate]);
 
   useEffect(() => {
     const upgraded = upgradeLegacyYearTrips(trips, trip, profile);
@@ -45,14 +64,23 @@ export function MyYearModal({ trip, onClose }: Props) {
     <div className="segmented year-tabs"><button className={tab === "overview" ? "selected" : ""} onClick={() => setTab("overview")}>Oversikt</button><button className={tab === "trips" ? "selected" : ""} onClick={() => setTab("trips")}>Turer ({summary.rows.length})</button><button className={tab === "profile" ? "selected" : ""} onClick={() => setTab("profile")}>Profil</button></div>
 
     {tab === "overview" && <div className="year-content">
-      {summary.rows.length === 0 ? <div className="year-empty"><strong>Ingen fullførte turer i {year}</strong><p>Fullførte turer legges automatisk til fra turnuskalenderen. Du kan også legge inn den aktive turen manuelt.</p><button className="primary" onClick={addCurrentTrip}>Legg til aktiv tur</button></div> : <>
-        <section className="year-forecast"><span className="eyebrow">Forventet årslønn akkurat nå</span><strong>{money(summary.projectedGross)}</strong><small>Basert på registrerte turer hittil · forventet netto {money(summary.projectedNet)}</small></section>
-        <div className="year-kpis"><article><span>Brutto opptjent</span><strong>{money(summary.gross)}</strong></article><article><span>Netto registrert</span><strong>{money(summary.actualNet)}</strong></article><article><span>Feriepenger opptjent</span><strong>{money(summary.holidayAccrued)}</strong></article><article><span>Offshore</span><strong>{summary.offshoreDays} døgn</strong></article><article><span>Overtid</span><strong>{summary.overtimeHours.toFixed(1)} t</strong></article><article><span>Avvik mot estimat</span><strong className={summary.variance < 0 ? "negative" : "positive"}>{money(summary.variance)}</strong></article></div>
-        <section className="card year-breakdown"><h3>Hva du har tjent</h3><div><span>Ordinær lønn</span><strong>{money(summary.regular)}</strong></div><div><span>Overtid · {summary.overtimeHours.toFixed(1)} t</span><strong>{money(summary.overtime)}</strong></div><div><span>Natt, ventetid og andre tillegg</span><strong>{money(summary.additions)}</strong></div><div className="total"><span>Brutto opptjent</span><strong>{money(summary.gross)}</strong></div></section>
+      <section className="year-forecast"><span className="eyebrow">Fast årslønn før skatt</span><strong>{money(salary.annualGross)}</strong><small>12 × {money(salary.monthlyGross)} per måned · uten variable tillegg</small></section>
+      <div className="year-kpis">
+        <article><span>Månedslønn før skatt</span><strong>{money(salary.monthlyGross)}</strong></article>
+        <article><span>Månedslønn etter skatt</span><strong>{money(salary.monthlyNet)}</strong></article>
+        <article><span>Beregnet skatt per måned</span><strong>{money(salary.monthlyTax)}</strong></article>
+        <article><span>Årslønn etter skatt</span><strong>{money(salary.annualNet)}</strong></article>
+        <article><span>Beregnet skatt per år</span><strong>{money(salary.annualTax)}</strong></article>
+        <article><span>Feriepenger av fastlønn</span><strong>{money(salary.annualHolidayPay)}</strong></article>
+      </div>
+      <p className="muted">Etter skatt er et estimat med {salary.taxRate}% trekk. Feriepenger, halv skatt, fradrag og tabelltrekk kan gi et annet faktisk årsresultat.</p>
+      {summary.rows.length === 0 ? <div className="year-empty"><strong>Ingen fullførte turer i {year}</strong><p>Fullførte turer legges automatisk til fra turnuskalenderen. Turene brukes til å registrere tillegg og overtid.</p><button className="primary" onClick={addCurrentTrip}>Legg til aktiv tur</button></div> : <>
+        <section className="card year-breakdown"><h3>Registrert utover fastlønn i {year}</h3><div><span>Overtid · {summary.overtimeHours.toFixed(1)} t</span><strong>{money(summary.overtime)}</strong></div><div><span>Natt, ventetid og andre tillegg</span><strong>{money(summary.additions)}</strong></div><div className="total"><span>Tillegg registrert totalt</span><strong>{money(summary.overtime + summary.additions)}</strong></div></section>
+        <div className="year-kpis"><article><span>Fullførte turer</span><strong>{summary.rows.length}</strong></article><article><span>Døgn offshore</span><strong>{summary.offshoreDays}</strong></article><article><span>Overtid registrert</span><strong>{summary.overtimeHours.toFixed(1)} t</strong></article></div>
       </>}
     </div>}
 
-    {tab === "trips" && <div className="year-content trip-list">{summary.rows.length === 0 ? <p className="muted">Ingen turer registrert i {year}.</p> : summary.rows.sort((a,b) => b.startDate.localeCompare(a.startDate)).map(t => <article className="card year-trip" key={t.id}><div className="year-trip-head"><div><strong>{t.title}</strong><span>{formatDate(new Date(t.startDate))}–{formatDate(new Date(t.endDate))}{t.autoGenerated ? " · Automatisk" : ""}</span></div><strong>{money(t.grossEarned)}</strong></div><div className="trip-meta"><span>{t.offshoreDays} døgn</span><span>{t.overtimeHours.toFixed(1)} t overtid</span><span>Estimert netto {money(t.expectedNet)}</span></div><div className="trip-controls"><label>Skift denne turen<select value={t.shiftPattern ?? "day"} onChange={e => persistTrips(trips.map(row => row.id === t.id ? changeYearTripPattern(row, e.target.value as TripSetup["pattern"], profile) : row))}><option value="day">Dag hele turen</option><option value="night">Natt hele turen</option><option value="night-day">Natt → dag</option><option value="day-night">Dag → natt</option></select></label><label>Utbetalingsmåned<input type="month" value={t.paymentMonth} onChange={e => updateTrip(t.id, { paymentMonth: e.target.value })}/></label><label>Faktisk utbetalt<input inputMode="decimal" placeholder="Ikke registrert" value={t.actualPaid ?? ""} onChange={e => updateTrip(t.id, { actualPaid: e.target.value === "" ? undefined : Number(e.target.value.replace(",", ".")) })}/></label><button className="danger-text" onClick={() => persistTrips(t.autoGenerated ? trips.map(row => row.id === t.id ? { ...row, excluded: true } : row) : trips.filter(row => row.id !== t.id))}>Slett tur</button></div></article>)}</div>}
+    {tab === "trips" && <div className="year-content trip-list">{summary.rows.length === 0 ? <p className="muted">Ingen turer registrert i {year}.</p> : summary.rows.sort((a,b) => b.startDate.localeCompare(a.startDate)).map(t => <article className="card year-trip" key={t.id}><div className="year-trip-head"><div><strong>{t.title}</strong><span>{formatDate(new Date(t.startDate))}–{formatDate(new Date(t.endDate))}{t.autoGenerated ? " · Automatisk" : ""}</span></div></div><div className="trip-meta"><span>{t.offshoreDays} døgn</span><span>{t.overtimeHours.toFixed(1)} t overtid</span><span>Tillegg {money(t.nightPay + t.overtimePay + t.waitingPay + t.swingPay + t.otherAdditions)}</span></div><div className="trip-controls"><label>Skift denne turen<select value={t.shiftPattern ?? "day"} onChange={e => persistTrips(trips.map(row => row.id === t.id ? changeYearTripPattern(row, e.target.value as TripSetup["pattern"], profile) : row))}><option value="day">Dag hele turen</option><option value="night">Natt hele turen</option><option value="night-day">Natt → dag</option><option value="day-night">Dag → natt</option></select></label><label>Utbetalingsmåned<input type="month" value={t.paymentMonth} onChange={e => updateTrip(t.id, { paymentMonth: e.target.value })}/></label><label>Faktisk utbetalt<input inputMode="decimal" placeholder="Ikke registrert" value={t.actualPaid ?? ""} onChange={e => updateTrip(t.id, { actualPaid: e.target.value === "" ? undefined : Number(e.target.value.replace(",", ".")) })}/></label><button className="danger-text" onClick={() => persistTrips(t.autoGenerated ? trips.map(row => row.id === t.id ? { ...row, excluded: true } : row) : trips.filter(row => row.id !== t.id))}>Slett tur</button></div></article>)}</div>}
 
     {tab === "profile" && <div className="year-content profile-form"><div className="year-note"><strong>Profilen brukes i hele årsoversikten</strong><span>Første versjon lagres bare lokalt på denne enheten. Konto og synkronisering kan kobles på senere.</span></div><label>Navn<input value={profile.name} placeholder="Ditt navn" onChange={e => persistProfile({...profile, name:e.target.value})}/></label><label>Arbeidsgiver<input value={profile.employer} placeholder="Arbeidsgiver / installasjon" onChange={e => persistProfile({...profile, employer:e.target.value})}/></label><div className="form-grid"><label>Feriepengesats<input type="number" min="0" max="20" step="0.1" value={profile.holidayPayRate} onChange={e => persistProfile({...profile, holidayPayRate:Number(e.target.value)})}/></label><label>Skatteprosent<input type="number" min="0" max="60" value={profile.defaultTaxRate} onChange={e => persistProfile({...profile, defaultTaxRate:Number(e.target.value)})}/></label></div><label>Rotasjon<input value={profile.rotationLabel} placeholder="2 / 4" onChange={e => persistProfile({...profile, rotationLabel:e.target.value})}/></label></div>}
   </Modal>;

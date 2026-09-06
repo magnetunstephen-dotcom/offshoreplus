@@ -8,15 +8,18 @@ export function snapshotTrip(setup: TripSetup, profile: UserProfile, id?: string
   const end = addDays(start, setup.rotationOnDays);
   const calc = calculateTrip(setup, new Date(end.getTime() + 60_000));
   const rate = setup.taxRate ?? profile.defaultTaxRate;
+  const regularPay = calc.tripsPerYear > 0 ? calc.regularMonthlyGross * 12 / calc.tripsPerYear : 0;
+  const additionsPay = calc.nightPay + calc.overtimePay + calc.waitingPay + calc.swingPay + calc.customAdditionsPay;
+  const grossEarned = regularPay + additionsPay;
   return {
     id: id ?? globalThis.crypto?.randomUUID?.() ?? String(Date.now()),
     title: profile.employer || "Offshore-tur",
     startDate: start.toISOString(), endDate: end.toISOString(),
     paymentMonth: end.toISOString().slice(0, 7),
-    regularPay: calc.basePay, nightPay: calc.nightPay,
+    regularPay, nightPay: calc.nightPay,
     overtimePay: calc.overtimePay, waitingPay: calc.waitingPay,
     swingPay: calc.swingPay, otherAdditions: calc.customAdditionsPay,
-    grossEarned: calc.gross, expectedNet: calc.gross * (1 - rate / 100),
+    grossEarned, expectedNet: grossEarned * (1 - rate / 100),
     offshoreDays: setup.rotationOnDays, overtimeHours: calc.overtimeHours,
     createdAt: new Date().toISOString(),
     shiftPattern: setup.pattern,
