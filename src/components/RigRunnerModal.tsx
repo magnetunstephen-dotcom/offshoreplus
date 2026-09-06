@@ -64,9 +64,20 @@ function createStartingCourse() {
   let startIndex = Math.floor(Math.random() * PLATFORM_NAMES.length);
   if (PLATFORM_NAMES[startIndex] === "Haven") startIndex -= 1;
   const name = PLATFORM_NAMES[startIndex];
+  const firstRig = { x: 720, padY: 335, scored: false, name, size: rigSize(name), ...PLATFORM_PROFILES[name] } as Rig;
+  const rigs = [firstRig];
+  let nextRigIndex = startIndex + 1;
+  // Valhall og Haven er én sammenhengende scene. Opprett begge med en gang,
+  // slik at gangbroen og begge installasjonene kommer inn på skjermen samlet.
+  if (name === "Valhall") {
+    const haven = createRig(firstRig.x + 245, nextRigIndex);
+    haven.padY = firstRig.padY + 8;
+    rigs.push(haven);
+    nextRigIndex += 1;
+  }
   return {
-    rigs: [{ x: 720, padY: 335, scored: false, name, size: rigSize(name), ...PLATFORM_PROFILES[name] }] as Rig[],
-    nextRigIndex: startIndex + 1,
+    rigs,
+    nextRigIndex,
     drones: [{ x: 600, y: 120 + Math.random() * 120, phase: Math.random() * 6 }] as Drone[],
   };
 }
@@ -663,11 +674,17 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         const lastRig = game.rigs[game.rigs.length - 1];
         if (lastRig.x < 510) {
           const nextName = PLATFORM_NAMES[game.nextRigIndex % PLATFORM_NAMES.length];
-          const pairedWithValhall = lastRig.name === "Valhall" && nextName === "Haven";
-          const nextRig = createRig(lastRig.x + (pairedWithValhall ? 245 : 475 + Math.random() * 120), game.nextRigIndex);
-          if (pairedWithValhall) nextRig.padY = lastRig.padY + 8;
+          const nextRig = createRig(lastRig.x + 475 + Math.random() * 120, game.nextRigIndex);
           game.rigs.push(nextRig);
           game.nextRigIndex += 1;
+          // Haven følger Valhall fra samme øyeblikk som Valhall opprettes.
+          // Dermed blir ikke Haven plutselig lastet inn først når Valhall er midt på skjermen.
+          if (nextName === "Valhall" && PLATFORM_NAMES[game.nextRigIndex % PLATFORM_NAMES.length] === "Haven") {
+            const haven = createRig(nextRig.x + 245, game.nextRigIndex);
+            haven.padY = nextRig.padY + 8;
+            game.rigs.push(haven);
+            game.nextRigIndex += 1;
+          }
         }
         game.rigs = game.rigs.filter(rig => rig.x > -180);
         game.rigs.forEach(rig => {
