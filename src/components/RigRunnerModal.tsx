@@ -8,6 +8,8 @@ type PlatformKind = "jacket" | "concrete" | "monotower" | "semi" | "tlp" | "spar
 type Rig = { x: number; padY: number; scored: boolean; name: string; size: number; kind: PlatformKind; flare: boolean; landable?: boolean };
 type Drone = { x: number; y: number; phase: number };
 type LeaderboardEntry = { user_id: string; display_name: string; score: number };
+type PendingScore = { runId: string; score: number };
+const PENDING_SCORE_KEY = "offshoreplus-pending-game-score";
 
 const WIDTH = 900;
 const HEIGHT = 480;
@@ -124,6 +126,24 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   useEffect(() => { loadLeaderboard(); }, [user?.id]);
 
   useEffect(() => {
+    if (!user || !supabaseConfigured) return;
+    const saved = localStorage.getItem(PENDING_SCORE_KEY);
+    if (!saved) return;
+    try {
+      const pending = JSON.parse(saved) as PendingScore;
+      supabase.rpc("finish_rig_runner_run", { p_run_id: pending.runId, p_final_score: pending.score }).then(async ({ data, error }) => {
+        if (!error || data === false) localStorage.removeItem(PENDING_SCORE_KEY);
+        if (data === true) {
+          setScoreMessage("Den ventende toppscoren ble lagret på poengtavlen.");
+          await loadLeaderboard();
+        }
+      });
+    } catch {
+      localStorage.removeItem(PENDING_SCORE_KEY);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", syncFullscreen);
     return () => document.removeEventListener("fullscreenchange", syncFullscreen);
@@ -152,8 +172,14 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       if (currentUser) setScoreMessage("Resultatet ble lagret på telefonen, men kom ikke på poengtavlen. Kontroller spillnavnet og prøv igjen.");
       return;
     }
+    localStorage.setItem(PENDING_SCORE_KEY, JSON.stringify({ runId, score: nextScore } satisfies PendingScore));
     const { data, error } = await supabase.rpc("finish_rig_runner_run", { p_run_id: runId, p_final_score: nextScore });
-    if (error || data !== true) {
+    if (error) {
+      setScoreMessage("Nettet svarte ikke. Resultatet sendes automatisk på nytt.");
+      return;
+    }
+    localStorage.removeItem(PENDING_SCORE_KEY);
+    if (data !== true) {
       setScoreMessage("Resultatet ble lagret lokalt, men poengtavlen avviste innsendingen.");
       return;
     }
