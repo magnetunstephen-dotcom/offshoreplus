@@ -68,6 +68,33 @@ const PLATFORM_PROFILES: Record<string, { kind: PlatformKind; flare: boolean; si
   "Askeladden": { kind: "drilljackup", flare: false, size: 1.07, theme: "catj" }, "Yme Inspirer": { kind: "drilljackup", flare: false, size: 1.07, theme: "noble" },
 };
 
+
+// Continuous 50-level environmental chapters; smoothstep prevents abrupt changes.
+const ENVIRONMENTS = [
+  [0, 0, 0, 0, 0, 0], [0, 1, .85, .10, 0, 0],
+  [1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 1],
+  [0, 0, 0, 0, 0, 0], [0, .65, 1, .10, 0, 0],
+  [0, 0, 0, 0, 1, 0], [0, .2, .15, .24, 0, 0],
+  [1, 0, 0, .04, 0, 0], [1, 0, 0, 0, 0, 1],
+] as const;
+export function flightEnvironment(level: number) {
+  const progress = Math.max(0, level);
+  const chapter = Math.floor((progress + 20) / 50);
+  const t = Math.max(0, Math.min(1, (progress - (chapter * 50 - 20)) / 40));
+  const blend = t * t * (3 - 2 * t);
+  const previous = ENVIRONMENTS[((chapter - 1) % 10 + 10) % 10];
+  const next = ENVIRONMENTS[chapter % 10];
+  const values = chapter === 0 ? [...ENVIRONMENTS[0]] : next.map((v, i) => previous[i] + (v - previous[i]) * blend);
+  const [day, storm, rain, fog, aurora, birds] = values;
+  const warmth = 4 * day * (1 - day);
+  const color = (night: number[], daylight: number[], sunset: number[]) => 'rgb(' + night.map((v, i) => Math.round((v + (daylight[i] - v) * day) * (1 - warmth * .65) + sunset[i] * warmth * .65)).join(',') + ')';
+  return { day, storm, rain, fog, aurora, birds, warmth,
+    sky: color([3,13,24], [50,139,201], [91,64,112]),
+    horizon: color([24,88,115], [170,220,240], [255,143,83]),
+    sea: color([19,83,107], [39,135,166], [132,109,122]),
+  };
+}
+
 export const LANDABLE_INSTALLATION_COUNT = PLATFORM_NAMES.filter(name => PLATFORM_PROFILES[name].landable !== false).length;
 
 function rigSize(name: string) {
@@ -706,14 +733,17 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillText(rig.name, x + 11, y + 42);
     }
 
+    let visualLevel = gameRef.current.score;
     function draw() {
       if (!context) return;
       const game = gameRef.current;
+      visualLevel = game.state === "ready" ? 0 : visualLevel + (game.score - visualLevel) * .025;
+      const environment = flightEnvironment(visualLevel);
       const gradient = context.createLinearGradient(0, 0, 0, HEIGHT);
-      gradient.addColorStop(0, "#030d18");
-      gradient.addColorStop(.48, "#0b2b3f");
-      gradient.addColorStop(.82, "#185873");
-      gradient.addColorStop(1, "#28758b");
+      gradient.addColorStop(0, environment.sky);
+      gradient.addColorStop(.48, environment.sky);
+      gradient.addColorStop(.82, environment.horizon);
+      gradient.addColorStop(1, environment.horizon);
       context.fillStyle = gradient;
       context.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -723,10 +753,12 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         const starX = (star * 173 + 47) % WIDTH;
         const starY = 18 + ((star * 67) % 165);
         const twinkle = .45 + Math.sin(game.distance / 90 + star) * .25;
-        context.globalAlpha = twinkle;
+        context.globalAlpha = twinkle * (1 - environment.day) * (1 - environment.storm * .8);
         context.beginPath(); context.arc(starX, starY, star % 5 === 0 ? 1.5 : .8, 0, Math.PI * 2); context.fill();
       }
       context.globalAlpha = 1;
+      context.save();
+      context.globalAlpha = (1 - environment.day) * (1 - environment.storm * .75);
       const moonGlow = context.createRadialGradient(585, 72, 8, 585, 72, 85);
       moonGlow.addColorStop(0, "rgba(218,241,246,.18)");
       moonGlow.addColorStop(.55, "rgba(180,224,234,.07)");
@@ -734,16 +766,45 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.fillStyle = moonGlow; context.beginPath(); context.arc(585, 72, 85, 0, Math.PI * 2); context.fill();
       context.fillStyle = "rgba(224,240,242,.12)";
       context.beginPath(); context.arc(585, 72, 45, 0, Math.PI * 2); context.fill();
+      context.restore();
+      context.save();
+      context.globalAlpha = environment.day;
+      context.fillStyle = "#ffe4a0";
+      context.shadowColor = "#ffbf73"; context.shadowBlur = 35;
+      context.beginPath(); context.arc(585, 300 - environment.day * 220, 29, 0, Math.PI * 2); context.fill();
+      context.restore();
+      context.save();
+      context.globalAlpha = environment.aurora * .35;
+      for (let ribbon = 0; ribbon < 3; ribbon++) {
+        context.strokeStyle = ribbon === 1 ? "#ac8bea" : "#65eab8";
+        context.lineWidth = 16; context.beginPath();
+        for (let x = 0; x <= WIDTH; x += 12) {
+          const y = 70 + ribbon * 26 + Math.sin(x / 120 + game.distance / 600 + ribbon) * 25;
+          x === 0 ? context.moveTo(x, y) : context.lineTo(x, y);
+        }
+        context.stroke();
+      }
+      context.restore();
+      context.save();
+      context.globalAlpha = environment.birds * .6;
+      context.strokeStyle = "#203e50"; context.lineWidth = 1.5;
+      for (let bird = 0; bird < 6; bird++) {
+        const x = ((bird * 37 + game.distance * .15) % (WIDTH + 200)) - 100;
+        const y = 100 + Math.abs(bird - 3) * 9;
+        const wing = Math.sin(game.distance / 16 + bird) * 4;
+        context.beginPath(); context.moveTo(x - 6, y - wing); context.lineTo(x, y); context.lineTo(x + 6, y - wing); context.stroke();
+      }
+      context.restore();
       for (let cloud = 0; cloud < 4; cloud++) {
         const cloudX = ((cloud * 310 - game.distance * (.025 + cloud * .004)) % (WIDTH + 320)) - 110;
         const cloudY = 105 + (cloud % 2) * 58;
         const cloudGradient = context.createRadialGradient(cloudX, cloudY, 8, cloudX, cloudY, 95);
-        cloudGradient.addColorStop(0, "rgba(164,205,217,.10)");
+        cloudGradient.addColorStop(0, `rgba(164,205,217,${.1 + environment.storm * .45 + environment.day * .15})`);
         cloudGradient.addColorStop(1, "rgba(70,125,145,0)");
         context.fillStyle = cloudGradient;
         context.beginPath(); context.ellipse(cloudX, cloudY, 125, 32, 0, 0, Math.PI * 2); context.fill();
       }
-      if (game.score >= 50) {
+      if (environment.storm > .01) {
         // Sjeldne, lokale lyn gir stormfølelse uten et ubehagelig helskjermblink.
         const lightningPhase = game.distance % 920;
         if (lightningPhase < 58) {
@@ -751,7 +812,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           const lightningX = 330 + ((storm * 173) % 420);
           context.save();
           context.shadowColor = "rgba(210,236,255,.9)"; context.shadowBlur = 18;
-          context.strokeStyle = `rgba(225,242,255,${.8 - lightningPhase / 90})`; context.lineWidth = 4;
+          context.strokeStyle = `rgba(225,242,255,${(.8 - lightningPhase / 90) * environment.storm})`; context.lineWidth = 4;
           context.beginPath(); context.moveTo(lightningX, 5); context.lineTo(lightningX - 24, 61); context.lineTo(lightningX + 3, 55); context.lineTo(lightningX - 31, 125); context.stroke();
           context.restore();
         }
@@ -766,7 +827,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.strokeStyle = "rgba(220,247,250,.28)"; context.lineWidth = 2;
       context.beginPath(); context.moveTo(vesselX - 20, SEA_Y + 3); context.lineTo(vesselX + 100, SEA_Y + 3); context.stroke();
       const seaGradient = context.createLinearGradient(0, SEA_Y, 0, HEIGHT);
-      seaGradient.addColorStop(0, "#13536b");
+      seaGradient.addColorStop(0, environment.sea);
       seaGradient.addColorStop(.12, "#0b3d56");
       seaGradient.addColorStop(.48, "#082b40");
       seaGradient.addColorStop(1, "#03111d");
@@ -788,14 +849,25 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       });
       context.strokeStyle = "rgba(206,239,244,.24)";
       context.lineWidth = 2;
-      for (let row = 0; row < 4; row++) {
+      for (let row = 0; row < 7; row++) {
         context.beginPath();
         for (let x = -20; x <= WIDTH + 20; x += 20) {
-          const y = SEA_Y + row * 13 + Math.sin((x + game.distance * .8) / 26) * 4;
+          const roughness = environment.storm;
+          const phase = x + game.distance * (.8 + roughness * 1.2);
+          const y = SEA_Y + 5 + row * 14 + Math.sin(phase / (32 + row * 3) + row) * (3 + roughness * 11) + Math.sin(phase / 13 + row) * roughness * 3;
           x === -20 ? context.moveTo(x, y) : context.lineTo(x, y);
         }
         context.stroke();
       }
+      context.save();
+      context.globalAlpha = environment.storm * .65;
+      context.strokeStyle = "#e0f6fa"; context.lineWidth = 2;
+      for (let foam = 0; foam < 35; foam++) {
+        const x = ((foam * 137 - game.distance * 1.7) % WIDTH + WIDTH) % WIDTH;
+        const y = SEA_Y + 10 + (foam * 23) % 88;
+        context.beginPath(); context.moveTo(x, y); context.quadraticCurveTo(x + 6, y - 4, x + 16, y); context.stroke();
+      }
+      context.restore();
       game.rigs.forEach(rig => drawRig(rig, game.distance / 9));
       game.drones.forEach(drone => {
         const bob = Math.sin(game.distance / 35 + drone.phase) * 7;
@@ -823,9 +895,9 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.textAlign = "start";
       });
       drawHelicopter(game.y, Math.max(-.18, Math.min(.22, game.velocity / 650)), game.distance / 4, game.helicopterColor);
-      if (game.score >= 15) {
-        const rainAmount = Math.min(48, 18 + game.score);
-        context.strokeStyle = `rgba(200,232,240,${Math.min(.34, .16 + game.score / 300)})`;
+      if (environment.rain > .001) {
+        const rainAmount = 65;
+        context.strokeStyle = `rgba(200,232,240,${environment.rain * .34})`;
         context.lineWidth = 1.5;
         for (let drop = 0; drop < rainAmount; drop++) {
           const rainX = (drop * 79 + game.distance * 2.1) % (WIDTH + 80) - 40;
@@ -833,8 +905,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
           context.beginPath(); context.moveTo(rainX, rainY); context.lineTo(rainX - 8, rainY + 21); context.stroke();
         }
       }
-      if (game.score >= 30) {
-        const fog = Math.min(.18, .06 + (game.score - 30) / 350);
+      if (environment.fog > .001) {
+        const fog = environment.fog;
         context.fillStyle = `rgba(205,225,226,${fog})`; context.fillRect(0, 110, WIDTH, 270);
       }
       if (game.score >= 10) {
