@@ -979,9 +979,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       game.lastTime = time;
       if (game.state === "running") {
         seaPhase += delta * (20 + flightEnvironment(visualLevel).storm * 12);
-        // Farten øker merkbart for hver landing og flater først ut på et høyere nivå.
-        // Det gjør lange vaktrunder vanskeligere uten å gjøre 100 landinger umulig.
-        const speed = 122 + Math.min(125, game.score * 10);
+        // Etter nivå 100 øker farten forsiktig videre, opp til 20 % ekstra ved nivå 200.
+        const speed = 122 + Math.min(125, game.score * 10) + Math.min(49.4, Math.max(0, game.score - 100) * .494);
         const gustForce = game.score >= 10 ? Math.sin(game.distance / 125) * Math.min(34, 10 + (game.score - 10) * .55) : 0;
         game.velocity += (390 + gustForce) * delta;
         game.y += game.velocity * delta;
