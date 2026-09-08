@@ -12,6 +12,13 @@ type LeaderboardEntry = { user_id: string; display_name: string; score: number; 
 type PendingScore = { runId: string; score: number; streak: number };
 const PENDING_SCORE_KEY = "offshoreplus-pending-game-score";
 
+const MUSIC_TRACKS = [
+  "/split-flight-offshore-hopper.mp3",
+  "/split-flight-final-stage-v2.mp3",
+  "/split-flight-helicopter-joy.mp3",
+  "/split-flight-jump.mp3",
+  "/split-flight-platform-chopper.mp3"
+] as const;
 const WIDTH = 900;
 const HEIGHT = 520;
 const SEA_Y = 420;
@@ -168,7 +175,6 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const finalAudioRef = useRef<HTMLAudioElement>(null);
   const frameRef = useRef<number | undefined>(undefined);
   const gameRunRef = useRef<string | null>(null);
   const gameRunPromiseRef = useRef<PromiseLike<string | null> | null>(null);
@@ -191,6 +197,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   });
   const [state, setState] = useState<GameState>("ready");
   const [score, setScore] = useState(0);
+  const musicTrack = MUSIC_TRACKS[Math.floor(score / 50) % MUSIC_TRACKS.length];
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-streak") || 0));
   const [best, setBest] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-best") || 0));
@@ -257,26 +264,21 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }, []);
 
   useEffect(() => {
-    const regular = audioRef.current;
-    const finalStage = finalAudioRef.current;
-    if (!regular || !finalStage) return;
-    regular.volume = .32;
-    finalStage.volume = .35;
-    const active = score >= 50 ? finalStage : regular;
-    const inactive = score >= 50 ? regular : finalStage;
-    inactive.pause();
-    if (soundOn && state !== "over") active.play().catch(() => undefined);
-    else active.pause();
-  }, [soundOn, state, score]);
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = .32;
+    if (soundOn && state !== "over") audio.play().catch(() => undefined);
+    else audio.pause();
+  }, [soundOn, state, musicTrack]);
 
   async function toggleSound() {
     const next = !soundOn;
     setSoundOn(next);
     localStorage.setItem("offshoreplus-game-sound", next ? "on" : "off");
-    const audio = score >= 50 ? finalAudioRef.current : audioRef.current;
+    const audio = audioRef.current;
     if (!audio) return;
     audio.volume = .32;
-    if (next) await audio.play().catch(() => undefined);
+    if (next && state !== "over") await audio.play().catch(() => undefined);
     else audio.pause();
   }
 
@@ -344,9 +346,14 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }
 
   function reset() {
-    finalAudioRef.current?.pause();
-    finalAudioRef.current && (finalAudioRef.current.currentTime = 0);
-    if (soundOn) audioRef.current?.play().catch(() => undefined);
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.setAttribute("src", MUSIC_TRACKS[0]);
+      audio.currentTime = 0;
+      audio.volume = .32;
+      if (soundOn) audio.play().catch(() => undefined);
+    }
     startVerifiedRun();
     const startingCourse = createStartingCourse();
     const previousColor = gameRef.current.helicopterColor;
@@ -1040,8 +1047,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   }, []);
 
   return <Modal onClose={onClose} labelledBy="rig-runner-title" className="game-modal">
-    <audio ref={audioRef} src="/split-flight-theme.mp3" loop preload="none" />
-    <audio ref={finalAudioRef} src="/split-flight-final-stage.mp3" loop preload="none" />
+    <audio ref={audioRef} src={musicTrack} loop preload="none" />
     <div ref={gameAreaRef} className={`game-fullscreen-area${mobilePlayMode ? " mobile-game-mode" : ""}`}>
     <div className="game-header">
       <div><span className="eyebrow">DRONEVAKTA</span><h2 id="rig-runner-title">Split Flight</h2></div>
