@@ -747,6 +747,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
     }
 
     let visualLevel = gameRef.current.score;
+    // Integrate sea motion independently of flight speed and level changes.
+    let seaPhase = 0;
     function draw() {
       if (!context) return;
       const game = gameRef.current;
@@ -866,8 +868,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
         context.beginPath();
         for (let x = -20; x <= WIDTH + 20; x += 20) {
           const roughness = environment.storm;
-          const phase = x + game.distance * (.8 + roughness * 1.2);
-          const y = SEA_Y + 5 + row * 14 + Math.sin(phase / (32 + row * 3) + row) * (3 + roughness * 11) + Math.sin(phase / 13 + row) * roughness * 3;
+          const phase = x + seaPhase;
+          const y = SEA_Y + 5 + row * 14 + Math.sin(phase / (48 + row * 4) + row) * (3 + roughness * 9) + Math.sin(phase / 85 + row) * roughness * 2;
           x === -20 ? context.moveTo(x, y) : context.lineTo(x, y);
         }
         context.stroke();
@@ -876,7 +878,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       context.globalAlpha = environment.storm * .65;
       context.strokeStyle = "#e0f6fa"; context.lineWidth = 2;
       for (let foam = 0; foam < 35; foam++) {
-        const x = ((foam * 137 - game.distance * 1.7) % WIDTH + WIDTH) % WIDTH;
+        const x = ((foam * 137 - seaPhase) % WIDTH + WIDTH) % WIDTH;
         const y = SEA_Y + 10 + (foam * 23) % 88;
         context.beginPath(); context.moveTo(x, y); context.quadraticCurveTo(x + 6, y - 4, x + 16, y); context.stroke();
       }
@@ -976,6 +978,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       const delta = Math.min(.034, Math.max(0, (time - (game.lastTime || time)) / 1000));
       game.lastTime = time;
       if (game.state === "running") {
+        seaPhase += delta * (20 + flightEnvironment(visualLevel).storm * 12);
         // Farten øker merkbart for hver landing og flater først ut på et høyere nivå.
         // Det gjør lange vaktrunder vanskeligere uten å gjøre 100 landinger umulig.
         const speed = 122 + Math.min(125, game.score * 10);
