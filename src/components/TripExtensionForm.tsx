@@ -58,7 +58,7 @@ export function TripExtensionForm({ trip, onSave }: { trip: TripSetup; onSave: (
       <button className="primary full-width" onClick={beginEditing}>{saved ? "Endre ekstraperioden" : "Planlegg ekstra dager"}</button>
       {saved && live.active && <button className="secondary full-width" onClick={()=>persist({...saved,end:now.toISOString(),workEnd:saved.workEnd && new Date(saved.workEnd)>now ? now.toISOString() : saved.workEnd})}>Jeg reiser hjem nå</button>}
     </> : <>
-      <label>Ny hjemreise<input type="datetime-local" value={end} min={start} max={toDateTimeLocal(nextTrip)} onChange={e=>setEnd(e.target.value)} /></label>
+      <label>Når går helikopteret fra land?<input type="datetime-local" value={end} min={start} max={toDateTimeLocal(nextTrip)} onChange={e=>setEnd(e.target.value)} /></label>
       <label>Skift i ekstraperioden<select value={shift} onChange={e=>{const value=e.target.value as "day"|"night";setShift(value);setShiftStart(value==="day"?"07:00":"19:00");}}><option value="day">Dagskift · 07–19</option><option value="night">Nattskift · 19–07</option></select></label>
       {valid && <div className="extension-summary"><strong>{changed && swing!=="none" ? "Svingskift legges til automatisk" : "Ingen automatisk svingskiftkompensasjon"}</strong>
       <p>Planlagt: {hours(projected.overtimeHours)} t overtid, {hours(projected.waitingHours)} t ventetid og {hours(projected.swingHours)} t svingskift.</p>

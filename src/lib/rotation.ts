@@ -46,7 +46,7 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
       periodStart: now,
       periodEnd: anchor,
       nextHelicopter: anchor,
-      countdownLabel: "Neste helikopter fra land",
+      countdownLabel: "Når går helikopteret fra land?",
       phaseDay: 1,
       phaseLength: Math.max(1, Math.ceil((anchor.getTime() - now.getTime()) / 86_400_000)),
     };
@@ -67,7 +67,7 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
     periodStart: phaseStart,
     periodEnd: phaseEnd,
     nextHelicopter: phaseEnd,
-    countdownLabel: isOffshore ? (extension ? "Helikopter hjem · forlenget tur" : "Helikopter hjem") : "Neste helikopter fra land",
+    countdownLabel: "Når går helikopteret fra land?",
     phaseDay,
     phaseLength,
   };
