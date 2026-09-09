@@ -1018,3 +1018,20 @@ body {
 .account-extra-action { display:block; margin:10px auto 0; }
 .account-extra-actions { display:grid; gap:5px; margin-top:10px; }
 @media (max-width:700px) { .privacy-footer { display:none; } }
+
+/* Live preview and a calm invitation to sign in. */
+.demo-banner { max-width:1200px; margin:18px auto 0; padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; border:1px solid var(--border); border-radius:14px; background:var(--panel); }
+.demo-banner strong { display:block; color:var(--accent, #21c994); font-size:12px; letter-spacing:.08em; }
+.demo-banner span { display:block; color:var(--muted); font-size:13px; margin-top:4px; }
+.demo-banner button { flex-shrink:0; }
+.account-button.login-glow { border-color:#21b98d; animation:login-breathe 3.6s ease-in-out infinite; }
+@keyframes login-breathe { 0%,100% { box-shadow:0 0 0 1px #21b98d22; } 50% { box-shadow:0 0 18px 3px #21b98d55; } }
+.welcome-dialog { position:fixed; margin:auto; width:min(600px, calc(100vw - 32px)); max-height:calc(100dvh - 40px); overflow:auto; padding:36px 28px 28px; border:1px solid var(--border); border-radius:24px; background:var(--panel); color:var(--text); text-align:center; box-shadow:0 24px 90px #0008; }
+.welcome-dialog::backdrop { background:rgba(3,13,22,.55); }
+.welcome-dialog h1 { font-size:clamp(24px,5vw,32px); margin:18px 0 12px; }
+.welcome-dialog p { color:var(--muted); line-height:1.6; }
+.welcome-dialog .welcome-demo-note { padding:10px 14px; border:1px solid var(--border); border-radius:12px; font-size:13px; }
+.welcome-dialog .welcome-help { margin:18px auto; }
+.welcome-dialog .modal-corner-close { position:absolute; right:12px; top:12px; }
+@media (max-width:600px) { .demo-banner { margin:12px 12px 0; align-items:flex-start; flex-direction:column; } .welcome-dialog { padding:32px 18px 20px; } .welcome-dialog .welcome-actions button { width:100%; } }
+@media (prefers-reduced-motion:reduce) { .account-button.login-glow { animation:none; box-shadow:0 0 0 1px #21b98d55; } }

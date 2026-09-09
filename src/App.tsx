@@ -1,3 +1,5 @@
+import { createDemoTrip } from "./lib/demoTrip";
+import { WelcomeDialog } from "./components/WelcomeDialog";
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { AdditionsModal } from "./components/AdditionsModal";
@@ -30,6 +32,21 @@ export default function App() {
   const [modal, setModal] = useState<ModalName>(null);
   const [theme, setTheme] = useState<"dark" | "light">(() => loadTheme());
   const [user, setUser] = useState<User | null>(null);
+  const [demoTrip, setDemoTrip] = useState(createDemoTrip);
+  const [authReady, setAuthReady] = useState(!supabaseConfigured);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const displayedTrip = trip ?? demoTrip;
+  const isDemo = !trip;
+  function dismissWelcome() {
+    sessionStorage.setItem("offshoreplus-welcome-seen", "1");
+    setWelcomeOpen(false);
+  }
+  function welcomeAction(next: ModalName) { dismissWelcome(); setModal(next); }
+  useEffect(() => {
+    if (!authReady || user || trip || modal || sessionStorage.getItem("offshoreplus-welcome-seen")) return;
+    const timer = window.setTimeout(() => setWelcomeOpen(true), 1400);
+    return () => window.clearTimeout(timer);
+  }, [authReady, user, trip, modal]);
   const [syncState, setSyncState] = useState("Ikke synkronisert ennå");
   const syncTimer = useRef<number | undefined>(undefined);
 
@@ -51,7 +68,7 @@ export default function App() {
 
   useEffect(() => {
     if (!supabaseConfigured) return;
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => { setUser(data.user); setAuthReady(true); }).catch(() => setAuthReady(true));
     const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
@@ -84,7 +101,7 @@ export default function App() {
   }
 
   function changeEarningsView(view: EarningsView) {
-    if (!trip) return;
+    if (!trip) { setDemoTrip(current => ({ ...current, earningsView: view })); return; }
     storeTrip({ ...trip, earningsView: view }, false);
   }
 
@@ -95,42 +112,26 @@ export default function App() {
           <span className="brand-mark"><OffshorePlusLogo size={29} /></span>
           <span>OffshorePlus</span>
         </div>
-        <div className="topbar-actions"><button className={`account-button ${user ? "signed-in" : ""}`} onClick={() => setModal("account")}><span>{user ? (user.email?.[0] || "O").toUpperCase() : "○"}</span>{user ? "Min konto" : "Logg inn"}</button><button className="theme-button" onClick={toggleTheme} aria-label="Bytt tema">
+        <div className="topbar-actions"><button className={`account-button ${user ? "signed-in" : "login-glow"}`} onClick={() => setModal("account")}><span>{user ? (user.email?.[0] || "O").toUpperCase() : "○"}</span>{user ? "Min konto" : "Logg inn"}</button><button className="theme-button" onClick={toggleTheme} aria-label="Bytt tema">
           {theme === "dark" ? <SunIcon size={19} /> : <MoonIcon size={19} />}
         </button></div>
       </header>
 
-      {trip ? (
+      {isDemo && <div className="demo-banner" role="note"><div><strong>LIVE DEMO · F2</strong><span>Eksempeltur startet for én uke siden · 2 uker på / 4 uker av · tallene er ikke dine egne</span></div><button className="secondary" onClick={() => setModal("wizard")}>Sett opp min tur</button></div>}
         <Dashboard
-          trip={trip}
+          trip={displayedTrip}
           onNewTrip={() => setModal("wizard")}
           onCalendar={() => setModal("calendar")}
-          onSettings={() => setModal("settings")}
-          onAdditions={() => setModal("additions")}
+          onSettings={() => setModal(trip ? "settings" : "wizard")}
+          onAdditions={() => setModal(trip ? "additions" : "wizard")}
           onEarningsInfo={() => setModal("earnings-info")}
           onCv={() => setModal("cv")}
           onCertificates={() => setModal("certificates")}
-          onMyYear={() => setModal("my-year")}
+          onMyYear={() => setModal(trip ? "my-year" : "wizard")}
           onGame={() => setModal("rig-runner")}
           onChangeEarningsView={changeEarningsView}
         />
-      ) : (
-        <main className="empty-state">
-          <div className="large-mark"><OffshorePlusLogo size={65} /></div>
-          <h1>OffshorePlus</h1>
-          <p>Gratis oversikt over offshore-tur, lønn og turnus. Du kan bruke tjenesten med eller uten konto.</p>
-          <div className="welcome-actions">
-            <button className="primary large-button" onClick={() => setModal("account")}>Jeg har konto · logg inn</button>
-            <button className="secondary large-button" onClick={() => setModal("wizard")}>Fortsett uten konto</button>
-          </div>
-          <small className="welcome-help">Ny bruker? Velg «Logg inn» og deretter «Opprett konto» – det er gratis.</small>
-          <section className="welcome-about" aria-labelledby="welcome-about-title">
-            <h2 id="welcome-about-title">Turnus og lønn offshore – samlet på ett sted</h2>
-            <p>OffshorePlus er en gratis norsk turnuskalender, skiftkalender og lønnskalkulator for offshorearbeidere. Se nedtelling til utreise og hjemreise, beregn månedslønn, overtid, nattillegg og andre tillegg, og legg 2/4-turnusen i telefonkalenderen.</p>
-            <p>Du kan også lagre kurs og sertifikater, få årsoversikt og prøve Split Flight – et lite offshore-spill med helikopter, plattformer og russiske droner.</p>
-          </section>
-        </main>
-      )}
+      {welcomeOpen && !user && isDemo && !modal && <WelcomeDialog onClose={dismissWelcome} onLogin={() => welcomeAction("account")} onSetup={() => welcomeAction("wizard")} onGame={() => welcomeAction("rig-runner")} />}
 
       <button className="feedback-bubble" onClick={() => setModal("feedback")} aria-label="Send tilbakemelding"><span>💬</span><b>Tips eller feil?</b></button>
       <InstallAppPrompt />
@@ -144,8 +145,8 @@ export default function App() {
         />
       )}
 
-      {modal === "calendar" && trip && (
-        <CalendarModal trip={trip} onClose={() => setModal(null)} />
+      {modal === "calendar" && (
+        <CalendarModal trip={displayedTrip} onClose={() => setModal(null)} />
       )}
 
       {modal === "settings" && trip && (
@@ -173,8 +174,8 @@ export default function App() {
       {modal === "password-reset" && <PasswordResetModal onClose={() => setModal(null)} />}
       {modal === "rig-runner" && <RigRunnerModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
 
-      {modal === "earnings-info" && trip && (
-        <EarningsInfoModal trip={trip} onClose={() => setModal(null)} />
+      {modal === "earnings-info" && (
+        <EarningsInfoModal trip={displayedTrip} onClose={() => setModal(null)} />
       )}
     </div>
   );
