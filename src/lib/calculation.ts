@@ -1,3 +1,4 @@
+import { extensionCalculation, extensionForTrip, manualHoursOutsideExtension } from "./extension";
 import type {
   CustomAddition,
   LiveAdditionSession,
@@ -30,6 +31,7 @@ export interface TripCalculation {
   overtimeHours: number;
   overtimePay: number;
   swingPay: number;
+  swingHours: number;
   customAdditionsPay: number;
   customMonthlyPay: number;
   customAdditionResults: CustomAdditionResult[];
@@ -83,11 +85,11 @@ function overlapHours(
   return Math.max(0, (end - start) / 3_600_000);
 }
 
-function sessionHours(session: LiveAdditionSession, now: Date): number {
+function sessionHours(session: LiveAdditionSession, now: Date, setup: TripSetup): number {
   const start = new Date(session.start);
-  const end = session.end ? new Date(session.end) : now;
+  const end = new Date(Math.min(now.getTime(), session.end ? new Date(session.end).getTime() : now.getTime()));
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
-  return Math.max(0, (end.getTime() - start.getTime()) / 3_600_000);
+  return manualHoursOutsideExtension(setup, start, end);
 }
 
 function customRate(addition: CustomAddition, setup: TripSetup): number {
@@ -179,7 +181,9 @@ function currentScheduledStatus(setup: TripSetup, now: Date) {
 export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculation {
   const start = new Date(setup.paidStart);
   const tripEnd = addDays(start, setup.rotationOnDays);
-  const effectiveEnd = new Date(Math.min(now.getTime(), tripEnd.getTime()));
+  const extension = extensionForTrip(setup);
+  const extra = extensionCalculation(setup, now);
+  const effectiveEnd = new Date(Math.min(now.getTime(), tripEnd.getTime(), extension ? new Date(extension.start).getTime() : Infinity));
   const elapsedSeconds = Math.max(0, (now.getTime() - start.getTime()) / 1000);
 
   let paidHours = 0;
@@ -199,14 +203,14 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const sessions = setup.additionSessions ?? [];
   const liveWaitingHours = sessions
     .filter((session) => session.type === "waiting")
-    .reduce((sum, session) => sum + sessionHours(session, now), 0);
+    .reduce((sum, session) => sum + sessionHours(session, now, setup), 0);
   const liveOvertimeHours = sessions
     .filter((session) => session.type === "overtime")
-    .reduce((sum, session) => sum + sessionHours(session, now), 0);
+    .reduce((sum, session) => sum + sessionHours(session, now, setup), 0);
 
   const manualOvertimeHours = setup.overtimeHours ?? 0;
-  const overtimeHours = manualOvertimeHours + liveOvertimeHours;
-  const waitingHours = liveWaitingHours;
+  const overtimeHours = manualOvertimeHours + liveOvertimeHours + extra.overtimeHours;
+  const waitingHours = liveWaitingHours + extra.waitingHours;
 
   const cycleDays = Math.max(1, setup.rotationOnDays + setup.rotationOffDays);
   const tripsPerYear = 365.2425 / cycleDays;
@@ -223,7 +227,8 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const waitingPay = waitingHours * setup.hourlyRate;
   const overtimePay = overtimeHours * setup.overtimeRate;
   const swingRate = Math.max(0, setup.overtimeRate - setup.hourlyRate);
-  const swingPay = (setup.swingCompHours ?? 0) * swingRate;
+  const swingHours = (setup.swingCompHours ?? 0) + extra.swingHours;
+  const swingPay = swingHours * swingRate;
   const additionsPay = waitingPay + overtimePay + swingPay + customAdditionsPay;
   const gross = basePay + nightPay + additionsPay;
   const net = gross * (1 - setup.taxRate / 100);
@@ -304,12 +309,12 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
 
   const activeSession = sessions.find((session) => !session.end);
   const scheduled = currentScheduledStatus(setup, now);
-  const status = activeSession?.type === "overtime"
+  const status = extra.active ? (extra.working ? "overtime" : "waiting") : activeSession?.type === "overtime"
     ? "overtime"
     : activeSession?.type === "waiting"
       ? "waiting"
       : scheduled.status;
-  const statusLabel = activeSession?.type === "overtime"
+  const statusLabel = extra.active ? (extra.working ? "Ekstratur · overtid på skift" : "Ekstratur · ventetid av skift") : activeSession?.type === "overtime"
     ? "Overtid · lønn teller raskere"
     : activeSession?.type === "waiting"
       ? "Ventetid · lønn teller"
@@ -326,6 +331,7 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     overtimeHours,
     overtimePay,
     swingPay,
+    swingHours,
     customAdditionsPay,
     customMonthlyPay,
     customAdditionResults,
@@ -357,10 +363,10 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
       setup.rotationOnDays,
       Math.max(1, Math.floor(elapsedSeconds / 86_400) + 1),
     ),
-    homeDate: tripEnd,
+    homeDate: extension ? new Date(extension.end) : tripEnd,
     status,
     statusLabel,
-    nextStatusDate: activeSession ? undefined : scheduled.next,
+    nextStatusDate: extra.active ? extra.next : activeSession ? undefined : scheduled.next,
     isMoneyRunning: status === "work" || status === "overtime" || status === "waiting",
   };
 }

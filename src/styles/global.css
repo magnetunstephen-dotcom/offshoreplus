@@ -1035,3 +1035,11 @@ body {
 .welcome-dialog .modal-corner-close { position:absolute; right:12px; top:12px; }
 @media (max-width:600px) { .demo-banner { margin:12px 12px 0; align-items:flex-start; flex-direction:column; } .welcome-dialog { padding:32px 18px 20px; } .welcome-dialog .welcome-actions button { width:100%; } }
 @media (prefers-reduced-motion:reduce) { .account-button.login-glow { animation:none; box-shadow:0 0 0 1px #21b98d55; } }
+
+.extension-card { padding:20px; margin:20px 0; border:1px solid var(--accent); border-radius:18px; background:var(--panel-strong); }
+.extension-card h3 { margin:8px 0 12px; } .extension-card p { color:var(--muted); line-height:1.5; }
+.extension-card label { display:grid; gap:6px; margin:14px 0; }
+.extension-card input,.extension-card select { width:100%; min-width:0; }
+.extension-card details { margin:16px 0; } .extension-card summary,.manual-additions summary { cursor:pointer; padding:12px 0; font-weight:700; }
+.extension-summary { padding:14px; margin:16px 0; border:1px solid var(--border); border-radius:12px; }
+.extension-summary small { color:var(--muted); } .extension-card .full-width + .full-width { margin-top:10px; }

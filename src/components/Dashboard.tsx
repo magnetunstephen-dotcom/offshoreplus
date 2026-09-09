@@ -181,6 +181,7 @@ export function Dashboard({
           {view !== "trip" && <div className={`live-calculation-note ${calculation.isMoneyRunning ? "active" : "paused"}`}><span className="status-dot" /> <strong>{calculation.isMoneyRunning ? "Teller live nå" : "Telleren står nå"}</strong><span>{calculation.isMoneyRunning ? "Beløpet oppdateres mens aktivt skift eller tillegg pågår." : "Beløpet øker igjen ved neste planlagte skift eller aktive tillegg."}</span></div>}
         </section>
 
+        {activeTrip.extension && <button className="live-addition-banner overtime" onClick={onAdditions}><strong>Automatisk ekstratur</strong><span>Hjemreise {formatDateTime(new Date(activeTrip.extension.end))} · Endre</span></button>}
         {activeSession && (
           <button className={`live-addition-banner ${activeSession.type}`} onClick={onAdditions}>
             <div className="op-icon-chip small"><FlameIcon size={18} /></div>
@@ -231,7 +232,7 @@ export function Dashboard({
             <div className="breakdown-row"><span>Nattillegg</span><strong>{money(calculation.nightPay)}</strong></div>
             <div className="breakdown-row"><span>Overtid · {hours(calculation.overtimeHours)}</span><strong>{money(calculation.overtimePay)}</strong></div>
             <div className="breakdown-row"><span>Ventetid · {hours(calculation.waitingHours)}</span><strong>{money(calculation.waitingPay)}</strong></div>
-            <div className="breakdown-row"><span>Svingskift · {trip.swingCompHours ?? 0} t</span><strong>{money(calculation.swingPay)}</strong></div>
+            <div className="breakdown-row"><span>Svingskift · {calculation.swingHours.toFixed(1)} t</span><strong>{money(calculation.swingPay)}</strong></div>
             <div className="breakdown-row holiday-row"><span>Feriepenger opptjent · {calculation.holidayPayRate}%<small>Estimat av lønnsgrunnlaget, uten trekkfrie refusjoner</small></span><strong>{money(calculation.tripHolidayPay)}</strong></div>
             {calculation.customAdditionResults.map((addition) => (
               <div className="breakdown-row" key={addition.id}><span>{addition.name}</span><strong>{money(addition.tripPay)}</strong></div>

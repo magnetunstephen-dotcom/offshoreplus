@@ -45,7 +45,17 @@ export interface CustomAddition {
   note?: string;
 }
 
+export interface TripExtension {
+  departure: string;
+  start: string;
+  end: string;
+  shift: "day" | "night";
+  shiftStart: string;
+  swing: "auto" | "none";
+}
+
 export interface TripSetup {
+  extension?: TripExtension;
   heliDeparture: string;
   paidStart: string;
   agreementId: AgreementId;

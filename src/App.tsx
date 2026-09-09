@@ -14,7 +14,8 @@ import { MyYearModal } from "./components/MyYearModal";
 import { AccountModal } from "./components/AccountModal";
 import { FeedbackModal } from "./components/FeedbackModal";
 import { loadAutoDisabledYears, loadTheme, loadTrip, loadUserProfile, loadYearTrips, saveTheme, saveTrip, saveYearTrips, STORAGE_CHANGED_EVENT } from "./lib/storage";
-import { automaticYearTrips } from "./lib/year";
+import { automaticYearTrips, refreshMatchingYearTrip } from "./lib/year";
+import { tripSetupForDate } from "./lib/rotation";
 import { pushLocalData, syncAccount } from "./lib/cloud";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
@@ -91,6 +92,9 @@ export default function App() {
   function storeTrip(nextTrip: TripSetup, closeModal = true) {
     setTrip(nextTrip);
     saveTrip(nextTrip);
+    const rows = loadYearTrips();
+    const updatedRows = refreshMatchingYearTrip(rows, tripSetupForDate(nextTrip), loadUserProfile());
+    if (updatedRows !== rows) saveYearTrips(updatedRows);
     if (closeModal) setModal(null);
   }
 

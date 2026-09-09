@@ -1,3 +1,7 @@
+import { TripExtensionForm } from "./TripExtensionForm";
+import { extensionCalculation } from "../lib/extension";
+import { tripSetupForDate } from "../lib/rotation";
+import { useClock } from "../hooks/useClock";
 import { useMemo, useState } from "react";
 import type {
   CustomAddition,
@@ -62,6 +66,8 @@ function rescueExercisePreset(): CustomAddition {
 }
 
 export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
+  const now = useClock();
+  const automatic = extensionCalculation(tripSetupForDate(trip, now), now).active;
   const sessions = trip.additionSessions ?? [];
   const customAdditions = trip.customAdditions ?? [];
   const active = useMemo(
@@ -78,7 +84,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
   const [taxTreatment, setTaxTreatment] = useState<TaxTreatment>("normal");
 
   function start(type: LiveAdditionType) {
-    if (active) return;
+    if (active || automatic) return;
     onSave({
       ...trip,
       additionSessions: [
@@ -157,9 +163,12 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
         <button className="calendar-close" onClick={onClose} aria-label="Lukk">×</button>
       </div>
       <p className="muted">
-        Start live-teller for overtid eller ventetid. Legg også inn faste og lokale tillegg.
+        Planlegg ekstra dager automatisk, eller registrer enkeltstående tillegg manuelt.
       </p>
 
+      <TripExtensionForm trip={trip} onSave={onSave} />
+      <details className="manual-additions"><summary>Manuelle tellere og svingskift for ordinærturen</summary>
+      {automatic && <p>Automatisk ekstraperiode teller nå. Du trenger ikke starte eller stoppe noe.</p>}
       {active ? (
         <section className="active-addition">
           <span className="eyebrow">Aktiv teller</span>
@@ -169,7 +178,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
         </section>
       ) : (
         <div className="addition-start-grid">
-          <button onClick={() => start("overtime")}>
+          <button disabled={automatic} onClick={() => start("overtime")}>
             <span>🔥</span><strong>Start overtid</strong><small>Valgt overtidsats teller live</small>
           </button>
           <button onClick={() => start("waiting")}>
@@ -179,8 +188,8 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
       )}
 
       <section className="swing-section">
-        <span className="eyebrow">Svingskiftkompensasjon</span>
-        <p className="muted">Velg faktisk kompensasjon. Maks to arbeidsperioder.</p>
+        <span className="eyebrow">Svingskift på ordinærturen</span>
+        <p className="muted">Kun ordinærturen. Svingskift i ekstraperioden beregnes separat og automatisk.</p>
         <div className="segmented three">
           {[0, 12, 24].map((value) => (
             <button
@@ -195,6 +204,7 @@ export function AdditionsModal({ trip, onSave, onClose }: AdditionsModalProps) {
         <small className="field-help">Beregnes som 65 % tillegg, ikke full overtidsbetaling.</small>
       </section>
 
+      </details>
       <section className="custom-additions-section">
         <div className="section-title-row">
           <div><span className="eyebrow">Mine tillegg</span><strong>Faste og lokale tillegg</strong></div>

@@ -1,3 +1,4 @@
+import { extensionForTrip } from "./extension";
 import type { TripSetup } from "../types";
 import { addDays } from "./date";
 
@@ -52,12 +53,13 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
   }
 
   const cycleStart = addDays(anchor, cycleIndex * cycle);
-  const offshoreEnd = addDays(cycleStart, trip.rotationOnDays);
+  const extension = extensionForTrip({ ...trip, heliDeparture: cycleStart.toISOString() });
+  const offshoreEnd = extension ? new Date(extension.end) : addDays(cycleStart, trip.rotationOnDays);
   const nextCycleStart = addDays(cycleStart, cycle);
   const isOffshore = now >= cycleStart && now < offshoreEnd;
   const phaseStart = isOffshore ? cycleStart : offshoreEnd;
   const phaseEnd = isOffshore ? offshoreEnd : nextCycleStart;
-  const phaseLength = isOffshore ? trip.rotationOnDays : trip.rotationOffDays;
+  const phaseLength = Math.max(1, Math.ceil((phaseEnd.getTime() - phaseStart.getTime()) / 86_400_000));
   const phaseDay = Math.min(phaseLength, Math.max(1, Math.floor((now.getTime() - phaseStart.getTime()) / 86_400_000) + 1));
 
   return {
@@ -81,9 +83,11 @@ export function tripSetupForDate(trip: TripSetup, now = new Date()): TripSetup {
   const departure = addDays(anchor, index * cycle);
   const paidOffset = new Date(trip.paidStart).getTime() - anchor.getTime();
   const paidStart = new Date(departure.getTime() + paidOffset);
-  const tripEnd = addDays(paidStart, trip.rotationOnDays);
+  const extension = extensionForTrip({ ...trip, heliDeparture: departure.toISOString() });
+  const tripEnd = extension ? new Date(extension.end) : addDays(paidStart, trip.rotationOnDays);
   return {
     ...trip,
+    extension,
     heliDeparture: departure.toISOString(),
     paidStart: paidStart.toISOString(),
     additionSessions: (trip.additionSessions ?? []).filter(session => {
@@ -107,7 +111,8 @@ export function offshorePeriodsForYear(trip: TripSetup, year: number): RotationP
   const periods: RotationPeriod[] = [];
 
   while (start < yearEnd) {
-    const end = addDays(start, trip.rotationOnDays);
+    const extension = extensionForTrip({ ...trip, heliDeparture: start.toISOString() });
+    const end = extension ? new Date(extension.end) : addDays(start, trip.rotationOnDays);
     if (end > yearStart && start < yearEnd) periods.push({ start, end });
     index += 1;
     start = addDays(anchor, index * cycle);
