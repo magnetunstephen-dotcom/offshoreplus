@@ -242,7 +242,7 @@ export function Dashboard({
         </details>
 
         <section className="quick-actions op-tools" aria-label="Hurtigvalg">
-          <button onClick={onCertificates}><span className="action-icon">✓</span><strong>Kurs & sertifikater</strong><small>Status og gjenbruk i CV</small><ChevronRightIcon className="action-chevron" size={17} /></button>
+          <button onClick={onAdditions}><span className="action-icon"><FlameIcon /></span><strong>Tillegg</strong><small>Ekstra dager, overtid og ventetid</small><ChevronRightIcon className="action-chevron" size={17} /></button>
           <button onClick={onSettings}><span className="action-icon"><SettingsIcon /></span><strong>Innstillinger</strong><small>Lønn og oppsett</small><ChevronRightIcon className="action-chevron" size={17}/></button>
         </section>
 
@@ -257,7 +257,7 @@ export function Dashboard({
 
       <nav className="bottom-nav op-bottom-nav" aria-label="Hovedmeny">
         <button className="active" aria-current="page"><HomeIcon/><span>Hjem</span></button>
-        <button onClick={onAdditions}><FlameIcon/><span>Tillegg</span></button>
+        <button onClick={onCertificates} aria-label="Kurs og sertifikater"><strong className="nav-cv-icon" aria-hidden="true">✓</strong><span>Kurs</span></button>
         <button onClick={onCalendar}><CalendarIcon/><span>Kalender</span></button>
         <button onClick={onMyYear}><strong className="nav-cv-icon">ÅR</strong><span>Mitt år</span></button>
         <button onClick={onCv}><strong className="nav-cv-icon">CV</strong><span>Profil</span></button>
