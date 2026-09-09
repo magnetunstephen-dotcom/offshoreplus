@@ -11,7 +11,7 @@ export function snapshotTrip(setup: TripSetup, profile: UserProfile, id?: string
   const calc = calculateTrip(setup, new Date(end.getTime() + 60_000));
   const rate = setup.taxRate ?? profile.defaultTaxRate;
   const regularPay = calc.tripsPerYear > 0 ? calc.regularMonthlyGross * 12 / calc.tripsPerYear : 0;
-  const additionsPay = calc.nightPay + calc.overtimePay + calc.waitingPay + calc.swingPay + calc.customAdditionsPay;
+  const additionsPay = calc.nightPay + calc.overtimePay + calc.waitingPay + calc.swingPay + calc.customAdditionsPay + calc.holidayCompensation;
   const grossEarned = regularPay + additionsPay;
   return {
     id: id ?? globalThis.crypto?.randomUUID?.() ?? String(Date.now()),
@@ -20,7 +20,7 @@ export function snapshotTrip(setup: TripSetup, profile: UserProfile, id?: string
     paymentMonth: end.toISOString().slice(0, 7),
     regularPay, nightPay: calc.nightPay,
     overtimePay: calc.overtimePay, waitingPay: calc.waitingPay,
-    swingPay: calc.swingPay, otherAdditions: calc.customAdditionsPay,
+    swingPay: calc.swingPay, otherAdditions: calc.customAdditionsPay + calc.holidayCompensation,
     grossEarned, expectedNet: grossEarned * (1 - rate / 100),
     offshoreDays: Math.ceil((end.getTime() - new Date(setup.heliDeparture).getTime()) / 86_400_000), overtimeHours: calc.overtimeHours,
     createdAt: new Date().toISOString(),

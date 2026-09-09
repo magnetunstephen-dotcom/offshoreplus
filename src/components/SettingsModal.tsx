@@ -26,6 +26,10 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
   const [annualSalary, setAnnualSalary] = useState(trip.customAnnualSalary ?? 0);
   const [annualIncludesHolidayPay, setAnnualIncludesHolidayPay] = useState(trip.customAnnualIncludesHolidayPay ?? false);
   const [holidayPayRate, setHolidayPayRate] = useState(trip.holidayPayRate ?? 12);
+  const [advanced,setAdvanced]=useState(false);
+  const [hourlyRatesIncludeHolidayPay,setHourlyRatesIncludeHolidayPay]=useState(trip.hourlyRatesIncludeHolidayPay ?? false);
+  const [roundOvertime,setRoundOvertime]=useState(trip.roundOvertime ?? true);
+  const [holidayCompensationRate,setHolidayCompensationRate]=useState(trip.holidayCompensationRate ?? 0);
   const agreement = salaryAgreements[agreementId];
 
   function chooseAgreement(next: AgreementId) {
@@ -133,11 +137,23 @@ export function SettingsModal({ trip, onSave, onClose }: SettingsModalProps) {
           </label>
         </div>
       </div>
+      <button className="secondary full-width" aria-expanded={advanced} aria-controls="pay-advanced" onClick={()=>setAdvanced(!advanced)}>{advanced ? "Skjul avansert" : "Avansert – satser og beregningsvalg"}</button>
+      {advanced && <div id="pay-advanced" className="advanced-settings">
+        <p>Tilpass etter lønnsslippen eller lokal avtale. Disse valgene påvirker estimatet, men endrer ikke valgt grunnlønn.</p>
+        <label>Inkluderer time- og overtidssatsene feriepenger?<select value={hourlyRatesIncludeHolidayPay ? "yes" : "no"} onChange={e=>setHourlyRatesIncludeHolidayPay(e.target.value==="yes")}><option value="no">Nei – beregn feriepengeopptjening i tillegg</option><option value="yes">Ja – ikke beregn feriepenger på disse beløpene igjen</option></select><small>Gjelder ventetid, overtid og svingskift. Fast månedslønn forutsettes oppgitt uten feriepenger. Kontroller satsgrunnlaget før du endrer.</small></label>
+        <label>Manuell overtid – avsluttede økter<select value={roundOvertime ? "half" : "exact"} onChange={e=>setRoundOvertime(e.target.value==="half")}><option value="half">Avrund opp til nærmeste halvtime</option><option value="exact">Nøyaktig tid (lokal ordning)</option></select></label>
+        <label>Helligdagsgodtgjørelse (kr per dag)<input type="number" min="0" step="1" value={holidayCompensationRate} onChange={e=>setHolidayCompensationRate(Math.max(0,Number(e.target.value)))} /><small>0 = ikke inkludert. Teller registrerte offshore-datoer, inkludert ekstra dager og hjemreisedagen. Heliport før utreise registreres som eget tillegg.</small></label>
+        <button className="secondary" onClick={()=>setHolidayCompensationRate(2400)}>Bruk sokkelsats 2026: 2400 kr/dag</button>
+        <p>Nattillegg på ordinær tur: velg vanlig skift/natt eller sats med konferansetid, hvis den gjelder deg.</p>
+        <div className="welcome-actions"><button className="secondary" onClick={()=>setNightAllowance(106)}>106 kr/t · skift/natt</button><button className="secondary" onClick={()=>setNightAllowance(136)}>136 kr/t · med konferansetid</button></div>
+        <small>Valgt nattillegg: {nightAllowance} kr/t. Lagre for å ta i bruk endringen. Nattillegg under ekstratur velges separat der.</small>
+        <p><a href="https://styrke.no/nyhet/ingen-streik-i-sokkeloppgjoret/" target="_blank" rel="noreferrer">Sokkeloppgjøret 2026 – kilde til satsforslagene</a></p>
+      </div>}
       <div className="modal-actions">
         <button className="secondary" onClick={onClose}>Lukk</button>
         <button
           className="primary"
-          onClick={() => onSave({ ...trip, agreementId, group, stepIndex, ...selectedRates(), customMonthlySalary: agreementId === "custom" ? (annualSalary > 0 ? derivedSalary.monthlySalary : monthlySalary) : undefined, customAnnualSalary: agreementId === "custom" && annualSalary > 0 ? annualSalary : undefined, customAnnualIncludesHolidayPay: agreementId === "custom" && annualSalary > 0 ? annualIncludesHolidayPay : undefined, holidayPayRate, nightAllowance, taxMethod, taxTable, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
+          onClick={() => onSave({ ...trip, hourlyRatesIncludeHolidayPay, roundOvertime, holidayCompensationRate, agreementId, group, stepIndex, ...selectedRates(), customMonthlySalary: agreementId === "custom" ? (annualSalary > 0 ? derivedSalary.monthlySalary : monthlySalary) : undefined, customAnnualSalary: agreementId === "custom" && annualSalary > 0 ? annualSalary : undefined, customAnnualIncludesHolidayPay: agreementId === "custom" && annualSalary > 0 ? annualIncludesHolidayPay : undefined, holidayPayRate, nightAllowance, taxMethod, taxTable, taxRate: Math.min(60, Math.max(0, Number(taxRate) || trip.taxRate)), rotationOnDays, rotationOffDays })}
         >
           Lagre
         </button>

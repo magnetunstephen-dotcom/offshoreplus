@@ -46,6 +46,10 @@ export interface CustomAddition {
 }
 
 export interface TripExtension {
+  workEnd?: string;
+  previousShiftStart?: string;
+  nightAllowance?: number;
+  roundOvertime?: boolean;
   departure: string;
   start: string;
   end: string;
@@ -55,6 +59,9 @@ export interface TripExtension {
 }
 
 export interface TripSetup {
+  hourlyRatesIncludeHolidayPay?: boolean;
+  roundOvertime?: boolean;
+  holidayCompensationRate?: number;
   extension?: TripExtension;
   heliDeparture: string;
   paidStart: string;

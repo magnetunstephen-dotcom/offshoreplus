@@ -1,3 +1,4 @@
+import { holidaysDuringTrip } from "./holidays";
 import { extensionCalculation, extensionForTrip, manualHoursOutsideExtension } from "./extension";
 import type {
   CustomAddition,
@@ -30,6 +31,7 @@ export interface TripCalculation {
   waitingPay: number;
   overtimeHours: number;
   overtimePay: number;
+  holidayCompensation: number;
   swingPay: number;
   swingHours: number;
   customAdditionsPay: number;
@@ -208,6 +210,10 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     .filter((session) => session.type === "overtime")
     .reduce((sum, session) => sum + sessionHours(session, now, setup), 0);
 
+  const billedManualOvertime = sessions.filter(session=>session.type==="overtime").reduce((sum,session)=>{
+    const hours=sessionHours(session,now,setup);
+    return sum + ((setup.roundOvertime ?? true) && session.end && new Date(session.end)<=now ? Math.ceil(hours*2-1e-9)/2 : hours);
+  },0);
   const manualOvertimeHours = setup.overtimeHours ?? 0;
   const overtimeHours = manualOvertimeHours + liveOvertimeHours + extra.overtimeHours;
   const waitingHours = liveWaitingHours + extra.waitingHours;
@@ -223,13 +229,18 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const customMonthlyPay = customAdditionResults.reduce((sum, result) => sum + result.monthlyPay, 0);
 
   const basePay = paidHours * setup.hourlyRate;
-  const nightPay = nightHours * setup.nightAllowance;
+  const nightPay = nightHours * setup.nightAllowance + extra.nightHours * (extension?.nightAllowance ?? 0);
   const waitingPay = waitingHours * setup.hourlyRate;
-  const overtimePay = overtimeHours * setup.overtimeRate;
+  const overtimePay = (manualOvertimeHours + billedManualOvertime + extra.billedOvertimeHours) * setup.overtimeRate;
   const swingRate = Math.max(0, setup.overtimeRate - setup.hourlyRate);
   const swingHours = (setup.swingCompHours ?? 0) + extra.swingHours;
   const swingPay = swingHours * swingRate;
-  const additionsPay = waitingPay + overtimePay + swingPay + customAdditionsPay;
+  const actualHome = extension ? new Date(extension.end) : tripEnd;
+  const holidayFrom = new Date(setup.heliDeparture);
+  const holidayUntil = new Date(Math.min(now.getTime(),actualHome.getTime()));
+  const holidayDays = holidayUntil < holidayFrom ? 0 : Math.round((Date.UTC(holidayUntil.getFullYear(),holidayUntil.getMonth(),holidayUntil.getDate())-Date.UTC(holidayFrom.getFullYear(),holidayFrom.getMonth(),holidayFrom.getDate()))/86_400_000)+1;
+  const holidayCompensation = holidaysDuringTrip(holidayFrom,holidayDays).length * Math.max(0,setup.holidayCompensationRate ?? 0);
+  const additionsPay = waitingPay + overtimePay + swingPay + customAdditionsPay + holidayCompensation;
   const gross = basePay + nightPay + additionsPay;
   const net = gross * (1 - setup.taxRate / 100);
 
@@ -241,11 +252,11 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const totalPaidHours = setup.rotationOnDays * 12;
   const estimatedGross =
     totalPaidHours * setup.hourlyRate +
-    totalNightHours * setup.nightAllowance +
+    totalNightHours * setup.nightAllowance + extra.nightHours * (extension?.nightAllowance ?? 0) +
     waitingPay +
     overtimePay +
     swingPay +
-    customAdditionsPay;
+    customAdditionsPay + holidayCompensation;
 
   // Bruk avtalens oppgitte månedslønn når den finnes. Andre avtaler bruker
   // normalisert full tur som reserve. Tillegg på aktiv tur annualiseres aldri.
@@ -287,7 +298,7 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
       const keep = result.taxTreatment === "tax-free" ? 1 : 1 - setup.taxRate / 100;
       return sum + result.monthlyPay * keep;
     }, 0);
-  const liveTaxedExtrasGross = nightPay + waitingPay + overtimePay + swingPay;
+  const liveTaxedExtrasGross = nightPay + waitingPay + overtimePay + swingPay + holidayCompensation;
   const activeExtrasGross = liveTaxedExtrasGross + tripCustomExtrasPay;
   const activeExtrasNet = liveTaxedExtrasGross * (1 - setup.taxRate / 100) + customTripExtrasNet;
   const estimatedMonthlyGross = regularMonthlyGross + monthlyFixedPay + activeExtrasGross;
@@ -303,9 +314,11 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
   const estimatedTaxFreeGross = taxFreeMonthlyFixedGross + taxFreeTripCustomGross;
   const holidayPayRate = setup.holidayPayRate ?? 12;
   // Trekkfrie refusjoner skal ikke inngå i det estimerte feriepengegrunnlaget.
-  const accruedHolidayPay = accruedTaxableGross * holidayPayRate / 100;
-  const estimatedHolidayPay = estimatedTaxableGross * holidayPayRate / 100;
-  const tripHolidayPay = (gross - taxFreeTripCustomGross) * holidayPayRate / 100;
+  const alreadyIncluded = setup.hourlyRatesIncludeHolidayPay ? waitingPay + overtimePay + swingPay : 0;
+  const includedRegular = setup.hourlyRatesIncludeHolidayPay && !agreementMonthlyGross ? totalPaidHours * setup.hourlyRate * tripsPerYear / 12 : 0;
+  const accruedHolidayPay = Math.max(0,accruedTaxableGross-alreadyIncluded-includedRegular*regularEarnedRatio) * holidayPayRate / 100;
+  const estimatedHolidayPay = Math.max(0,estimatedTaxableGross-alreadyIncluded-includedRegular) * holidayPayRate / 100;
+  const tripHolidayPay = Math.max(0,gross-taxFreeTripCustomGross-alreadyIncluded-(setup.hourlyRatesIncludeHolidayPay ? basePay : 0)) * holidayPayRate / 100;
 
   const activeSession = sessions.find((session) => !session.end);
   const scheduled = currentScheduledStatus(setup, now);
@@ -330,6 +343,7 @@ export function calculateTrip(setup: TripSetup, now = new Date()): TripCalculati
     waitingPay,
     overtimeHours,
     overtimePay,
+    holidayCompensation,
     swingPay,
     swingHours,
     customAdditionsPay,

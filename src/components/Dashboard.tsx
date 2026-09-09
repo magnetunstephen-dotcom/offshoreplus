@@ -88,7 +88,7 @@ export function Dashboard({
   const finalNet = usesTable && finalTable.tax !== null
     ? calculation.estimatedTaxableGross - finalTable.tax + calculation.estimatedTaxFreeGross
     : calculation.estimatedMonthlyNet;
-  const holidays = holidaysDuringTrip(new Date(activeTrip.paidStart));
+  const holidays = holidaysDuringTrip(new Date(activeTrip.heliDeparture), Math.ceil((calculation.homeDate.getTime()-new Date(activeTrip.heliDeparture).getTime())/86_400_000)+1);
   const status = rotationStatus(trip, now);
   const countdown = countdownParts(status.nextHelicopter, now);
   const progress = Math.min(100, Math.max(0, (status.phaseDay / status.phaseLength) * 100));
@@ -232,6 +232,7 @@ export function Dashboard({
             <div className="breakdown-row"><span>Nattillegg</span><strong>{money(calculation.nightPay)}</strong></div>
             <div className="breakdown-row"><span>Overtid · {hours(calculation.overtimeHours)}</span><strong>{money(calculation.overtimePay)}</strong></div>
             <div className="breakdown-row"><span>Ventetid · {hours(calculation.waitingHours)}</span><strong>{money(calculation.waitingPay)}</strong></div>
+            <div className="breakdown-row"><span>Helligdagsgodtgjørelse</span><strong>{money(calculation.holidayCompensation)}</strong></div>
             <div className="breakdown-row"><span>Svingskift · {calculation.swingHours.toFixed(1)} t</span><strong>{money(calculation.swingPay)}</strong></div>
             <div className="breakdown-row holiday-row"><span>Feriepenger opptjent · {calculation.holidayPayRate}%<small>Estimat av lønnsgrunnlaget, uten trekkfrie refusjoner</small></span><strong>{money(calculation.tripHolidayPay)}</strong></div>
             {calculation.customAdditionResults.map((addition) => (
@@ -250,7 +251,7 @@ export function Dashboard({
           <section className="card holiday-card">
             <strong>Hellig-/tariffdager på denne turen</strong>
             {holidays.map((holiday) => <span key={`${holiday.name}-${holiday.date.toISOString()}`}>{holiday.name} – {formatDate(holiday.date)}</span>)}
-            <small>Kontroller alltid hvilke tillegg som gjelder i avtalen din.</small>
+            <small>{trip.holidayCompensationRate ? `Godtgjørelse beregnes med ${trip.holidayCompensationRate} kr per dag. Opptjente dager inngår i beløpet.` : "Kun datovarsel – helligdagsbetaling er ikke inkludert. Aktiver sats under Innstillinger → Avansert."}</small>
           </section>
         )}
       </main>

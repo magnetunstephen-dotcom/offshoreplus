@@ -67,7 +67,7 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
     periodStart: phaseStart,
     periodEnd: phaseEnd,
     nextHelicopter: phaseEnd,
-    countdownLabel: isOffshore ? "Helikopter fra land / hjemreise" : "Neste helikopter fra land",
+    countdownLabel: isOffshore ? (extension ? "Helikopter hjem · forlenget tur" : "Helikopter hjem") : "Neste helikopter fra land",
     phaseDay,
     phaseLength,
   };

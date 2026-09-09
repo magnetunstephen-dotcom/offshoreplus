@@ -36,6 +36,7 @@ export function EarningsInfoModal({ trip, onClose }: EarningsInfoModalProps) {
         fortløpende.
       </p>
 
+      <p className="muted small-copy">{trip.hourlyRatesIncludeHolidayPay ? "Valgt: time- og overtidssatsene inkluderer feriepenger. Appen beregner ikke ny feriepengeopptjening på ventetid, overtid og svingskift." : "Valgt: feriepengeopptjening beregnes også på ventetid, overtid og svingskift. Inkluderer satsene allerede feriepenger, endrer du dette under Innstillinger → Avansert."}</p>
       <div className="example-box">
         <strong className="example-title">Opptjent hittil</strong>
         <div className="example-row"><span>Fastlønn jobbet inn hittil</span><b>{money(calculation.accruedRegularGross)}</b></div>

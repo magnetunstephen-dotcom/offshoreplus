@@ -1043,3 +1043,9 @@ body {
 .extension-card details { margin:16px 0; } .extension-card summary,.manual-additions summary { cursor:pointer; padding:12px 0; font-weight:700; }
 .extension-summary { padding:14px; margin:16px 0; border:1px solid var(--border); border-radius:12px; }
 .extension-summary small { color:var(--muted); } .extension-card .full-width + .full-width { margin-top:10px; }
+
+.advanced-settings { margin:14px 0; padding:16px; border:1px solid var(--border); border-radius:14px; background:var(--panel); }
+.advanced-settings label { display:grid; gap:8px; margin:16px 0; }
+.advanced-settings small { color:var(--muted); font-size:12px; line-height:1.5; }
+.advanced-settings input,.advanced-settings select { width:100%; min-width:0; }
+.advanced-settings p { color:var(--muted); line-height:1.5; }
