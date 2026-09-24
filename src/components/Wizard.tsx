@@ -132,12 +132,14 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       {step === 1 && (
         <div>
           <div className="step-emoji">🚁</div>
-          <h2 id="wizard-title">Når gikk helikopteret fra land?</h2>
+          <h2 id="wizard-title">Når starter den faste rotasjonen?</h2>
           <p className="muted">
-            Dette brukes som reiseinformasjon. Lønnstelleren starter ikke her.
+            Velg dato og klokkeslett for en planlagt utreise fra land. Kalenderen
+            bruker denne som fast utgangspunkt og gjentar turnusen automatisk.
+            Lønnstelleren starter ikke før første betalte arbeidstime.
           </p>
           <label>
-            Dato og klokkeslett
+            Planlagt utreise fra land
             <DateTime24Input value={heliDeparture} onChange={setHeliDeparture} />
           </label>
           <label>
@@ -360,3 +362,4 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
     </Modal>
   );
 }
+

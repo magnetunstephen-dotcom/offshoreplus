@@ -8,7 +8,10 @@ function merge(local: AppCloudData, remote: AppCloudData): AppCloudData {
   local.yearTrips.forEach(t => trips.set(t.id, t));
   const localProfileHasData = Boolean(local.profile.name || local.profile.employer);
   return {
-    trip: local.trip ?? remote.trip,
+    // Når kontoen allerede har en tur i skyen, er den fasiten ved innlogging.
+    // Ellers kan en gammel nettleserkopi skrive over en nyere korrigering fra
+    // en annen enhet med en gang synkroniseringen starter.
+    trip: remote.trip ?? local.trip,
     profile: localProfileHasData ? local.profile : remote.profile,
     yearTrips: [...trips.values()],
     cvProfile: local.cvProfile ?? remote.cvProfile,
@@ -32,3 +35,4 @@ export async function pushLocalData(user: User): Promise<void> {
   const { error } = await supabase.from("user_data").upsert({ user_id: user.id, data: exportCloudData(), updated_at: new Date().toISOString() });
   if (error) throw error;
 }
+
