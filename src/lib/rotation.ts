@@ -67,7 +67,9 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
     periodStart: phaseStart,
     periodEnd: phaseEnd,
     nextHelicopter: phaseEnd,
-    countdownLabel: "Når går helikopteret fra land?",
+    countdownLabel: isOffshore
+      ? "Når går helikopteret hjem?"
+      : "Når går helikopteret fra land?",
     phaseDay,
     phaseLength,
   };
@@ -131,3 +133,4 @@ export function isOffshoreDate(date: Date, periods: RotationPeriod[]): boolean {
     return day >= from && day <= to;
   });
 }
+
