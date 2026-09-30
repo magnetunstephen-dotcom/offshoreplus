@@ -135,7 +135,7 @@ export interface AppCloudData {
 }
 
 export function exportCloudData(): AppCloudData {
-  return { syncVersion: 2, trip: loadTrip(), profile: loadUserProfile(), yearTrips: loadYearTrips(), cvProfile: loadCvProfile(), certificates: loadCertificates(), autoDisabledYears: loadAutoDisabledYears() };
+  return { syncVersion: 3, trip: loadTrip(), profile: loadUserProfile(), yearTrips: loadYearTrips(), cvProfile: loadCvProfile(), certificates: loadCertificates(), autoDisabledYears: loadAutoDisabledYears() };
 }
 
 export function importCloudData(data: AppCloudData): void {
