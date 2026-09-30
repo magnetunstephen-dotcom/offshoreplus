@@ -36,21 +36,9 @@ export function rotationStatus(trip: TripSetup, now = new Date()): RotationStatu
   // Finn omtrentlig syklus først, og korriger med kalenderdager. Dette gjør at
   // eksempelvis tirsdag kl. 12:45 forblir tirsdag kl. 12:45 også over
   // overgang mellom sommer- og vintertid.
-  let cycleIndex = elapsed < 0 ? -1 : Math.floor(elapsed / (cycle * 86_400_000));
-  while (cycleIndex >= 0 && addDays(anchor, (cycleIndex + 1) * cycle) <= now) cycleIndex += 1;
-  while (cycleIndex > 0 && addDays(anchor, cycleIndex * cycle) > now) cycleIndex -= 1;
-
-  if (cycleIndex < 0) {
-    return {
-      isOffshore: false,
-      periodStart: now,
-      periodEnd: anchor,
-      nextHelicopter: anchor,
-      countdownLabel: "Når går helikopteret fra land?",
-      phaseDay: 1,
-      phaseLength: Math.max(1, Math.ceil((anchor.getTime() - now.getTime()) / 86_400_000)),
-    };
-  }
+  let cycleIndex = Math.floor(elapsed / (cycle * 86_400_000));
+  while (addDays(anchor, (cycleIndex + 1) * cycle) <= now) cycleIndex += 1;
+  while (addDays(anchor, cycleIndex * cycle) > now) cycleIndex -= 1;
 
   const cycleStart = addDays(anchor, cycleIndex * cycle);
   const extension = extensionForTrip({ ...trip, heliDeparture: cycleStart.toISOString() });
