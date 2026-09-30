@@ -8,15 +8,15 @@ function merge(local: AppCloudData, remote: AppCloudData): AppCloudData {
   local.yearTrips.forEach(t => trips.set(t.id, t));
   const localProfileHasData = Boolean(local.profile.name || local.profile.employer);
   return {
-    syncVersion: 2,
+    syncVersion: 3,
     // Når kontoen allerede har en tur i skyen, er den fasiten ved innlogging.
     // Ellers kan en gammel nettleserkopi skrive over en nyere korrigering fra
     // en annen enhet med en gang synkroniseringen starter.
     trip: remote.trip ?? local.trip,
     profile: localProfileHasData ? local.profile : remote.profile,
     yearTrips: [...trips.values()],
-    cvProfile: local.cvProfile ?? remote.cvProfile,
-    certificates: local.certificates.length ? local.certificates : remote.certificates,
+    cvProfile: remote.cvProfile ?? local.cvProfile,
+    certificates: remote.certificates.length ? remote.certificates : local.certificates,
     autoDisabledYears: [...new Set([...(remote.autoDisabledYears ?? []), ...(local.autoDisabledYears ?? [])])],
   };
 }
