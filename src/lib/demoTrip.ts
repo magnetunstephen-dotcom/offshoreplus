@@ -4,7 +4,9 @@ import type { TripSetup } from "../types";
 // Preview only: never persist or sync this example as a user's trip.
 export function createDemoTrip(now = new Date()): TripSetup {
   const start = new Date(now);
-  start.setDate(start.getDate() - 7);
+  // En tom/inkognito nettleser skal ikke se ut som om brukerens egen lønn
+  // teller. Demoen viser derfor en kommende utreise i hjemmeperioden.
+  start.setDate(start.getDate() + 7);
   const rates = salaryAgreements.sokkel4a2025.groups.F;
   return {
     heliDeparture: start.toISOString(), paidStart: start.toISOString(),
@@ -15,3 +17,4 @@ export function createDemoTrip(now = new Date()): TripSetup {
     additionSessions: [], swingCompHours: 0, earningsView: "monthly-gross", customAdditions: [],
   };
 }
+
