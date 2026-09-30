@@ -8,6 +8,7 @@ function merge(local: AppCloudData, remote: AppCloudData): AppCloudData {
   local.yearTrips.forEach(t => trips.set(t.id, t));
   const localProfileHasData = Boolean(local.profile.name || local.profile.employer);
   return {
+    syncVersion: 2,
     // Når kontoen allerede har en tur i skyen, er den fasiten ved innlogging.
     // Ellers kan en gammel nettleserkopi skrive over en nyere korrigering fra
     // en annen enhet med en gang synkroniseringen starter.

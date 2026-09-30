@@ -125,6 +125,7 @@ export const STORAGE_CHANGED_EVENT = "offshoreplus:storage-changed";
 function notifyStorageChange() { window.dispatchEvent(new Event(STORAGE_CHANGED_EVENT)); }
 
 export interface AppCloudData {
+  syncVersion?: number;
   trip: TripSetup | null;
   profile: UserProfile;
   yearTrips: YearTrip[];
@@ -134,7 +135,7 @@ export interface AppCloudData {
 }
 
 export function exportCloudData(): AppCloudData {
-  return { trip: loadTrip(), profile: loadUserProfile(), yearTrips: loadYearTrips(), cvProfile: loadCvProfile(), certificates: loadCertificates(), autoDisabledYears: loadAutoDisabledYears() };
+  return { syncVersion: 2, trip: loadTrip(), profile: loadUserProfile(), yearTrips: loadYearTrips(), cvProfile: loadCvProfile(), certificates: loadCertificates(), autoDisabledYears: loadAutoDisabledYears() };
 }
 
 export function importCloudData(data: AppCloudData): void {
@@ -146,3 +147,4 @@ export function importCloudData(data: AppCloudData): void {
   localStorage.setItem(AUTO_DISABLED_YEARS_KEY, JSON.stringify(data.autoDisabledYears ?? []));
   notifyStorageChange();
 }
+
