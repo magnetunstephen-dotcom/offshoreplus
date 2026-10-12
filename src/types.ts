@@ -59,6 +59,8 @@ export interface TripExtension {
 }
 
 export interface TripSetup {
+  // Rotation owning the manually registered trip additions (legacy: heliDeparture).
+  additionsDeparture?: string;
   hourlyRatesIncludeHolidayPay?: boolean;
   roundOvertime?: boolean;
   holidayCompensationRate?: number;

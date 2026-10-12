@@ -91,6 +91,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
     const hourlyRate = agreementId === "custom" ? (usesAnnualSalary ? derivedSalary.hourlyRate : customHourlyRate) : agreement.groups[group].hourly[stepIndex];
     const overtimeRate = agreementId === "custom" ? (usesAnnualSalary ? derivedSalary.overtimeRate : customOvertimeRate) : agreement.groups[group].overtime[stepIndex];
     onComplete({
+      additionsDeparture: existingTrip?.additionsDeparture,
       hourlyRatesIncludeHolidayPay: existingTrip?.hourlyRatesIncludeHolidayPay,
       roundOvertime: existingTrip?.roundOvertime,
       holidayCompensationRate: existingTrip?.holidayCompensationRate,

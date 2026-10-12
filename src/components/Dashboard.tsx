@@ -92,7 +92,7 @@ export function Dashboard({
   const status = rotationStatus(trip, now);
   const countdown = countdownParts(status.nextHelicopter, now);
   const progress = Math.min(100, Math.max(0, (status.phaseDay / status.phaseLength) * 100));
-  const activeSession = (trip.additionSessions ?? []).find((session) => !session.end);
+  const activeSession = (activeTrip.additionSessions ?? []).find((session) => !session.end);
   const salaryAgreement = salaryAgreements[trip.agreementId];
   const salaryStep = salaryAgreement?.steps[trip.stepIndex] ?? String(trip.stepIndex + 1);
   // «Denne turen» ble ofte tolket som en ekstra turbetaling.
