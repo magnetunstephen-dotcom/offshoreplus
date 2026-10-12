@@ -15,7 +15,7 @@ import { AccountModal } from "./components/AccountModal";
 import { FeedbackModal } from "./components/FeedbackModal";
 import { loadAutoDisabledYears, loadTheme, loadTrip, loadUserProfile, loadYearTrips, saveTheme, saveTrip, saveYearTrips, STORAGE_CHANGED_EVENT } from "./lib/storage";
 import { automaticYearTrips, refreshMatchingYearTrip } from "./lib/year";
-import { tripSetupForDate } from "./lib/rotation";
+import { saveActiveTripAdditions, tripSetupForDate } from "./lib/rotation";
 import { pushLocalData, syncAccount } from "./lib/cloud";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import type { EarningsView, TripSetup } from "./types";
@@ -163,9 +163,9 @@ export default function App() {
 
       {modal === "additions" && trip && (
         <AdditionsModal
-          trip={trip}
+          trip={tripSetupForDate(trip)}
           onClose={() => setModal(null)}
-          onSave={(nextTrip) => storeTrip(nextTrip, false)}
+          onSave={(nextTrip) => storeTrip(saveActiveTripAdditions(trip, nextTrip), false)}
         />
       )}
 

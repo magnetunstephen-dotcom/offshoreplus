@@ -75,6 +75,7 @@ export function tripSetupForDate(trip: TripSetup, now = new Date()): TripSetup {
   const paidStart = new Date(departure.getTime() + paidOffset);
   const extension = extensionForTrip({ ...trip, heliDeparture: departure.toISOString() });
   const tripEnd = extension ? new Date(extension.end) : addDays(paidStart, trip.rotationOnDays);
+  const ownsAdditions = new Date(trip.additionsDeparture ?? trip.heliDeparture).getTime() === departure.getTime();
   return {
     ...trip,
     extension,
@@ -84,9 +85,28 @@ export function tripSetupForDate(trip: TripSetup, now = new Date()): TripSetup {
       const sessionStart = new Date(session.start);
       return sessionStart >= paidStart && sessionStart < tripEnd;
     }),
-    overtimeHours: index === 0 ? trip.overtimeHours : 0,
-    swingCompHours: index === 0 ? trip.swingCompHours : 0,
-    customAdditions: index === 0 ? trip.customAdditions : (trip.customAdditions ?? []).filter(addition => addition.kind === "monthly-fixed"),
+    overtimeHours: ownsAdditions ? trip.overtimeHours : 0,
+    swingCompHours: ownsAdditions ? trip.swingCompHours : 0,
+    customAdditions: ownsAdditions ? trip.customAdditions : (trip.customAdditions ?? []).map(addition =>
+      addition.kind === "monthly-fixed" ? addition : { ...addition, enabled: false }),
+  };
+}
+
+// Keep the rotation anchor and session history while editing the displayed trip.
+export function saveActiveTripAdditions(original: TripSetup, edited: TripSetup): TripSetup {
+  const activeSessionIds = new Set((edited.additionSessions ?? []).map(session => session.id));
+  const paidStart = new Date(edited.paidStart);
+  const end = edited.extension ? new Date(edited.extension.end) : addDays(paidStart, edited.rotationOnDays);
+  const otherSessions = (original.additionSessions ?? []).filter(session => {
+    const start = new Date(session.start);
+    return !activeSessionIds.has(session.id) && (start < paidStart || start >= end);
+  });
+  return {
+    ...edited,
+    heliDeparture: original.heliDeparture,
+    paidStart: original.paidStart,
+    additionsDeparture: edited.heliDeparture,
+    additionSessions: [...otherSessions, ...(edited.additionSessions ?? [])],
   };
 }
 
