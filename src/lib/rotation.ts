@@ -88,7 +88,7 @@ export function tripSetupForDate(trip: TripSetup, now = new Date()): TripSetup {
     overtimeHours: ownsAdditions ? trip.overtimeHours : 0,
     swingCompHours: ownsAdditions ? trip.swingCompHours : 0,
     customAdditions: ownsAdditions ? trip.customAdditions : (trip.customAdditions ?? []).map(addition =>
-      addition.kind === "monthly-fixed" ? addition : { ...addition, enabled: false }),
+      { ...addition, enabled: false, occurrences: 0 }),
   };
 }
 
