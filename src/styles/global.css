@@ -1049,3 +1049,15 @@ body {
 .advanced-settings small { color:var(--muted); font-size:12px; line-height:1.5; }
 .advanced-settings input,.advanced-settings select { width:100%; min-width:0; }
 .advanced-settings p { color:var(--muted); line-height:1.5; }
+
+/* Compact optional offshore weather */
+.op-weather-card { margin-top: 14px; }
+.op-weather-card > summary { cursor: pointer; display:flex; justify-content:space-between; align-items:center; gap:12px; list-style:none; font-weight:600; }
+.op-weather-card > summary::-webkit-details-marker { display:none; }
+.op-weather-hint { font-size: .82rem; opacity:.75; font-weight:400; text-align:right; }
+.op-weather-content { display:grid; gap:10px; padding-top:14px; }
+.op-weather-content label, .op-weather-content small { font-size:.8rem; opacity:.75; }
+.op-weather-content select { width:100%; padding:10px; border:1px solid var(--border, #7775); border-radius:9px; background:var(--card, transparent); color:inherit; }
+.op-weather-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:8px; }
+.op-weather-metrics span { display:flex; flex-direction:column; gap:4px; padding:10px; border-radius:9px; background:rgba(127,127,127,.09); font-size:.8rem; }
+.op-weather-metrics strong { font-size:1rem; }
