@@ -1,4 +1,5 @@
 import { OffshoreWeather } from "./OffshoreWeather";
+import { HomeFlight } from "./HomeFlight";
 import { calculateTrip } from "../lib/calculation";
 import { formatDate, formatDateTime } from "../lib/date";
 import { holidaysDuringTrip } from "../lib/holidays";
@@ -129,6 +130,8 @@ export function Dashboard({
             <div><strong>{String(countdown.seconds).padStart(2, "0")}</strong><span>sek</span></div>
           </div>
         </section>
+
+        <HomeFlight homeDate={calculation.homeDate} isOffshore={status.isOffshore} />
 
         <button className="featured-game-launch" onClick={onGame}>
           <span>🚁</span><span><strong>Split Flight</strong><small>Land på {LANDABLE_INSTALLATION_COUNT} forskjellige installasjoner i Nordsjøen og unngå de russiske dronene. Klarer du alle?</small></span><ChevronRightIcon size={20}/>
