@@ -9,14 +9,14 @@ const FIELDS = [
   { name: "Heidrun", lat: 65.326, lon: 7.328 },
 ];
 type Forecast = { time: string; data: { instant: { details: { air_temperature?: number; wind_speed?: number; wind_from_direction?: number } } } };
-export function OffshoreWeather() {
+export function OffshoreWeather({ installation }: { installation?: string }) {
   const [field, setField] = useState(() => localStorage.getItem("op-weather-field") || "Valhall");
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const selected = FIELDS.find(f => f.name === field) ?? FIELDS[0];
+  const selected = FIELDS.find(f => f.name === (installation || field)) ?? FIELDS[0];
   useEffect(() => {
-    localStorage.setItem("op-weather-field", selected.name);
+    if (!installation) localStorage.setItem("op-weather-field", selected.name);
     const controller = new AbortController();
     setLoading(true); setError(""); setForecast(null);
     fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${selected.lat}&lon=${selected.lon}`, { signal: controller.signal })
@@ -31,7 +31,8 @@ export function OffshoreWeather() {
     <summary><span>🌤️ Offshorevær · {selected.name}</span><span className="op-weather-hint">{details ? `${Math.round(details.wind_speed ?? 0)} m/s · ${Math.round(details.air_temperature ?? 0)}°C` : "Se værvarsel"} ▾</span></summary>
     <div className="op-weather-content">
       <label htmlFor="op-weather-field">Velg installasjon</label>
-      <select id="op-weather-field" value={selected.name} onChange={e => setField(e.target.value)}>{FIELDS.map(f => <option key={f.name}>{f.name}</option>)}</select>
+      <select id="op-weather-field" value={selected.name} disabled={Boolean(installation)} onChange={e => setField(e.target.value)}>{FIELDS.map(f => <option key={f.name}>{f.name}</option>)}</select>
+      {installation && <small>Endres under Ny tur.</small>}
       {loading && <p>Henter værvarsel …</p>}
       {error && <p role="status">{error}</p>}
       {details && <div className="op-weather-metrics"><span>🌡️ Temperatur <strong>{details.air_temperature?.toFixed(1) ?? "–"} °C</strong></span><span>💨 Vind <strong>{details.wind_speed?.toFixed(1) ?? "–"} m/s</strong></span><span>🧭 Vindretning <strong>{details.wind_from_direction?.toFixed(0) ?? "–"}°</strong></span></div>}
