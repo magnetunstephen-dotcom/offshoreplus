@@ -1,3 +1,4 @@
+import { OffshoreWeather } from "./OffshoreWeather";
 import { calculateTrip } from "../lib/calculation";
 import { formatDate, formatDateTime } from "../lib/date";
 import { holidaysDuringTrip } from "../lib/holidays";
@@ -254,6 +255,7 @@ export function Dashboard({
             <small>{trip.holidayCompensationRate ? `Godtgjørelse beregnes med ${trip.holidayCompensationRate} kr per dag. Opptjente dager inngår i beløpet.` : "Kun datovarsel – helligdagsbetaling er ikke inkludert. Aktiver sats under Innstillinger → Avansert."}</small>
           </section>
         )}
+        <OffshoreWeather />
       </main>
 
       <nav className="bottom-nav op-bottom-nav" aria-label="Hovedmeny">
