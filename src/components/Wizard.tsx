@@ -149,7 +149,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
             Installasjon (valgfritt)
             <select value={installation} onChange={(event) => setInstallation(event.target.value)}>
               <option value="">Ikke valgt</option>
-              {["Valhall", "Ekofisk", "Johan Sverdrup", "Troll A", "Gullfaks A", "Heidrun"].map(name => <option key={name} value={name}>{name}</option>)}
+              {["Valhall", "Valhall PH", "Valhall Haven", "Ekofisk", "Eldfisk", "Embla", "Johan Sverdrup", "Johan Castberg", "Johan Cruijff", "Troll A", "Troll B", "Troll C", "Gullfaks A", "Gullfaks B", "Gullfaks C", "Heidrun", "Oseberg A", "Oseberg B", "Oseberg C", "Oseberg Sør", "Brage", "Snorre A", "Snorre B", "Statfjord A", "Statfjord B", "Statfjord C", "Sleipner A", "Sleipner B", "Sleipner T", "Gina Krog", "Gudrun", "Edvard Grieg", "Ivar Aasen", "Alvheim", "Grane", "Balder", "Jotun", "Åsgard A", "Åsgard B", "Kristin", "Njord A", "Draugen", "Norne", "Skarv", "Aasta Hansteen", "Gjøa", "Martin Linge", "Yme", "Ula", "Tambar", "Tor", "Veslefrikk", "Ringhorne", "Visund", "Kvitebjørn", "Valemon", "Fenja", "Duva", "Hod", "Gyda"].map(name => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
           <label>
