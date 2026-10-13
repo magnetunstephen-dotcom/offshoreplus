@@ -65,6 +65,7 @@ export interface TripSetup {
   roundOvertime?: boolean;
   holidayCompensationRate?: number;
   extension?: TripExtension;
+  installation?: string;
   heliDeparture: string;
   paidStart: string;
   agreementId: AgreementId;
