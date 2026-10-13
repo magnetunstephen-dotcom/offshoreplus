@@ -31,6 +31,7 @@ const patterns: Array<{ id: ShiftPattern; title: string; detail: string }> = [
 export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
   const now = new Date();
   const [step, setStep] = useState(1);
+  const [installation, setInstallation] = useState(existingTrip?.installation ?? "");
   const [heliDeparture, setHeliDeparture] = useState(
     existingTrip?.heliDeparture ?? toDateTimeLocal(now),
   );
@@ -96,6 +97,7 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
       roundOvertime: existingTrip?.roundOvertime,
       holidayCompensationRate: existingTrip?.holidayCompensationRate,
       heliDeparture,
+      installation,
       paidStart,
       agreementId,
       group,
@@ -142,6 +144,13 @@ export function Wizard({ existingTrip, onComplete, onCancel }: WizardProps) {
           <label>
             Planlagt utreise fra land
             <DateTime24Input value={heliDeparture} onChange={setHeliDeparture} />
+          </label>
+          <label>
+            Installasjon (valgfritt)
+            <select value={installation} onChange={(event) => setInstallation(event.target.value)}>
+              <option value="">Ikke valgt</option>
+              {["Valhall", "Ekofisk", "Johan Sverdrup", "Troll A", "Gullfaks A", "Heidrun"].map(name => <option key={name} value={name}>{name}</option>)}
+            </select>
           </label>
           <label>
             Rotasjon
