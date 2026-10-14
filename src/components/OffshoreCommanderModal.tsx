@@ -102,17 +102,17 @@ export function OffshoreCommanderModal({onClose}:{onClose:()=>void}){
  },[]);
  const move=(e:React.PointerEvent<HTMLDivElement>)=>{const b=e.currentTarget.getBoundingClientRect(),x=(e.clientX-b.left-b.width/2)/(b.width*.32),y=(e.clientY-b.top-b.height/2)/(b.height*.32),m=Math.max(1,Math.hypot(x,y));stick.current={x:x/m,y:y/m};setStickPos(stick.current);};
  const release=()=>{stickPointer.current=null;stick.current={x:0,y:0};setStickPos({x:0,y:0});};
- return <Modal onClose={onClose}><div ref={root} style={{background:"#061d2c",color:"#fff",borderRadius:12,padding:10,width:"100%",boxSizing:"border-box",height:full?"100dvh":undefined,display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
+ return <Modal onClose={onClose}><div ref={root} style={{background:"#061d2c",color:"#fff",borderRadius:12,padding:10,width:"100%",boxSizing:"border-box",height:"100dvh",position:"fixed",inset:0,zIndex:99999,borderRadius:0,display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",fontSize:13}}><strong>⚓ Helge Ingstad</strong><span>⭐ {hud.score} · ❤️ {hud.health}% · 🛟 {hud.rescued}</span><button className="secondary" onClick={leave}>✕ Lukk</button></div>
  {!landscape&&<div style={{fontSize:12,opacity:.8}}>📱 Snu telefonen til liggende format.</div>}
- <div style={{position:"relative",width:"100%",aspectRatio:"960 / 540",maxHeight:full?"calc(100dvh - 105px)":undefined,margin:"auto",overflow:"hidden",borderRadius:10}}>
+ <div style={{position:"relative",width:"100%",flex:1,minHeight:0,aspectRatio:undefined,margin:"auto",overflow:"hidden",borderRadius:10}}>
  <canvas ref={canvas} width={W} height={H} style={{width:"100%",height:"100%",display:"block"}}/>
  <div onPointerDown={e=>{stickPointer.current=e.pointerId;e.currentTarget.setPointerCapture(e.pointerId);move(e);}} onPointerMove={e=>{if(stickPointer.current===e.pointerId)move(e);}} onPointerUp={release} onPointerCancel={release} style={{position:"absolute",bottom:"6%",left:"4%",width:"min(22%,115px)",aspectRatio:"1",border:"2px solid #80c4d7",borderRadius:"50%",background:"rgba(45,102,126,.6)",touchAction:"none",display:"grid",placeItems:"center"}}>
  <div style={{width:"43%",aspectRatio:"1",borderRadius:"50%",background:"#a6e3ef",transform:"translate("+stickPos.x*65+"%,"+stickPos.y*65+"%)"}}/></div>
  <button onClick={sonar} style={{position:"absolute",bottom:"7%",right:"17%",borderRadius:"50%",width:"min(13%,72px)",aspectRatio:"1",background:"#12655e",border:"2px solid #75e6ca",color:"white",fontSize:11}}>📡<br/>SONAR</button>
  <button onClick={shoot} style={{position:"absolute",bottom:"7%",right:"3%",borderRadius:"50%",width:"min(13%,72px)",aspectRatio:"1",background:"#9a3b37",border:"2px solid #ffad92",color:"white",fontSize:11}}>💥<br/>SKYT</button>
  </div>
- <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap"}}><button className="primary" onClick={async()=>{await fullscreen();reset();}}>▶ Start / restart</button><button className="secondary" onClick={fullscreen}>⛶ Fullskjerm</button></div>
- <small style={{opacity:.75}}>🟥 Ubåt +100 · 🟦 Supply −150 ved treff · 🟧 Livbåt +50 og slep · Lever livbåter ved plattform +200 hver. PC: WASD, mellomrom for skudd, E for sonar. Omtrentlige feltposisjoner, ikke navigasjonskart.</small>
+ <div style={{position:"absolute",top:52,left:"50%",transform:"translateX(-50%)",display:"flex",gap:8,zIndex:2}}><button className="primary" onClick={async()=>{await fullscreen();reset();}}>▶ Start / restart</button>{!full&&<button className="secondary" onClick={fullscreen}>⛶ Fullskjerm</button>}</div>
+ 
  </div></Modal>;
 }
