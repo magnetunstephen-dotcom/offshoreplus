@@ -42,7 +42,27 @@ export function OffshoreWeather({ installation }: { installation?: string }) {
       {installation && matched && <small>Endres under Ny tur.</small>}
       {loading && <p>Henter værvarsel …</p>}
       {error && <p role="status">{error}</p>}
-      {details && <div className="op-weather-metrics"><span>🌡️ Temperatur <strong>{details.air_temperature?.toFixed(1) ?? "–"} °C</strong></span><span>💨 Vind <strong>{windLabel(details.wind_speed)}</strong></span><span>🌬️ Vindkast <strong>{windLine(details.wind_speed_of_gust)}</strong></span><span>🧭 Vindretning <strong>{details.wind_from_direction?.toFixed(0) ?? "–"}°</strong></span></div>}
+      {details && <div className="op-weather-metrics">
+        <span>🌡️ Temperatur <strong>{details.air_temperature?.toFixed(1) ?? "–"} °C</strong></span>
+        <span>💨 Vind
+          <strong style={{ display: "block", whiteSpace: "nowrap" }}>{windLine(details.wind_speed, details.wind_speed_of_gust)}</strong>
+          <strong style={{ display: "block", whiteSpace: "nowrap" }}>{windLine(details.wind_speed, details.wind_speed_of_gust, true)}</strong>
+        </span>
+        <span>🧭 Vindretning
+          {details.wind_from_direction != null && <svg viewBox="0 0 100 100" width="84" height="84" role="img" aria-label={`Vind fra ${Math.round(details.wind_from_direction)} grader`} style={{ display: "block", margin: "5px auto" }}>
+            <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeOpacity=".4" strokeWidth="2" />
+            <text x="50" y="11" textAnchor="middle" fontSize="12" fill="currentColor">N</text>
+            <text x="94" y="54" textAnchor="middle" fontSize="12" fill="currentColor">Ø</text>
+            <text x="50" y="98" textAnchor="middle" fontSize="12" fill="currentColor">S</text>
+            <text x="7" y="54" textAnchor="middle" fontSize="12" fill="currentColor">V</text>
+            <g transform={`rotate(${details.wind_from_direction} 50 50)`}>
+              <path d="M50 18 L42 60 L50 54 L58 60 Z" fill="#39c6a2" />
+              <circle cx="50" cy="50" r="4" fill="currentColor" />
+            </g>
+          </svg>}
+          <strong style={{ display: "block", textAlign: "center" }}>{details.wind_from_direction?.toFixed(0) ?? "–"}°</strong>
+        </span>
+      </div>}
       {details && details.wind_speed_of_gust == null && <small>Vindkast er ikke tilgjengelig i dette værvarselet.</small>}{forecast && <small>Prognose: {new Date(forecast.time).toLocaleString("nb-NO")} · Kilde: MET Norway. Ikke til operativ bruk.</small>}
       <small>Bølgevarsel kommer i en senere versjon.</small>
     </div>
