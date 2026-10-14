@@ -13,16 +13,17 @@ const platforms=[
  {name:"Johan Castberg",lat:72.49,lon:20.35}
 ];
 // Approximate field coordinates for a geographically based arcade map; not for navigation.
-const world=platforms.map(p=>({...p,x:(p.lon+1)*120,y:(72.8-p.lat)*115}));
+const world=platforms.map(p=>({...p,x:(p.lon-3.21)*220+1600,y:(56.55-p.lat)*220+1100}));
+const missionFields=world.slice(0,4);
 type Vessel={x:number;y:number;vx:number;vy:number;kind:"sub"|"supply"|"lifeboat";active:boolean;revealed:number};
-type Game={x:number;y:number;angle:number;score:number;health:number;elapsed:number;sonar:number;cooldown:number;running:boolean;vessels:Vessel[];trail:{x:number;y:number}[];rescued:number;shots:{x:number;y:number;vx:number;vy:number}[]};
-const initial=():Game=>({x:world[0].x-70,y:world[0].y+60,angle:0,score:0,health:100,elapsed:0,sonar:0,cooldown:0,running:false,vessels:[],trail:[],rescued:0,shots:[]});
+type Game={x:number;y:number;angle:number;score:number;health:number;elapsed:number;sonar:number;cooldown:number;running:boolean;vessels:Vessel[];trail:{x:number;y:number}[];rescued:number;delivered:number;shots:{x:number;y:number;vx:number;vy:number}[]};
+const initial=():Game=>({x:world[0].x-100,y:world[0].y+60,angle:0,score:0,health:100,elapsed:0,sonar:0,cooldown:0,running:false,vessels:[],trail:[],rescued:0,delivered:0,shots:[]});
 export function OffshoreCommanderModal({onClose}:{onClose:()=>void}){
  const canvas=useRef<HTMLCanvasElement>(null),root=useRef<HTMLDivElement>(null);
  const game=useRef<Game>(initial()),keys=useRef(new Set<string>()),stick=useRef({x:0,y:0}),stickPointer=useRef<number|null>(null);
- const [hud,setHud]=useState({score:0,health:100,rescued:0,running:false}),[full,setFull]=useState(false),[stickPos,setStickPos]=useState({x:0,y:0});
+ const [hud,setHud]=useState({score:0,health:100,rescued:0,delivered:0,running:false}),[full,setFull]=useState(false),[stickPos,setStickPos]=useState({x:0,y:0});
  const [landscape,setLandscape]=useState(window.innerWidth>window.innerHeight);
- const reset=()=>{game.current=initial();game.current.running=true;setHud({score:0,health:100,rescued:0,running:true});};
+ const reset=()=>{game.current=initial();game.current.running=true;setHud({score:0,health:100,rescued:0,delivered:0,running:true});};
  const sonar=()=>{const g=game.current;if(g.running&&g.sonar<=0){g.sonar=1;g.vessels.forEach(v=>{if(v.kind==="sub"&&Math.hypot(v.x-g.x,v.y-g.y)<270)v.revealed=4;});}};
  const shoot=()=>{const g=game.current;if(!g.running||g.cooldown>0)return;g.cooldown=.28;g.shots.push({x:g.x+Math.sin(g.angle)*24,y:g.y-Math.cos(g.angle)*24,vx:Math.sin(g.angle)*430,vy:-Math.cos(g.angle)*430});};
  const fullscreen=async()=>{try{await root.current?.requestFullscreen();setFull(true);}catch{/* browser may block fullscreen */}try{const o=screen.orientation as ScreenOrientation & {lock?:(mode:string)=>Promise<void>};await o.lock?.("landscape");}catch{/* rotate manually */}};
@@ -47,8 +48,8 @@ export function OffshoreCommanderModal({onClose}:{onClose:()=>void}){
      g.x+=Math.sin(g.angle)*speed*dt;g.y-=Math.cos(g.angle)*speed*dt;
      g.x=Math.max(20,Math.min(3100,g.x));g.y=Math.max(20,Math.min(2200,g.y));
      g.trail.unshift({x:g.x,y:g.y});if(g.trail.length>650)g.trail.pop();
-     if(Math.random()<dt*.9&&g.vessels.length<24){
-      const a=Math.random()*Math.PI*2,d=220+Math.random()*290;
+     if(Math.random()<dt*1.8&&g.vessels.length<24){
+      const a=Math.random()*Math.PI*2,d=170+Math.random()*230;
       const kind:Vessel["kind"]=Math.random()<.38?"sub":Math.random()<.6?"supply":"lifeboat";
       g.vessels.push({x:g.x+Math.cos(a)*d,y:g.y+Math.sin(a)*d,vx:(Math.random()-.5)*35,vy:(Math.random()-.5)*35,kind,active:true,revealed:0});
      }
@@ -65,9 +66,9 @@ export function OffshoreCommanderModal({onClose}:{onClose:()=>void}){
      }
      g.shots=g.shots.filter(b=>Math.hypot(b.x-g.x,b.y-g.y)<650);
      g.vessels=g.vessels.filter(v=>v.active&&Math.hypot(v.x-g.x,v.y-g.y)<850);
-     for(const p of world){if(g.rescued&&Math.hypot(p.x-g.x,p.y-g.y)<42){g.score+=g.rescued*200;g.rescued=0;}}
+     for(const p of missionFields){if(g.rescued&&Math.hypot(p.x-g.x,p.y-g.y)<55){g.score+=g.rescued*200;g.delivered+=g.rescued;g.rescued=0;}}
      if(g.health===0)g.running=false;
-     if(now-lastHud>160){setHud({score:g.score,health:g.health,rescued:g.rescued,running:g.running});lastHud=now;}
+     if(now-lastHud>160){setHud({score:g.score,health:g.health,rescued:g.rescued,delivered:g.delivered,running:g.running});lastHud=now;}
     }
     ctx.fillStyle="#06283b";ctx.fillRect(0,0,W,H);
     ctx.save();ctx.translate(W/2-g.x,H/2-g.y);
@@ -75,15 +76,15 @@ export function OffshoreCommanderModal({onClose}:{onClose:()=>void}){
     const left=g.x-W/2,top=g.y-H/2;
     for(let x=Math.floor(left/80)*80;x<left+W;x+=80){ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+H);ctx.stroke();}
     for(let y=Math.floor(top/80)*80;y<top+H;y+=80){ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(left+W,y);ctx.stroke();}
-    for(const p of world){if(Math.abs(p.x-g.x)>W/2+80||Math.abs(p.y-g.y)>H/2+80)continue;
+    for(const p of missionFields){if(Math.abs(p.x-g.x)>W/2+80||Math.abs(p.y-g.y)>H/2+80)continue;
      ctx.fillStyle="#e9b44a";ctx.fillRect(p.x-12,p.y-12,24,24);ctx.fillStyle="#74edb8";ctx.fillRect(p.x-7,p.y-7,14,14);
-     ctx.fillStyle="#d6fff0";ctx.font="bold 14px sans-serif";ctx.fillText(p.name,p.x+20,p.y-12);
+     ctx.fillStyle="#d6fff0";ctx.font="bold 14px sans-serif";ctx.fillText(p.name,p.x+22,p.y-20);
      ctx.strokeStyle="#52d9aa";ctx.beginPath();ctx.arc(p.x,p.y,43,0,Math.PI*2);ctx.stroke();
     }
     for(const v of g.vessels){if(v.kind==="sub"&&v.revealed<=0&&g.sonar<=0)continue;
      ctx.save();ctx.translate(v.x,v.y);ctx.rotate(Math.atan2(v.vy,v.vx)+Math.PI/2);
      ctx.fillStyle=v.kind==="sub"?"#f26673":v.kind==="supply"?"#70b8ff":"#ffad42";
-     ctx.beginPath();ctx.moveTo(0,-17);ctx.lineTo(11,10);ctx.lineTo(0,16);ctx.lineTo(-11,10);ctx.closePath();ctx.fill();
+     ctx.beginPath();if(v.kind==="lifeboat"){ctx.ellipse(0,0,13,8,0,0,Math.PI*2);}else if(v.kind==="sub"){ctx.ellipse(0,0,8,19,0,0,Math.PI*2);}else{ctx.moveTo(0,-23);ctx.lineTo(12,-9);ctx.lineTo(12,17);ctx.lineTo(-12,17);ctx.lineTo(-12,-9);ctx.closePath();}ctx.fill();
      ctx.fillStyle="#112c3a";ctx.fillRect(-4,-3,8,9);ctx.restore();
     }
     for(let i=0;i<g.rescued;i++){const t=g.trail[Math.min(g.trail.length-1,(i+1)*27)];if(!t)continue;
@@ -102,8 +103,8 @@ export function OffshoreCommanderModal({onClose}:{onClose:()=>void}){
  },[]);
  const move=(e:React.PointerEvent<HTMLDivElement>)=>{const b=e.currentTarget.getBoundingClientRect(),x=(e.clientX-b.left-b.width/2)/(b.width*.32),y=(e.clientY-b.top-b.height/2)/(b.height*.32),m=Math.max(1,Math.hypot(x,y));stick.current={x:x/m,y:y/m};setStickPos(stick.current);};
  const release=()=>{stickPointer.current=null;stick.current={x:0,y:0};setStickPos({x:0,y:0});};
- return <Modal onClose={onClose}><div ref={root} style={{background:"#061d2c",color:"#fff",borderRadius:12,padding:10,width:"100%",boxSizing:"border-box",height:"100dvh",position:"fixed",inset:0,zIndex:99999,borderRadius:0,display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
- <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",fontSize:13}}><strong>⚓ Helge Ingstad</strong><span>⭐ {hud.score} · ❤️ {hud.health}% · 🛟 {hud.rescued}</span><button className="secondary" onClick={leave}>✕ Lukk</button></div>
+ return <Modal onClose={onClose}><div ref={root} style={{background:"#061d2c",color:"#fff",borderRadius:12,padding:10,width:"100%",boxSizing:"border-box",height:"100dvh",position:"fixed",inset:0,zIndex:99999,display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
+ <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",fontSize:13}}><strong>⚓ Helge Ingstad</strong><span>⭐ {hud.score} · ❤️ {hud.health}% · 🛟 {hud.rescued} · Levert {hud.delivered}</span><button className="secondary" onClick={leave}>✕ Lukk</button></div>
  {!landscape&&<div style={{fontSize:12,opacity:.8}}>📱 Snu telefonen til liggende format.</div>}
  <div style={{position:"relative",width:"100%",flex:1,minHeight:0,aspectRatio:undefined,margin:"auto",overflow:"hidden",borderRadius:10}}>
  <canvas ref={canvas} width={W} height={H} style={{width:"100%",height:"100%",display:"block"}}/>
@@ -112,7 +113,7 @@ export function OffshoreCommanderModal({onClose}:{onClose:()=>void}){
  <button onClick={sonar} style={{position:"absolute",bottom:"7%",right:"17%",borderRadius:"50%",width:"min(13%,72px)",aspectRatio:"1",background:"#12655e",border:"2px solid #75e6ca",color:"white",fontSize:11}}>📡<br/>SONAR</button>
  <button onClick={shoot} style={{position:"absolute",bottom:"7%",right:"3%",borderRadius:"50%",width:"min(13%,72px)",aspectRatio:"1",background:"#9a3b37",border:"2px solid #ffad92",color:"white",fontSize:11}}>💥<br/>SKYT</button>
  </div>
- <div style={{position:"absolute",top:52,left:"50%",transform:"translateX(-50%)",display:"flex",gap:8,zIndex:2}}><button className="primary" onClick={async()=>{await fullscreen();reset();}}>▶ Start / restart</button>{!full&&<button className="secondary" onClick={fullscreen}>⛶ Fullskjerm</button>}</div>
+ <div style={{position:"absolute",top:54,left:"50%",transform:"translateX(-50%)",display:"flex",gap:8,zIndex:2}}>{!hud.running&&<button className="primary" onClick={async()=>{await fullscreen();reset();}}>▶ Start oppdrag</button>}{!full&&<button className="secondary" onClick={fullscreen}>⛶ Fullskjerm</button>}</div>
  
  </div></Modal>;
 }
