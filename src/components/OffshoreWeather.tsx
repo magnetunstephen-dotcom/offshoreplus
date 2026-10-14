@@ -42,7 +42,7 @@ export function OffshoreWeather({ installation }: { installation?: string }) {
       {installation && matched && <small>Endres under Ny tur.</small>}
       {loading && <p>Henter værvarsel …</p>}
       {error && <p role="status">{error}</p>}
-      {details && <div className="op-weather-metrics"><span>🌡️ Temperatur <strong>{details.air_temperature?.toFixed(1) ?? "–"} °C</strong></span><span>💨 Vind <strong>{windLabel(details.wind_speed)}</strong></span><span>🌬️ Vindkast <strong>{windLabel(details.wind_speed_of_gust)}</strong></span><span>🧭 Vindretning <strong>{details.wind_from_direction?.toFixed(0) ?? "–"}°</strong></span></div>}
+      {details && <div className="op-weather-metrics"><span>🌡️ Temperatur <strong>{details.air_temperature?.toFixed(1) ?? "–"} °C</strong></span><span>💨 Vind <strong>{windLabel(details.wind_speed)}</strong></span><span>🌬️ Vindkast <strong>{windLine(details.wind_speed_of_gust)}</strong></span><span>🧭 Vindretning <strong>{details.wind_from_direction?.toFixed(0) ?? "–"}°</strong></span></div>}
       {details && details.wind_speed_of_gust == null && <small>Vindkast er ikke tilgjengelig i dette værvarselet.</small>}{forecast && <small>Prognose: {new Date(forecast.time).toLocaleString("nb-NO")} · Kilde: MET Norway. Ikke til operativ bruk.</small>}
       <small>Bølgevarsel kommer i en senere versjon.</small>
     </div>
