@@ -52,7 +52,7 @@ export function OffshoreCommanderModal({onClose}:{onClose:()=>void}) {
   return()=>{cancelAnimationFrame(frame);window.removeEventListener("keydown",down);window.removeEventListener("keyup",up);};
  },[]);
  const touch=(e:React.PointerEvent<HTMLCanvasElement>)=>{const rect=e.currentTarget.getBoundingClientRect();pointer.current={x:(e.clientX-rect.left)*W/rect.width,y:(e.clientY-rect.top)*H/rect.height};};
- return <Modal title="⚓ Offshore Commander" onClose={onClose}><div style={{display:"grid",gap:12,maxWidth:850}}>
+ return <Modal onClose={onClose}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><h2>⚓ Offshore Commander</h2><button className="secondary" onClick={onClose}>Lukk ✕</button></div><div style={{display:"grid",gap:12,maxWidth:850}}>
  <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}><strong>KNM Helge Ingstad · Nordsjøen</strong><span>Poeng: {hud.score} · Skrog: {hud.health}%</span></div>
  <canvas ref={canvas} width={W} height={H} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);touch(e);}} onPointerMove={e=>{if(e.buttons)touch(e);}} onPointerUp={()=>pointer.current=null} onPointerCancel={()=>pointer.current=null} style={{width:"100%",touchAction:"none",borderRadius:12,border:"1px solid #236071",background:"#061c2b"}} aria-label="Spillkart over norsk sokkel"/>
  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button className="primary" onClick={reset}>▶ Start oppdrag</button><button className="secondary" onClick={ping}>📡 Sonar</button><button className="secondary" onClick={()=>setMuted(v=>!v)}>{muted?"🔇":"🔊"} Lyd (kommer senere)</button></div>
