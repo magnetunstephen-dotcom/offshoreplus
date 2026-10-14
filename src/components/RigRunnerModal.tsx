@@ -202,6 +202,7 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
   const [bestStreak, setBestStreak] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-streak") || 0));
   const [best, setBest] = useState(() => Number(localStorage.getItem("offshoreplus-rig-runner-best") || 0));
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showTop20, setShowTop20] = useState(false);
   const [streakLeaderboard, setStreakLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [nickname, setNickname] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
   const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem("offshoreplus-game-name") || "");
@@ -222,8 +223,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       return;
     }
     const [{ data }, { data: streakData }] = await Promise.all([
-      supabase.from("game_scores").select("user_id,display_name,score,best_streak").order("score", { ascending: false }).order("updated_at", { ascending: true }).limit(10),
-      supabase.from("game_scores").select("user_id,display_name,score,best_streak").order("best_streak", { ascending: false }).order("updated_at", { ascending: true }).limit(10),
+      supabase.from("game_scores").select("user_id,display_name,score,best_streak").order("score", { ascending: false }).order("updated_at", { ascending: true }).limit(20),
+      supabase.from("game_scores").select("user_id,display_name,score,best_streak").order("best_streak", { ascending: false }).order("updated_at", { ascending: true }).limit(20),
     ]);
     if (userRef.current?.id !== viewerId) return;
     if (streakData) setStreakLeaderboard(streakData as LeaderboardEntry[]);
@@ -1074,8 +1075,8 @@ export function RigRunnerModal({ onClose, user, onLogin }: { onClose: () => void
       </div>
       <aside className="game-leaderboard" aria-label="Poengtavle">
         {user && <>
-        <section className="leaderboard-section"><div><span className="eyebrow">TOPP 10</span><h3>Flest landinger</h3></div>{leaderboard.length ? <ol>{leaderboard.map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.score}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå.</p>}</section>
-        <section className="leaderboard-section"><div><span className="eyebrow">TOPP 10</span><h3>Flest helidekk på rad</h3></div>{streakLeaderboard.filter(entry => entry.best_streak > 0).length ? <ol>{streakLeaderboard.filter(entry => entry.best_streak > 0).map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.best_streak}</strong></li>)}</ol> : <p className="leaderboard-empty">Første rekord på helidekk i rad er fortsatt ledig!</p>}</section>
+        <section className="leaderboard-section"><div><span className="eyebrow">TOPP {showTop20 ? 20 : 10}</span><h3>Flest landinger</h3></div>{leaderboard.length ? <ol>{leaderboard.slice(0, showTop20 ? 20 : 10).map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.score}</strong></li>)}</ol> : <p className="leaderboard-empty">Ingen resultater ennå.</p>}{leaderboard.length > 10 && <button type="button" className="secondary" onClick={() => setShowTop20(v => !v)}>{showTop20 ? "Vis færre" : "Vis flere (topp 20)"}</button>}</section>
+        <section className="leaderboard-section"><div><span className="eyebrow">TOPP {showTop20 ? 20 : 10}</span><h3>Flest helidekk på rad</h3></div>{streakLeaderboard.filter(entry => entry.best_streak > 0).length ? <ol>{streakLeaderboard.filter(entry => entry.best_streak > 0).slice(0, showTop20 ? 20 : 10).map((entry, index) => <li key={entry.user_id} className={entry.user_id === user?.id ? "is-me" : ""}><span><b>{index + 1}</b>{entry.display_name}</span><strong>{entry.best_streak}</strong></li>)}</ol> : <p className="leaderboard-empty">Første rekord på helidekk i rad er fortsatt ledig!</p>}{streakLeaderboard.filter(entry => entry.best_streak > 0).length > 10 && <button type="button" className="secondary" onClick={() => setShowTop20(v => !v)}>{showTop20 ? "Vis færre" : "Vis flere (topp 20)"}</button>}</section>
         </>}
         {scoreMessage && <p className="game-score-message" role="status">{scoreMessage}</p>}
         {!user ? <><p className="leaderboard-login-help">Spill så mye du vil! Logg inn for å se topp 10, lagre rekordene dine og få ditt eget spillnavn.</p><button className="secondary full-width" onClick={onLogin}>Logg inn og se topp 10</button></> : <form className="game-name-form" onSubmit={saveNickname}><label htmlFor="game-name">Ditt spillnavn</label><div><input id="game-name" value={nicknameDraft} maxLength={20} placeholder="F.eks. Nordsjøpiloten" onChange={event => setNicknameDraft(event.target.value)} /><button type="submit">Lagre</button></div>{nameMessage && <small>{nameMessage}</small>}</form>}
