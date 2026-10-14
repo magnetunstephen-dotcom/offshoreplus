@@ -9,7 +9,11 @@ const FIELDS = [
   { name: "Heidrun", lat: 65.326, lon: 7.328 },
 ];
 type Forecast = { time: string; data: { instant: { details: { air_temperature?: number; wind_speed?: number; wind_from_direction?: number; wind_speed_of_gust?: number } } } };
-const windLabel = (speed?: number) => speed == null ? "–" : `${speed.toFixed(1)} m/s (${(speed * 1.943844).toFixed(1)} knop)`;
+const windLine = (speed?: number, gust?: number, knots = false) => {
+  if (speed == null) return "–";
+  const factor = knots ? 1.943844 : 1;
+  return `${(speed * factor).toFixed(1)} ${knots ? "knop" : "m/s"}${gust == null ? "" : ` (${(gust * factor).toFixed(1)})`}`;
+};
 export function OffshoreWeather({ installation }: { installation?: string }) {
   const [field, setField] = useState(() => localStorage.getItem("op-weather-field") || "Valhall");
   const [forecast, setForecast] = useState<Forecast | null>(null);
@@ -30,7 +34,7 @@ export function OffshoreWeather({ installation }: { installation?: string }) {
   }, [selected.name, selected.lat, selected.lon]);
   const details = forecast?.data.instant.details;
   return <details className="card op-weather-card">
-    <summary><span>🌤️ Offshorevær · {installation || selected.name}</span><span className="op-weather-hint">{details ? `${windLabel(details.wind_speed)} · ${Math.round(details.air_temperature ?? 0)}°C` : "Se værvarsel"} ▾</span></summary>
+    <summary><span>🌤️ Offshorevær · {installation || selected.name}</span><span className="op-weather-hint">{details ? `${windLine(details.wind_speed, details.wind_speed_of_gust)} · ${Math.round(details.air_temperature ?? 0)}°C` : "Se værvarsel"} ▾</span></summary>
     <div className="op-weather-content">
       <label htmlFor="op-weather-field">Velg installasjon</label>
       <select id="op-weather-field" value={selected.name} disabled={Boolean(installation)} onChange={e => setField(e.target.value)}>{FIELDS.map(f => <option key={f.name}>{f.name}</option>)}</select>
