@@ -8,7 +8,8 @@ const FIELDS = [
   { name: "Gullfaks A", lat: 61.181, lon: 2.188 },
   { name: "Heidrun", lat: 65.326, lon: 7.328 },
 ];
-type Forecast = { time: string; data: { instant: { details: { air_temperature?: number; wind_speed?: number; wind_from_direction?: number } } } };
+type Forecast = { time: string; data: { instant: { details: { air_temperature?: number; wind_speed?: number; wind_from_direction?: number; wind_speed_of_gust?: number } } } };
+const windLabel = (speed?: number) => speed == null ? "–" : `${speed.toFixed(1)} m/s (${(speed * 1.943844).toFixed(1)} knop)`;
 export function OffshoreWeather({ installation }: { installation?: string }) {
   const [field, setField] = useState(() => localStorage.getItem("op-weather-field") || "Valhall");
   const [forecast, setForecast] = useState<Forecast | null>(null);
@@ -29,7 +30,7 @@ export function OffshoreWeather({ installation }: { installation?: string }) {
   }, [selected.name, selected.lat, selected.lon]);
   const details = forecast?.data.instant.details;
   return <details className="card op-weather-card">
-    <summary><span>🌤️ Offshorevær · {installation || selected.name}</span><span className="op-weather-hint">{details ? `${Math.round(details.wind_speed ?? 0)} m/s · ${Math.round(details.air_temperature ?? 0)}°C` : "Se værvarsel"} ▾</span></summary>
+    <summary><span>🌤️ Offshorevær · {installation || selected.name}</span><span className="op-weather-hint">{details ? `${windLabel(details.wind_speed)} · ${Math.round(details.air_temperature ?? 0)}°C` : "Se værvarsel"} ▾</span></summary>
     <div className="op-weather-content">
       <label htmlFor="op-weather-field">Velg installasjon</label>
       <select id="op-weather-field" value={selected.name} disabled={Boolean(installation)} onChange={e => setField(e.target.value)}>{FIELDS.map(f => <option key={f.name}>{f.name}</option>)}</select>
@@ -37,8 +38,8 @@ export function OffshoreWeather({ installation }: { installation?: string }) {
       {installation && matched && <small>Endres under Ny tur.</small>}
       {loading && <p>Henter værvarsel …</p>}
       {error && <p role="status">{error}</p>}
-      {details && <div className="op-weather-metrics"><span>🌡️ Temperatur <strong>{details.air_temperature?.toFixed(1) ?? "–"} °C</strong></span><span>💨 Vind <strong>{details.wind_speed?.toFixed(1) ?? "–"} m/s</strong></span><span>🧭 Vindretning <strong>{details.wind_from_direction?.toFixed(0) ?? "–"}°</strong></span></div>}
-      {forecast && <small>Prognose: {new Date(forecast.time).toLocaleString("nb-NO")} · Kilde: MET Norway. Ikke til operativ bruk.</small>}
+      {details && <div className="op-weather-metrics"><span>🌡️ Temperatur <strong>{details.air_temperature?.toFixed(1) ?? "–"} °C</strong></span><span>💨 Vind <strong>{windLabel(details.wind_speed)}</strong></span><span>🌬️ Vindkast <strong>{windLabel(details.wind_speed_of_gust)}</strong></span><span>🧭 Vindretning <strong>{details.wind_from_direction?.toFixed(0) ?? "–"}°</strong></span></div>}
+      {details && details.wind_speed_of_gust == null && <small>Vindkast er ikke tilgjengelig i dette værvarselet.</small>}{forecast && <small>Prognose: {new Date(forecast.time).toLocaleString("nb-NO")} · Kilde: MET Norway. Ikke til operativ bruk.</small>}
       <small>Bølgevarsel kommer i en senere versjon.</small>
     </div>
   </details>;
