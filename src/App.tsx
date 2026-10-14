@@ -24,8 +24,9 @@ import { InstallAppPrompt } from "./components/InstallAppPrompt";
 import { PrivacyModal } from "./components/PrivacyModal";
 import { PasswordResetModal } from "./components/PasswordResetModal";
 import { RigRunnerModal } from "./components/RigRunnerModal";
+import { OffshoreCommanderModal } from "./components/OffshoreCommanderModal";
 
-type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | "privacy" | "password-reset" | "rig-runner" | null;
+type ModalName = "wizard" | "calendar" | "settings" | "additions" | "earnings-info" | "cv" | "certificates" | "my-year" | "account" | "feedback" | "privacy" | "password-reset" | "rig-runner" | "offshore-commander" | null;
 
 export default function App() {
   const initialTrip = loadTrip();
@@ -137,6 +138,7 @@ export default function App() {
         />
       {welcomeOpen && !user && isDemo && !modal && <WelcomeDialog onClose={dismissWelcome} onLogin={() => welcomeAction("account")} onSetup={() => welcomeAction("wizard")} onGame={() => welcomeAction("rig-runner")} />}
 
+      <button className="secondary" style={{position:"fixed",bottom:85,right:18,zIndex:20}} onClick={() => setModal("offshore-commander")}>⚓ Offshore Commander</button>
       <button className="feedback-bubble" onClick={() => setModal("feedback")} aria-label="Send tilbakemelding"><span>💬</span><b>Tips eller feil?</b></button>
       <InstallAppPrompt />
       <button className="privacy-footer" onClick={() => setModal("privacy")}>Personvern · Vilkår</button>
@@ -176,6 +178,7 @@ export default function App() {
       {modal === "feedback" && <FeedbackModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
       {modal === "privacy" && <PrivacyModal onClose={() => setModal(null)} />}
       {modal === "password-reset" && <PasswordResetModal onClose={() => setModal(null)} />}
+      {modal === "offshore-commander" && <OffshoreCommanderModal onClose={() => setModal(null)} />}
       {modal === "rig-runner" && <RigRunnerModal user={user} onClose={() => setModal(null)} onLogin={() => setModal("account")} />}
 
       {modal === "earnings-info" && (
