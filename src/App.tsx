@@ -139,8 +139,8 @@ export default function App() {
       {welcomeOpen && !user && isDemo && !modal && <WelcomeDialog onClose={dismissWelcome} onLogin={() => welcomeAction("account")} onSetup={() => welcomeAction("wizard")} onGame={() => welcomeAction("rig-runner")} />}
 
       <button className="feedback-bubble" onClick={() => setModal("feedback")} aria-label="Send tilbakemelding"><span>💬</span><b>Tips eller feil?</b></button>
+      <div style={{position:"fixed",left:12,bottom:"calc(78px + env(safe-area-inset-bottom, 0px))",zIndex:21}}><button onClick={() => setModal("offshore-commander")} style={{background:"rgba(13,38,53,.92)",color:"#b9d4da",border:"1px dashed #537280",borderRadius:10,padding:"6px 9px",fontSize:11,opacity:.85,cursor:"pointer"}}>🧪 Under test</button></div>
       <InstallAppPrompt />
-      <div style={{textAlign:"center",padding:"8px 12px 2px"}}><button onClick={() => setModal("offshore-commander")} style={{background:"transparent",border:"1px dashed var(--border, #526474)",borderRadius:10,padding:"7px 12px",fontSize:12,opacity:.65,color:"inherit",cursor:"pointer"}}>🧪 Under test · Offshore Commander</button></div>
       <button className="privacy-footer" onClick={() => setModal("privacy")}>Personvern · Vilkår</button>
 
       {modal === "wizard" && (
