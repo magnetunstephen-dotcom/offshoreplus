@@ -104,7 +104,7 @@ export function Dashboard({
 
   const heroLabel = view === "trip"
     ? "Opptjent denne turen"
-    : view === "monthly-gross" ? "Brutto opptjent hittil" : "Estimert netto opptjent hittil";
+    : view === "monthly-gross" ? "Brutto opptjent på turen" : "Estimert netto opptjent på turen";
   const heroValue = view === "trip"
     ? calculation.gross
     : view === "monthly-gross" ? calculation.accruedNextPayoutGross : accruedNet;
@@ -171,7 +171,7 @@ export function Dashboard({
           {view === "monthly-net" && <span className="muted">Tilsvarer {money(calculation.accruedNextPayoutGross)} før skatt</span>}
           {view === "monthly-gross" && <span className="muted">Tilsvarer ca. {money(accruedNet)} etter skatt</span>}
           {view === "trip" && <span className="muted">Brutto opptjent på aktiv tur</span>}
-          {view !== "trip" && <div className="pay-target"><span>Forventet ved fullført tur · med tillegg registrert hittil</span><strong>{view === "monthly-gross" ? `${money(calculation.estimatedMonthlyGross)} før skatt` : `ca. ${money(finalNet)} etter skatt`}</strong><small>{salaryAgreement?.name} · gruppe {trip.group} · trinn {salaryStep}{usesTable ? ` · tabell ${trip.taxTable || "mangler"}` : ` · ${trip.taxRate}% trekk`}</small></div>}
+          {view !== "trip" && <div className="pay-target"><span>Forventet månedslønn · inkludert registrerte tillegg</span><strong>{view === "monthly-gross" ? `${money(calculation.estimatedMonthlyGross)} før skatt` : `ca. ${money(finalNet)} etter skatt`}</strong><small>{salaryAgreement?.name} · gruppe {trip.group} · trinn {salaryStep}{usesTable ? ` · tabell ${trip.taxTable || "mangler"}` : ` · ${trip.taxRate}% trekk`}</small></div>}
           {usesTable && (accruedTable.loading || finalTable.loading) && <span className="tax-table-state">Laster Skatteetatens 2026-tabell …</span>}
           {usesTable && (accruedTable.error || finalTable.error) && <span className="tax-table-state error">{accruedTable.error || finalTable.error}</span>}
           {view === "trip" && (
@@ -181,7 +181,7 @@ export function Dashboard({
             <button className={view === "monthly-net" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-net")}>Etter skatt</button>
             <button className={view === "monthly-gross" ? "selected" : ""} onClick={() => onChangeEarningsView("monthly-gross")}>Før skatt</button>
           </div>
-          {view !== "trip" && <span className="tax-note">Beløpet hittil består av den delen av månedslønnen du har jobbet inn, pluss registrerte tillegg. Det forventede beløpet viser hele månedslønnen pluss de samme tilleggene. {usesTable ? `Trekkpliktig lønn beregnes med tabell ${trip.taxTable || "–"}.` : "Fastlønn og trekkpliktige tillegg bruker valgt skatteprosent."}</span>}
+          {view !== "trip" && <span className="tax-note">Live-telleren viser opptjent fastlønn og tillegg så langt i turen. Forventet månedslønn viser full ordinær månedslønn pluss registrerte tillegg, uavhengig av hvor langt du er kommet i turen. Feriepenger vises separat og er ikke inkludert i beløpene. {usesTable ? `Trekkpliktig lønn beregnes med tabell ${trip.taxTable || "–"}.` : "Fastlønn og trekkpliktige tillegg bruker valgt skatteprosent."}</span>}
           {view !== "trip" && <div className={`live-calculation-note ${calculation.isMoneyRunning ? "active" : "paused"}`}><span className="status-dot" /> <strong>{calculation.isMoneyRunning ? "Teller live nå" : "Telleren står nå"}</strong><span>{calculation.isMoneyRunning ? "Beløpet oppdateres mens aktivt skift eller tillegg pågår." : "Beløpet øker igjen ved neste planlagte skift eller aktive tillegg."}</span></div>}
         </section>
 
@@ -199,12 +199,12 @@ export function Dashboard({
 
         <section className="op-summary-grid">
           <article className="card summary-card">
-            <span className="eyebrow">Ordinær månedslønn</span>
+            <span className="eyebrow">Fast månedslønn · før tillegg</span>
             <strong className="metric">{money(calculation.regularMonthlyGross)}</strong>
             <span className="muted">Årslønn {money(calculation.regularMonthlyGross * 12)} · {calculation.usesAgreementMonthlySalary ? "fra valgt lønnsgrunnlag" : "beregnet fra full tur"}</span>
           </article>
           <button className="card summary-card addition-summary" onClick={onAdditions}>
-            <span className="eyebrow">Tillegg denne turen</span>
+            <span className="eyebrow">Opptjente tillegg denne turen</span>
             <strong className="metric accent-money">+{money(calculation.activeExtrasGross)}</strong>
             <span className="summary-link">Opptjent live · se / registrer <ChevronRightIcon size={16} /></span>
           </button>
@@ -212,7 +212,7 @@ export function Dashboard({
 
         <details className="card pay-breakdown op-details">
           <summary>
-            <span>Se lønnsdetaljer</span>
+            <span>Se opptjent lønn og feriepenger</span>
             <strong>{money(view === "trip" ? calculation.gross : calculation.accruedNextPayoutGross)}</strong>
           </summary>
           <div className="breakdown-content">
@@ -220,7 +220,7 @@ export function Dashboard({
               <div className="breakdown-explainer"><strong>Slik er estimatet bygget opp</strong><span>{usesTable ? `Samlet trekkpliktig beløp slås opp i månedstabell ${trip.taxTable || "–"} for 2026. Trekkfrie refusjoner legges til etterpå.` : `Fastlønn og trekkpliktige tillegg bruker ${trip.taxRate}% fra prosentkortet. Trekkfrie refusjoner bruker 0%.`}</span></div>
               <div className="breakdown-row"><span>Fastlønn opptjent · {hours(calculation.paidHours)} av {trip.rotationOnDays * 12} t</span><strong>{money(calculation.accruedRegularGross)}</strong></div>
               <div className="breakdown-row"><span>Variable tillegg opptjent</span><strong>+{money(calculation.activeExtrasGross)}</strong></div>
-              <div className="breakdown-row holiday-row"><span>Feriepenger opptjent · {calculation.holidayPayRate}%<small>Spart til senere – ikke med i neste utbetaling</small></span><strong>+{money(calculation.accruedHolidayPay)}</strong></div>
+              <div className="breakdown-row holiday-row"><span>Feriepenger opptjent · {calculation.holidayPayRate}%<small>Opptjenes til senere utbetaling · ikke inkludert i lønnstelleren</small></span><strong>+{money(calculation.accruedHolidayPay)}</strong></div>
               {usesTable ? <>
                 <div className="breakdown-row"><span>Trekkpliktig grunnlag</span><strong>{money(calculation.accruedTaxableGross)}</strong></div>
                 <div className="breakdown-row sub-row"><span>Tabelltrekk 2026</span><strong>-{money(accruedTable.tax ?? 0)}</strong></div>
